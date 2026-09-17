@@ -20,9 +20,15 @@ document.querySelector('#programs').innerHTML=programs.filter(p=>!p.related).map
 document.querySelector('#related-programs').innerHTML=programs.filter(p=>p.related).map(renderProgram).join('');
 const map=document.querySelector('#map'),tip=document.querySelector('#tooltip');
 function showDetail(place){document.querySelectorAll('.marker').forEach(b=>{const chosen=b.dataset.name===place.name;b.classList.toggle('selected',chosen);b.setAttribute('aria-pressed',String(chosen));});document.querySelector('#detail').innerHTML=`<p class="eyebrow">SELECTED LOCATION</p><h2>${place.name}</h2>`+place.ids.map(id=>{const p=programs.find(p=>p.id===id);return `<div class="detail-block">${badge(p)}<h3>${p.name}</h3><p class="metric">${p.metric}</p><p class="metric-label">${p.metricLabel}</p>${p.metric.includes("AUC")?aucExplanation:""}<p>${p.short}</p><p class="contact-note">${p.date}${place.ids.includes('ave')&&id==='ave'?' · Five-country aggregate':''}</p><a href="#${p.id}">Outcomes, sponsors & contact ↓</a></div>`}).join('');}
-function showTip(place,button){tip.innerHTML=`<strong>${place.name}</strong>`+place.ids.map(id=>{let p=programs.find(p=>p.id===id);return `<div>${p.name}<small>${p.short}</small></div>`}).join('<hr>');tip.hidden=false;const r=button.getBoundingClientRect(),m=map.getBoundingClientRect();const x=Math.max(8,Math.min(r.left-m.left+20,m.width-tip.offsetWidth-8));let y=r.top-m.top-tip.offsetHeight-14;if(y<5)y=r.bottom-m.top+14;tip.style.left=x+'px';tip.style.top=Math.min(y,m.height-tip.offsetHeight-5)+'px';button.setAttribute('aria-describedby','tooltip');}
-for(const place of places){const b=document.createElement('button');b.className='marker '+(place.left?'left ':'')+programs.find(p=>p.id===place.ids[0]).kind;b.style.left=((place.lon+110)/250*100)+'%';b.style.top=((57-place.lat)/103*100)+'%';b.dataset.name=place.name;b.setAttribute('aria-label',`${place.name}: ${place.ids.map(id=>programs.find(p=>p.id===id).name).join(', ')}. Show outcomes`);b.innerHTML=`${place.ids.length>1?place.ids.length:'•'}<span class="marker-label">${place.name}</span>`;b.addEventListener('mouseenter',()=>showTip(place,b));b.addEventListener('focus',()=>showTip(place,b));b.addEventListener('mouseleave',()=>tip.hidden=true);b.addEventListener('blur',()=>tip.hidden=true);b.addEventListener('click',()=>{tip.hidden=true;showDetail(place)});document.querySelector('#markers').append(b)}
-document.addEventListener('keydown',e=>{if(e.key==='Escape')tip.hidden=true});showDetail(places.find(p=>p.name==='Bangladesh'));
+let tipButton=null, tipTimer=null, overTip=false, overMarker=false;
+function cancelTipClose(){clearTimeout(tipTimer);tipTimer=null;}
+function closeTip(){cancelTipClose();tip.hidden=true;tipButton?.removeAttribute('aria-describedby');tipButton=null;overTip=false;overMarker=false;}
+function scheduleTipClose(){cancelTipClose();tipTimer=setTimeout(()=>{if(!overTip&&!overMarker&&document.activeElement!==tipButton)closeTip();},350);}
+tip.addEventListener('mouseenter',()=>{overTip=true;cancelTipClose();});
+tip.addEventListener('mouseleave',()=>{overTip=false;scheduleTipClose();});
+function showTip(place,button){cancelTipClose();if(tipButton!==button){tipButton?.removeAttribute('aria-describedby');overTip=false;}tipButton=button;tip.innerHTML=`<strong>${place.name}</strong>`+place.ids.map(id=>{let p=programs.find(p=>p.id===id);return `<div>${p.name}<small>${p.short}</small></div>`}).join('<hr>');tip.hidden=false;const r=button.getBoundingClientRect(),m=map.getBoundingClientRect();const viewport=map.parentElement.getBoundingClientRect();const minX=Math.max(8,viewport.left-m.left+8),maxX=Math.min(m.width-tip.offsetWidth-8,viewport.right-m.left-tip.offsetWidth-8);const x=Math.max(minX,Math.min(r.left-m.left+20,maxX));let y=r.top-m.top-tip.offsetHeight-14;if(y<5)y=r.bottom-m.top+14;tip.style.left=x+'px';tip.style.top=Math.min(y,m.height-tip.offsetHeight-5)+'px';button.setAttribute('aria-describedby','tooltip');}
+for(const place of places){const b=document.createElement('button');b.className='marker '+(place.left?'left ':'')+programs.find(p=>p.id===place.ids[0]).kind;b.style.left=((place.lon+110)/250*100)+'%';b.style.top=((57-place.lat)/103*100)+'%';b.dataset.name=place.name;b.setAttribute('aria-label',`${place.name}: ${place.ids.map(id=>programs.find(p=>p.id===id).name).join(', ')}. Show outcomes`);b.innerHTML=`${place.ids.length>1?place.ids.length:'•'}<span class="marker-label">${place.name}</span>`;b.addEventListener('mouseenter',()=>{overMarker=true;showTip(place,b)});b.addEventListener('focus',()=>{overMarker=b.matches(':hover');showTip(place,b)});b.addEventListener('mouseleave',()=>{if(tipButton===b){overMarker=false;scheduleTipClose()}});b.addEventListener('blur',()=>{if(tipButton===b)scheduleTipClose()});b.addEventListener('click',()=>{closeTip();showDetail(place)});document.querySelector('#markers').append(b)}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeTip()});showDetail(places.find(p=>p.name==='Bangladesh'));
 
 const mapScroller=document.querySelector('.map-scroll');
 const mapShell=document.querySelector('.map-shell');
@@ -37,7 +43,7 @@ function updateMapScrollCue(){
  swipeHint.hidden=!overflow;
  swipeHint.innerHTML=left?(right?'← Swipe to explore →':'← Swipe to explore'):'Swipe to explore <span aria-hidden="true">→</span>';
 }
-mapScroller.addEventListener('scroll',updateMapScrollCue,{passive:true});
-window.addEventListener('resize',updateMapScrollCue);
+mapScroller.addEventListener('scroll',()=>{closeTip();updateMapScrollCue()},{passive:true});
+window.addEventListener('resize',()=>{closeTip();updateMapScrollCue()});
 new ResizeObserver(updateMapScrollCue).observe(mapScroller);
 updateMapScrollCue();
