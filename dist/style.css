@@ -3,3 +3,5 @@
 .map-scroll{overflow-x:auto}.map-foot{flex-wrap:wrap}@media(max-width:540px){#map{min-width:520px}.marker{width:24px;height:24px}.intro{padding-top:20px}h1{font-size:32px}.summary{margin-top:18px}}
 
 aside{max-height:680px;overflow-y:auto}#tooltip{max-height:90%;overflow-y:auto;pointer-events:auto}.metric{overflow-wrap:anywhere}@media(max-width:740px){aside{max-height:none;overflow:visible}}
+
+.brand{letter-spacing:1px}.brand-icon{flex-shrink:0}@media(max-width:540px){.brand{font-size:12px;letter-spacing:.5px}}
