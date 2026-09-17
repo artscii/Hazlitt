@@ -12,3 +12,5 @@ aside{max-height:680px;overflow-y:auto}#tooltip{max-height:90%;overflow-y:auto;p
 
 /* Expanded geographic coverage keeps markers legible on narrow screens. */
 #map{min-width:1200px;min-height:0}.marker{width:24px;height:24px}.africa{left:53%;top:48%}.asia{left:81%;top:16%}.americas{left:4%;top:23%}.marker-label{display:none}.map-shell.has-overflow .map-swipe-hint{display:flex;justify-content:flex-end;gap:8px;margin:0;padding:8px 16px;color:#426572;font-size:13px}.map-shell.can-scroll-right::after,.map-shell.can-scroll-left::before{opacity:1}.map-shell.has-overflow::before,.map-shell.has-overflow::after{top:36px}
+
+.badge.related{background:#e9edf7;color:#415578}.method li{font-size:14px;color:#5d7480;margin-bottom:12px}.phone{overflow-wrap:anywhere}.directory+.directory{margin-top:36px}
