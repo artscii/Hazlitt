@@ -5,3 +5,7 @@
 aside{max-height:680px;overflow-y:auto}#tooltip{max-height:90%;overflow-y:auto;pointer-events:auto}.metric{overflow-wrap:anywhere}@media(max-width:740px){aside{max-height:none;overflow:visible}}
 
 .brand{letter-spacing:1px}.brand-icon{flex-shrink:0}@media(max-width:540px){.brand{font-size:12px;letter-spacing:.5px}}
+
+/* Horizontal-map affordance appears only when the viewport clips the map. */
+.map-shell{position:relative}.map-swipe-hint{display:none}.map-shell::after,.map-shell::before{content:"";position:absolute;top:0;bottom:0;width:28px;pointer-events:none;z-index:6;opacity:0}.map-shell::after{right:0;background:linear-gradient(to right,transparent,#edf4f7)}.map-shell::before{left:0;background:linear-gradient(to left,transparent,#edf4f7)}
+@media(max-width:540px){.map-shell.has-overflow .map-swipe-hint{display:flex;justify-content:flex-end;gap:8px;margin:0;padding:8px 16px;color:#426572;background:#edf4f7;font-size:14px;line-height:1.4}.map-shell.has-overflow::before,.map-shell.has-overflow::after{top:36px}.map-shell.can-scroll-right::after,.map-shell.can-scroll-left::before{opacity:1}.map-scroll:focus-visible{outline:2px solid #00777e;outline-offset:-2px}}

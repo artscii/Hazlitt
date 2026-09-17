@@ -15,3 +15,21 @@ function showDetail(place){document.querySelectorAll('.marker').forEach(b=>{cons
 function showTip(place,button){tip.innerHTML=`<strong>${place.name}</strong>`+place.ids.map(id=>{let p=programs.find(p=>p.id===id);return `<div>${p.name}<small>${p.short}</small></div>`}).join('<hr>');tip.hidden=false;const r=button.getBoundingClientRect(),m=map.getBoundingClientRect();const x=Math.max(8,Math.min(r.left-m.left+20,m.width-tip.offsetWidth-8));let y=r.top-m.top-tip.offsetHeight-14;if(y<5)y=r.bottom-m.top+14;tip.style.left=x+'px';tip.style.top=Math.min(y,m.height-tip.offsetHeight-5)+'px';button.setAttribute('aria-describedby','tooltip');}
 for(const place of places){const b=document.createElement('button');b.className='marker '+(place.left?'left ':'')+(place.ids[0]==='kinondo'?'historical':place.ids[0]==='ngyn'?'pilot':'');b.style.left=((place.lon+26)/166*100)+'%';b.style.top=((57-place.lat)/103*100)+'%';b.dataset.name=place.name;b.setAttribute('aria-label',`${place.name}: ${place.ids.map(id=>programs.find(p=>p.id===id).name).join(', ')}. Show outcomes`);b.innerHTML=`${place.ids.length>1?place.ids.length:'•'}<span class="marker-label">${place.name}</span>`;b.addEventListener('mouseenter',()=>showTip(place,b));b.addEventListener('focus',()=>showTip(place,b));b.addEventListener('mouseleave',()=>tip.hidden=true);b.addEventListener('blur',()=>tip.hidden=true);b.addEventListener('click',()=>{tip.hidden=true;showDetail(place)});document.querySelector('#markers').append(b)}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')tip.hidden=true});showDetail(places[2]);
+
+const mapScroller=document.querySelector('.map-scroll');
+const mapShell=document.querySelector('.map-shell');
+const swipeHint=document.querySelector('#map-swipe-hint');
+function updateMapScrollCue(){
+ const overflow=mapScroller.scrollWidth-mapScroller.clientWidth>2;
+ const left=mapScroller.scrollLeft>2;
+ const right=mapScroller.scrollLeft+mapScroller.clientWidth<mapScroller.scrollWidth-2;
+ mapShell.classList.toggle('has-overflow',overflow);
+ mapShell.classList.toggle('can-scroll-left',overflow&&left);
+ mapShell.classList.toggle('can-scroll-right',overflow&&right);
+ swipeHint.hidden=!overflow;
+ swipeHint.innerHTML=left?(right?'← Swipe to explore →':'← Swipe to explore'):'Swipe to explore <span aria-hidden="true">→</span>';
+}
+mapScroller.addEventListener('scroll',updateMapScrollCue,{passive:true});
+window.addEventListener('resize',updateMapScrollCue);
+new ResizeObserver(updateMapScrollCue).observe(mapScroller);
+updateMapScrollCue();
