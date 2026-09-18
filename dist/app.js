@@ -43,6 +43,10 @@ document.addEventListener('click',e=>{
  if(!link||e.defaultPrevented||e.button>0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;
  const id=link.getAttribute('href').slice(1);
  if(id!=='map-overview'&&!programs.some(p=>p.id===id))return;
+ if(link.getAttribute('data-profile')===id){
+  const chosen=programs.find(p=>p.id===id);
+  prioritizeProfiles({name:chosen.name,ids:[id]});
+ }
  const profile=document.getElementById(id);if(!profile)return;
  e.preventDefault();closeTip();
  // Wait for the docked preview to collapse before measuring the destination.
