@@ -22,14 +22,41 @@ const map=document.querySelector('#map'),tip=document.querySelector('#tooltip');
 function showDetail(place){document.querySelectorAll('.marker').forEach(b=>{const chosen=b.dataset.name===place.name;b.classList.toggle('selected',chosen);b.setAttribute('aria-pressed',String(chosen));});document.querySelector('#detail').innerHTML=`<p class="eyebrow">SELECTED LOCATION</p><h2>${place.name}</h2>`+place.ids.map(id=>{const p=programs.find(p=>p.id===id);return `<div class="detail-block">${badge(p)}<h3>${p.name}</h3><p class="metric">${p.metric}</p><p class="metric-label">${p.metricLabel}</p>${p.metric.includes("AUC")?aucExplanation:""}<p>${p.short}</p><p class="contact-note">${p.date}${place.ids.includes('ave')&&id==='ave'?' · Five-country aggregate':''}</p><a href="#${p.id}">Outcomes, sponsors & contact ↓</a></div>`}).join('');}
 let tipButton=null, tipTimer=null, overTip=false, overMarker=false, touchTipButton=null, touchInteraction=false;
 function cancelTipClose(){clearTimeout(tipTimer);tipTimer=null;}
-function closeTip(){touchTipButton=null;cancelTipClose();tip.hidden=true;tipButton?.removeAttribute('aria-describedby');tipButton=null;overTip=false;overMarker=false;}
-function scheduleTipClose(){cancelTipClose();tipTimer=setTimeout(()=>{if(!touchTipButton&&!overTip&&!overMarker&&document.activeElement!==tipButton&&!tip.contains(document.activeElement))closeTip();},350);}
+const tipDock=document.createElement('div');tipDock.className='tooltip-dock';tipDock.hidden=true;map.parentElement.after(tipDock);
+function closeTip(){tipDock.hidden=true;touchTipButton=null;cancelTipClose();tip.hidden=true;tipButton?.removeAttribute('aria-describedby');tipButton=null;overTip=false;overMarker=false;}
+function scheduleTipClose(){cancelTipClose();tipTimer=setTimeout(()=>{if(!touchTipButton&&!overTip&&!overMarker&&document.activeElement!==tipButton&&!tip.contains(document.activeElement))closeTip();},650);}
 tip.addEventListener('mouseenter',()=>{overTip=true;cancelTipClose();});
 tip.addEventListener('mouseleave',()=>{overTip=false;scheduleTipClose();});
 tip.addEventListener('focusin',cancelTipClose);
 tip.addEventListener('focusout',scheduleTipClose);
 tip.addEventListener('click',e=>{const link=e.target.closest('a[data-profile]');if(!link)return;const profile=document.getElementById(link.dataset.profile);closeTip();if(profile){profile.setAttribute('tabindex','-1');profile.focus({preventScroll:true});}});
-function showTip(place,button){cancelTipClose();if(tipButton!==button){tipButton?.removeAttribute('aria-describedby');overTip=false;}tipButton=button;tip.innerHTML=`<strong>${place.name}</strong>`+place.ids.map(id=>{let p=programs.find(p=>p.id===id);return `<div>${p.name}<small>${p.short}</small><a class="tooltip-profile" data-profile="${p.id}" href="#${p.id}" aria-label="View project profile: ${p.name}">View project profile →</a></div>`}).join('<hr>');tip.hidden=false;const r=button.getBoundingClientRect(),m=map.getBoundingClientRect();const viewport=map.parentElement.getBoundingClientRect();const minX=Math.max(8,viewport.left-m.left+8),maxX=Math.min(m.width-tip.offsetWidth-8,viewport.right-m.left-tip.offsetWidth-8);const x=Math.max(minX,Math.min(r.left-m.left+20,maxX));let y=r.top-m.top-tip.offsetHeight-14;if(y<5)y=r.bottom-m.top+14;tip.style.left=x+'px';tip.style.top=Math.min(y,m.height-tip.offsetHeight-5)+'px';button.setAttribute('aria-describedby','tooltip');}
+function chooseTipPosition(bounds,size,anchor,obstacles){
+ const clamp=(n,min,max)=>Math.max(min,Math.min(n,max));
+ const maxX=bounds.right-size.width,maxY=bounds.bottom-size.height;
+ if(maxX<bounds.left||maxY<bounds.top)return null;
+ const xs=[anchor.right+14,anchor.left-size.width-14,(anchor.left+anchor.right-size.width)/2,bounds.left,maxX];
+ const ys=[anchor.bottom+14,anchor.top-size.height-14,(anchor.top+anchor.bottom-size.height)/2,bounds.top,maxY];
+ for(const o of obstacles){xs.push(o.right+8,o.left-size.width-8);ys.push(o.bottom+8,o.top-size.height-8);}
+ let best=null;
+ for(const rawX of xs)for(const rawY of ys){
+  const x=clamp(rawX,bounds.left,maxX),y=clamp(rawY,bounds.top,maxY);
+  const hits=obstacles.filter(o=>x<o.right+6&&x+size.width>o.left-6&&y<o.bottom+6&&y+size.height>o.top-6).length;
+  const dx=Math.max(anchor.left-(x+size.width),x-anchor.right,0),dy=Math.max(anchor.top-(y+size.height),y-anchor.bottom,0);
+  const distance=Math.hypot(dx,dy),score=hits*100000+distance;
+  if(!best||score<best.score)best={x,y,hits,score};
+ }
+ return best;
+}
+function showTip(place,button){cancelTipClose();if(tipButton!==button){tipButton?.removeAttribute('aria-describedby');overTip=false;}tipButton=button;tip.innerHTML=`<strong>${place.name}</strong>`+place.ids.map(id=>{let p=programs.find(p=>p.id===id);return `<div>${p.name}<small>${p.short}</small><a class="tooltip-profile" data-profile="${p.id}" href="#${p.id}" aria-label="View project profile: ${p.name}">View project profile →</a></div>`}).join('<hr>');tipDock.hidden=true;map.append(tip);tip.classList.remove('docked');tip.style.maxHeight='';tip.hidden=false;
+ const r=button.getBoundingClientRect(),m=map.getBoundingClientRect(),v=map.parentElement.getBoundingClientRect();
+ const bounds={left:Math.max(m.left,v.left)+8,right:Math.min(m.right,v.right)-8,top:Math.max(m.top,0)+8,bottom:Math.min(m.bottom,window.innerHeight)-8};
+ tip.style.maxHeight=Math.max(120,Math.min(300,bounds.bottom-bounds.top))+'px';
+ const obstacles=[...document.querySelectorAll('.marker')].map(b=>b.getBoundingClientRect()).filter(o=>o.right>bounds.left&&o.left<bounds.right&&o.bottom>bounds.top&&o.top<bounds.bottom);
+ const position=chooseTipPosition(bounds,{width:tip.offsetWidth,height:tip.offsetHeight},r,obstacles);
+ if(v.width<600||!position||position.hits>0){tipDock.hidden=false;tipDock.append(tip);tip.classList.add('docked');tip.style.left='';tip.style.top='';tip.style.maxHeight='280px';}
+ else{tip.style.left=(position.x-m.left)+'px';tip.style.top=(position.y-m.top)+'px';}
+ button.setAttribute('aria-describedby','tooltip');}
+
 for(const place of places){const b=document.createElement('button');b.className='marker '+(place.left?'left ':'')+programs.find(p=>p.id===place.ids[0]).kind;b.style.left=((place.lon+110)/250*100)+'%';b.style.top=((57-place.lat)/103*100)+'%';b.dataset.name=place.name;b.setAttribute('aria-label',`${place.name}: ${place.ids.map(id=>programs.find(p=>p.id===id).name).join(', ')}. Show outcomes`);b.innerHTML=`${place.ids.length>1?place.ids.length:'•'}<span class="marker-label">${place.name}</span>`;b.addEventListener('pointerdown',e=>{touchInteraction=e.pointerType==='touch'||e.pointerType==='pen'});b.addEventListener('mouseenter',()=>{if(touchInteraction||window.matchMedia('(hover: none)').matches)return;overMarker=true;showTip(place,b)});b.addEventListener('focus',()=>{if(touchInteraction)return;overMarker=b.matches(':hover');showTip(place,b)});b.addEventListener('mouseleave',()=>{if(tipButton===b){overMarker=false;scheduleTipClose()}});b.addEventListener('blur',()=>{if(tipButton===b)scheduleTipClose()});b.addEventListener('click',()=>{if(touchInteraction||window.matchMedia('(hover: none)').matches){if(touchTipButton===b&&!tip.hidden)closeTip();else{closeTip();showTip(place,b);touchTipButton=b;}}else closeTip();showDetail(place)});document.querySelector('#markers').append(b)}
 document.addEventListener('pointerdown',e=>{if(!tip.hidden&&!tip.contains(e.target)&&!tipButton?.contains(e.target))closeTip();});
 document.addEventListener('keydown',e=>{touchInteraction=false;if(e.key==='Escape')closeTip()});showDetail(places.find(p=>p.name==='Bangladesh'));
