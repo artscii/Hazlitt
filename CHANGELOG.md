@@ -1,5 +1,10 @@
 # Release history
 
+## 1.0.1
+
+- Choosing a tooltip profile link shows only that project in the selected-location sidebar, retaining the location heading.
+- Choosing or highlighting a map point again restores all projects for that location.
+
 ## 1.0.0
 
 First publicly numbered release, building on the existing atlas.
