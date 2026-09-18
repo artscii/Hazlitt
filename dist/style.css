@@ -34,3 +34,5 @@ aside{max-height:680px;overflow-y:auto}#tooltip{max-height:90%;overflow-y:auto;p
 /* Explicit sea color and contained previews on compact iPhone viewports. */
 .map-column,.map-shell,.map-scroll,#map,#map>img,.tooltip-dock{background-color:#eef0f2;color-scheme:light}.map-shell::after{background:linear-gradient(to right,transparent,#eef0f2)}.map-shell::before{background:linear-gradient(to left,transparent,#eef0f2)}.map-shell.has-overflow .map-swipe-hint{background:#eef0f2}
 .tooltip-dock{width:100%;max-width:100%;min-width:0;overflow:hidden}#tooltip{box-sizing:border-box;overflow-wrap:anywhere;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}#tooltip.docked{max-width:100%;min-width:0}#tooltip .tooltip-profile{white-space:normal;overflow-wrap:anywhere}.tooltip-dock{scroll-margin:12px}
+
+.map-return-icon{width:16px;height:16px;flex:none;opacity:.75}.program .back-to-map{gap:7px}#tooltip{max-width:calc(100vw - 32px)}@supports(width:100dvw){#tooltip{max-width:calc(100dvw - 32px)}}
