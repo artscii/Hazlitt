@@ -42,3 +42,8 @@ aside{max-height:680px;overflow-y:auto}#tooltip{max-height:90%;overflow-y:auto;p
 /* Individually readable entries, using available space before scrolling. */
 #tooltip.multi-project:not(.docked){width:360px}.tooltip-entries{display:grid;gap:6px}.tooltip-entry{padding:10px;border-radius:5px;background:#ffffff04}.tooltip-entry:nth-child(even){background:#ffffff0d}.tooltip-entry-title{font-weight:600;line-height:1.35}#tooltip .tooltip-entry small{line-height:1.4;margin-top:5px}#tooltip .tooltip-entry .tooltip-profile{margin-top:6px;padding:6px 8px}.tooltip-entry{min-width:0}
 @media(min-width:740px){#tooltip.docked .tooltip-entries{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}}
+
+/* Equal-height grid cards keep profile actions aligned below variable copy. */
+.tooltip-entry{display:flex;flex-direction:column;gap:6px}
+#tooltip .tooltip-entry small{margin-top:0;margin-bottom:6px}
+#tooltip .tooltip-entry .tooltip-profile{margin-top:auto;flex-shrink:0}
