@@ -15,7 +15,7 @@ const places=[{name:'Guanacaste, Costa Rica',lon:-85.4,lat:10.4,ids:['guanacaste
 const aucExplanation=`<div class="metric-help"><h4>AUC, in plain language</h4><p>AUC means “area under the curve.” It summarizes how well a test separates people with the condition from those without it, across different cutoffs for calling a result positive.</p><p><strong>0.5</strong> is chance-level separation; <strong>1.0</strong> is perfect separation in the tested data.</p><p>Here, <strong>0.91</strong> means that, for a randomly chosen pair—one woman with precancer and one without—the model would rank the woman with precancer higher about 91% of the time.</p><p>It does <strong>not</strong> mean 91% of patients are correctly diagnosed. It does not tell us how many cases a clinic will miss or how many false alarms it will produce at its chosen cutoff.</p></div>`;
 const badge=p=>`<span class="badge ${p.kind}">${p.status}</span>`;
 const links=p=>`<a href="${p.source}" target="_blank" rel="noopener">${p.sourceLabel||"Read the evidence"} ↗</a>${p.source2?` · <a href="${p.source2}" target="_blank" rel="noopener">${p.source2Label||"Related report"} ↗</a>`:''}`;
-const renderProgram=p=>`<article class="program" id="${p.id}"><div>${badge(p)}<h3>${p.name}</h3><p class="geo">${p.geo}</p><p class="geo">${p.date}</p></div><div><p class="label">REPORTED OUTCOMES</p><p>${p.outcome}</p>${links(p)}</div><div><p class="label">SPONSORS & PARTNERS</p><p>${p.partners}</p>${p.tel?`<a class="phone" href="tel:${p.tel}">${p.phone}</a>`:`<a class="phone" href="mailto:${p.email}">${p.email}</a>`}<p class="contact-note">${p.contact}</p><a href="${p.contactSource}" target="_blank" rel="noopener">Contact source ↗</a></div></article>`;
+const renderProgram=p=>`<article class="program" id="${p.id}"><div><a class="back-to-map" href="#map-overview">↑ Back to map</a>${badge(p)}<h3>${p.name}</h3><p class="geo">${p.geo}</p><p class="geo">${p.date}</p></div><div><p class="label">REPORTED OUTCOMES</p><p>${p.outcome}</p>${links(p)}</div><div><p class="label">SPONSORS & PARTNERS</p><p>${p.partners}</p>${p.tel?`<a class="phone" href="tel:${p.tel}">${p.phone}</a>`:`<a class="phone" href="mailto:${p.email}">${p.email}</a>`}<p class="contact-note">${p.contact}</p><a href="${p.contactSource}" target="_blank" rel="noopener">Contact source ↗</a></div></article>`;
 document.querySelector('#programs').innerHTML=programs.filter(p=>!p.related).map(renderProgram).join('');
 document.querySelector('#related-programs').innerHTML=programs.filter(p=>p.related).map(renderProgram).join('');
 const map=document.querySelector('#map'),tip=document.querySelector('#tooltip');
@@ -33,7 +33,7 @@ document.addEventListener('click',e=>{
  const link=e.target.closest('a[href^="#"]');
  if(!link||e.defaultPrevented||e.button>0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;
  const id=link.getAttribute('href').slice(1);
- if(!programs.some(p=>p.id===id))return;
+ if(id!=='map-overview'&&!programs.some(p=>p.id===id))return;
  const profile=document.getElementById(id);if(!profile)return;
  e.preventDefault();closeTip();
  // Wait for the docked preview to collapse before measuring the destination.

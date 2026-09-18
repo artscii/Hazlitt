@@ -27,3 +27,6 @@ aside{max-height:680px;overflow-y:auto}#tooltip{max-height:90%;overflow-y:auto;p
 
 /* Crowded maps and narrow screens show previews below the hotspots. */
 .tooltip-dock{padding:12px;background:#edf4f7;border-top:1px solid #d7e1e6}.tooltip-dock[hidden]{display:none}#tooltip.docked{position:relative;inset:auto;width:100%;max-width:none;box-shadow:none}.tooltip-dock #tooltip{font-size:14px}
+
+/* Keep the return link quiet and only show it on the linked profile. */
+.program .back-to-map{display:none;width:fit-content;min-height:44px;align-items:center;margin:-12px 0 8px;color:#64746d;font-size:13px;font-weight:400;text-decoration:none}.program:target .back-to-map{display:flex}.program .back-to-map:hover{text-decoration:underline;color:#076b70}#map-overview{scroll-margin-top:20px}
