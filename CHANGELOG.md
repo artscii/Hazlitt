@@ -1,5 +1,9 @@
 # Release history
 
+## 1.0.2
+
+- Added subtle alternating backgrounds and spacing to multi-project location sidebar entries; single-project views retain their existing appearance.
+
 ## 1.0.1
 
 - Choosing a tooltip profile link shows only that project in the selected-location sidebar, retaining the location heading.
