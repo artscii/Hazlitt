@@ -30,3 +30,7 @@ aside{max-height:680px;overflow-y:auto}#tooltip{max-height:90%;overflow-y:auto;p
 
 /* Keep the return link quiet and only show it on the linked profile. */
 .program .back-to-map{display:none;width:fit-content;min-height:44px;align-items:center;margin:-12px 0 8px;color:#64746d;font-size:13px;font-weight:400;text-decoration:none}.program:target .back-to-map{display:flex}.program .back-to-map:hover{text-decoration:underline;color:#076b70}#map-overview{scroll-margin-top:20px}
+
+/* Explicit sea color and contained previews on compact iPhone viewports. */
+.map-column,.map-shell,.map-scroll,#map,#map>img,.tooltip-dock{background-color:#eef0f2;color-scheme:light}.map-shell::after{background:linear-gradient(to right,transparent,#eef0f2)}.map-shell::before{background:linear-gradient(to left,transparent,#eef0f2)}.map-shell.has-overflow .map-swipe-hint{background:#eef0f2}
+.tooltip-dock{width:100%;max-width:100%;min-width:0;overflow:hidden}#tooltip{box-sizing:border-box;overflow-wrap:anywhere;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}#tooltip.docked{max-width:100%;min-width:0}#tooltip .tooltip-profile{white-space:normal;overflow-wrap:anywhere}.tooltip-dock{scroll-margin:12px}
