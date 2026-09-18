@@ -1,5 +1,10 @@
 # Release history
 
+## 1.0.4
+
+- Add phone page gutters and consistent inset padding across all project profile text.
+- Preserve desktop spacing and prevent long profile text from overflowing.
+
 ## 1.0.3
 
 - Open with Bombo selected in the sidebar and highlighted first in the profiles.
