@@ -1,5 +1,10 @@
 # Release history
 
+## 1.0.3
+
+- Open with Bombo selected in the sidebar and highlighted first in the profiles.
+- Center the initial mobile map view on its shared coastal marker.
+
 ## 1.0.2
 
 - Added subtle alternating backgrounds and spacing to multi-project location sidebar entries; single-project views retain their existing appearance.

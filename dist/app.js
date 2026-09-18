@@ -1,4 +1,4 @@
-// Atlas v1.0.2 — subtle alternating backgrounds distinguish multi-project sidebar entries.
+// Atlas v1.0.3 — Bombo is the default selected project and initial map location.
 // On release: update the footer and source version comments, then add a CHANGELOG.md entry.
 const programs=[
 {"id": "bombo", "related": true, "name": "Bombo Palliative Care Project · cervical screening", "status": "Related initiative · AI not documented", "kind": "historical", "geo": "Bombo Regional Referral Hospital · Tanga, Tanzania", "metric": "Not reported", "metricLabel": "screening and treatment outcome totals in reviewed sources", "short": "Leah Norgrove and Ambrose Marsh supported integration of cervical screening with HIV and palliative care. AI use and quantified screening benefits are not documented in the reviewed sources.", "outcome": "Island Health’s 2018 report documents cervical screening for women living with HIV. A 2019 conference abstract describes integrated care at Bombo and reports that cervical cancer represented 48% of female cancers in the 2017 palliative-care data. This is a burden measure, not a screening success rate. Screening totals, treatment completion, mortality benefit and current screening activity were not verified.", "partners": "Bombo Palliative Care Project Society (Canada); Drs. Leah Norgrove and Ambrose Marsh; Dr. Violet Bakari and the Bombo HIV Care and Treatment Clinic team. The Society raises funds for local capacity and gaps in Tanzanian government support.", "phone": "", "tel": "", "email": "hazlitt.home@gmail.com", "contact": "Public correspondence email in the 2019 conference abstract. A direct project telephone was not verified. The abstract prints “Ambrose March”; Island Health confirms Marsh. Contact details have not been tested.", "source": "https://www.islandhealth.ca/news/news-releases/dr-norgrove-receives-humanitarian-award", "sourceLabel": "Island Health program report", "source2": "https://www.academyforlife.va/content/dam/pav/documenti%20pdf/2019/Interventi%20Paglia/Programme%20and%20Abstract%202019_single.pdf#page=80", "source2Label": "2019 abstract D020, page 80", "contactSource": "https://www.academyforlife.va/content/dam/pav/documenti%20pdf/2019/Interventi%20Paglia/Programme%20and%20Abstract%202019_single.pdf#page=80", "date": "Program reports 2018–19 · reviewed September 2026"},
@@ -91,7 +91,11 @@ function showTip(place,button){showDetail(place);cancelTipClose();if(tipButton!=
 
 for(const place of places){const b=document.createElement('button');b.className='marker '+(place.left?'left ':'')+programs.find(p=>p.id===place.ids[0]).kind;b.style.left=((place.lon+110)/250*100)+'%';b.style.top=((57-place.lat)/103*100)+'%';b.dataset.name=place.name;b.setAttribute('aria-label',`${place.name}: ${place.ids.map(id=>programs.find(p=>p.id===id).name).join(', ')}. Show outcomes`);b.innerHTML=`${place.ids.length>1?place.ids.length:'•'}<span class="marker-label">${place.name}</span>`;b.addEventListener('pointerdown',e=>{touchInteraction=e.pointerType==='touch'||e.pointerType==='pen'});b.addEventListener('mouseenter',()=>{if(touchInteraction||window.matchMedia('(hover: none)').matches)return;overMarker=true;showTip(place,b)});b.addEventListener('focus',()=>{if(touchInteraction)return;overMarker=b.matches(':hover');showTip(place,b)});b.addEventListener('mouseleave',()=>{if(tipButton===b){overMarker=false;scheduleTipClose()}});b.addEventListener('blur',()=>{if(tipButton===b)scheduleTipClose()});b.addEventListener('click',()=>{if(touchInteraction||window.matchMedia('(hover: none)').matches){if(touchTipButton===b&&!tip.hidden)closeTip();else{closeTip();showTip(place,b);touchTipButton=b;}}else closeTip();showDetail(place);prioritizeProfiles(place)});document.querySelector('#markers').append(b)}
 document.addEventListener('pointerdown',e=>{if(!tip.hidden&&!tip.contains(e.target)&&!tipButton?.contains(e.target))closeTip();});
-document.addEventListener('keydown',e=>{touchInteraction=false;if(e.key==='Escape')closeTip()});showDetail(places.find(p=>p.name==='Bangladesh'));
+document.addEventListener('keydown',e=>{touchInteraction=false;if(e.key==='Escape')closeTip()});
+// v1.0.3: open with Bombo selected, while preserving the shared coastal marker.
+const defaultPlace=places.find(p=>p.ids.includes('bombo'));
+showDetail({...defaultPlace,ids:['bombo']});
+prioritizeProfiles({name:programs.find(p=>p.id==='bombo').name,ids:['bombo']});
 
 const mapScroller=document.querySelector('.map-scroll');
 const mapShell=document.querySelector('.map-shell');
@@ -109,6 +113,8 @@ function updateMapScrollCue(){
 mapScroller.addEventListener('scroll',()=>{closeTip();updateMapScrollCue()},{passive:true});
 window.addEventListener('resize',()=>{closeTip();updateMapScrollCue()});
 new ResizeObserver(updateMapScrollCue).observe(mapScroller);
+// Keep the selected coastal location visible on narrow screens without scrolling the page.
+mapScroller.scrollLeft=Math.max(0,((defaultPlace.lon+110)/250)*mapScroller.scrollWidth-mapScroller.clientWidth/2);
 updateMapScrollCue();
 
 window.addEventListener('scroll',()=>{if(tip.hidden)return;const r=tip.getBoundingClientRect(),v=window.visualViewport,top=v?.offsetTop||0,bottom=top+(v?.height||window.innerHeight);if(tipDock.hidden||r.top<top||r.bottom>bottom)closeTip();},{passive:true});
