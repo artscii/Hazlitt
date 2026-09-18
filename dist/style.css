@@ -21,5 +21,6 @@ aside{max-height:680px;overflow-y:auto}#tooltip{max-height:90%;overflow-y:auto;p
 
 /* A quiet location cue for profiles reached through map or sidebar links. */
 .program{transition:background-color .25s ease,box-shadow .25s ease}
-.program:target{background-color:#edf5f4;box-shadow:inset 3px 0 0 #9bc5c2}
+.program>div:first-child{padding-left:18px}
+.program:target{background-color:#fffced;box-shadow:inset 3px 0 0 #eadfa5}
 @media(prefers-reduced-motion:reduce){.program{transition:none}html{scroll-behavior:auto}}
