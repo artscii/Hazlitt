@@ -68,14 +68,14 @@ function chooseTipPosition(bounds,size,anchor,obstacles){
  }
  return best;
 }
-function showTip(place,button){cancelTipClose();if(tipButton!==button){tipButton?.removeAttribute('aria-describedby');overTip=false;}tipButton=button;tip.innerHTML=`<strong>${place.name}</strong>`+place.ids.map(id=>{let p=programs.find(p=>p.id===id);return `<div>${p.name}<small>${p.short}</small><a class="tooltip-profile" data-profile="${p.id}" href="#${p.id}" aria-label="View project profile: ${p.name}">View project profile →</a></div>`}).join('<hr>');tipDock.hidden=true;map.append(tip);tip.classList.remove('docked');tip.style.maxHeight='';tip.hidden=false;
+function showTip(place,button){cancelTipClose();if(tipButton!==button){tipButton?.removeAttribute('aria-describedby');overTip=false;}tipButton=button;tip.classList.toggle('multi-project',place.ids.length>1);tip.innerHTML=`<strong>${place.name}</strong><div class="tooltip-entries">`+place.ids.map(id=>{let p=programs.find(p=>p.id===id);return `<div class="tooltip-entry"><span class="tooltip-entry-title">${p.name}</span><small>${p.short}</small><a class="tooltip-profile" data-profile="${p.id}" href="#${p.id}" aria-label="View project profile: ${p.name}">View project profile →</a></div>`}).join('')+'</div>';tipDock.hidden=true;map.append(tip);tip.classList.remove('docked');tip.style.maxHeight='';tip.hidden=false;
  const r=button.getBoundingClientRect(),m=map.getBoundingClientRect(),v=map.parentElement.getBoundingClientRect();
  const vv=window.visualViewport,screen={left:vv?.offsetLeft||0,top:vv?.offsetTop||0,width:vv?.width||window.innerWidth,height:vv?.height||window.innerHeight};
  const bounds={left:Math.max(m.left,v.left,screen.left)+8,right:Math.min(m.right,v.right,screen.left+screen.width)-8,top:Math.max(m.top,screen.top)+8,bottom:Math.min(m.bottom,screen.top+screen.height)-8};
- tip.style.maxHeight=Math.max(120,Math.min(300,bounds.bottom-bounds.top))+'px';
+ tip.style.maxHeight=Math.max(80,bounds.bottom-bounds.top)+'px';
  const obstacles=[...document.querySelectorAll('.marker')].map(b=>b.getBoundingClientRect()).filter(o=>o.right>bounds.left&&o.left<bounds.right&&o.bottom>bounds.top&&o.top<bounds.bottom);
  const position=chooseTipPosition(bounds,{width:tip.offsetWidth,height:tip.offsetHeight},r,obstacles);
- if(v.width<600||!position||position.hits>0){tipDock.hidden=false;tipDock.append(tip);tip.classList.add('docked');tip.style.left='';tip.style.top='';tip.style.maxHeight=Math.max(80,Math.min(280,(window.visualViewport?.height||window.innerHeight)-48))+'px';}
+ if(v.width<600||!position||position.hits>0){tipDock.hidden=false;tipDock.append(tip);tip.classList.add('docked');tip.style.left='';tip.style.top='';tip.style.maxHeight=Math.max(80,(window.visualViewport?.height||window.innerHeight)-56)+'px';}
  else{tip.style.left=(position.x-m.left)+'px';tip.style.top=(position.y-m.top)+'px';}
  button.setAttribute('aria-describedby','tooltip');
  if(!tipDock.hidden)requestAnimationFrame(()=>{if(!tip.hidden&&tipButton===button)tipDock.scrollIntoView({block:'nearest',inline:'nearest',behavior:'instant'});});}
