@@ -18,3 +18,8 @@ aside{max-height:680px;overflow-y:auto}#tooltip{max-height:90%;overflow-y:auto;p
 .metric-help{background:#edf5f5;border-left:3px solid #16858a;border-radius:4px;padding:12px 14px;margin:16px 0}.metric-help h4{font-size:14px;margin:0 0 8px}.metric-help p{font-size:13px;margin:0 0 10px}.metric-help p:last-child{margin-bottom:0}
 
 #tooltip .tooltip-profile{display:flex;align-items:center;min-height:44px;margin-top:8px;padding:8px 10px;border:1px solid #70999f;border-radius:5px;color:#fff;font-size:14px;font-weight:600;text-decoration:underline;touch-action:manipulation}#tooltip .tooltip-profile:hover,#tooltip .tooltip-profile:focus-visible{background:#315461}article.program{scroll-margin-top:20px}
+
+/* A quiet location cue for profiles reached through map or sidebar links. */
+.program{transition:background-color .25s ease,box-shadow .25s ease}
+.program:target{background-color:#edf5f4;box-shadow:inset 3px 0 0 #9bc5c2}
+@media(prefers-reduced-motion:reduce){.program{transition:none}html{scroll-behavior:auto}}
