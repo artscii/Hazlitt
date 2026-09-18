@@ -29,7 +29,20 @@ tip.addEventListener('mouseenter',()=>{overTip=true;cancelTipClose();});
 tip.addEventListener('mouseleave',()=>{overTip=false;scheduleTipClose();});
 tip.addEventListener('focusin',cancelTipClose);
 tip.addEventListener('focusout',scheduleTipClose);
-tip.addEventListener('click',e=>{const link=e.target.closest('a[data-profile]');if(!link)return;const profile=document.getElementById(link.dataset.profile);closeTip();if(profile){profile.setAttribute('tabindex','-1');profile.focus({preventScroll:true});}});
+document.addEventListener('click',e=>{
+ const link=e.target.closest('a[href^="#"]');
+ if(!link||e.defaultPrevented||e.button>0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;
+ const id=link.getAttribute('href').slice(1);
+ if(!programs.some(p=>p.id===id))return;
+ const profile=document.getElementById(id);if(!profile)return;
+ e.preventDefault();closeTip();
+ // Wait for the docked preview to collapse before measuring the destination.
+ requestAnimationFrame(()=>{
+  if(location.hash!=='#'+id)location.hash=id;
+  profile.setAttribute('tabindex','-1');profile.focus({preventScroll:true});
+  profile.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start',inline:'nearest'});
+ });
+});
 function chooseTipPosition(bounds,size,anchor,obstacles){
  const clamp=(n,min,max)=>Math.max(min,Math.min(n,max));
  const maxX=bounds.right-size.width,maxY=bounds.bottom-size.height;
