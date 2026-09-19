@@ -1,5 +1,9 @@
 # Release history
 
+## 1.3.4
+
+- Draw subtle dotted country-center connectors on marker hover and keyboard focus without moving markers. Shared Kenya/Tanzania marker points to both countries.
+
 ## 1.3.3
 
 - Give markers stable offshore display positions, remove callout lines, and keep selection halos.
