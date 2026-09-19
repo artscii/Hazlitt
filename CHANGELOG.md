@@ -1,5 +1,9 @@
 # Release history
 
+## 1.1.1
+
+- Explicitly restore all projects for empty or whitespace searches, native search clearing and browser page restoration.
+
 ## 1.1.0
 
 - Add live, case- and accent-insensitive project search with result counts and clear action.
