@@ -1,4 +1,4 @@
-// Atlas v1.2.3 — Bombo is the default selected project and initial map location.
+// Atlas v1.2.4 — Bombo is the default selected project and initial map location.
 // On release: update the footer and source version comments, then add a CHANGELOG.md entry.
 const programs=[
 {"id": "bombo", "related": true, "name": "Bombo Palliative Care Project · cervical screening", "status": "Related initiative · AI not documented", "kind": "historical", "geo": "Bombo Regional Referral Hospital · Tanga, Tanzania", "metric": "Not reported", "metricLabel": "screening and treatment outcome totals in reviewed sources", "short": "Leah Norgrove and Ambrose Marsh supported integration of cervical screening with HIV and palliative care. AI use and quantified screening benefits are not documented in the reviewed sources.", "outcome": "Island Health’s 2018 report documents cervical screening for women living with HIV. A 2019 conference abstract describes integrated care at Bombo and reports that cervical cancer represented 48% of female cancers in the 2017 palliative-care data. This is a burden measure, not a screening success rate. Screening totals, treatment completion, mortality benefit and current screening activity were not verified.", "partners": "Bombo Palliative Care Project Society (Canada); Drs. Leah Norgrove and Ambrose Marsh; Dr. Violet Bakari and the Bombo HIV Care and Treatment Clinic team. The Society raises funds for local capacity and gaps in Tanzanian government support.", "phone": "", "tel": "", "email": "hazlitt.home@gmail.com", "contact": "Public correspondence email in the 2019 conference abstract. A direct project telephone was not verified. The abstract prints “Ambrose March”; Island Health confirms Marsh. Contact details have not been tested.", "source": "https://www.islandhealth.ca/news/news-releases/dr-norgrove-receives-humanitarian-award", "sourceLabel": "Island Health program report", "source2": "https://www.academyforlife.va/content/dam/pav/documenti%20pdf/2019/Interventi%20Paglia/Programme%20and%20Abstract%202019_single.pdf#page=80", "source2Label": "2019 abstract D020, page 80", "contactSource": "https://www.academyforlife.va/content/dam/pav/documenti%20pdf/2019/Interventi%20Paglia/Programme%20and%20Abstract%202019_single.pdf#page=80", "date": "Program reports 2018–19 · reviewed September 2026"},
@@ -20,13 +20,13 @@ const links=p=>`<a href="${p.source}" target="_blank" rel="noopener">${p.sourceL
 const renderProgram=p=>`<article class="program" id="${p.id}"><div><a class="back-to-map" href="#map-overview"><svg class="map-return-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2Z"/><path d="M9 3v16M15 5v16"/></svg>Back to map</a>${badge(p)}<h3>${p.name}</h3><p class="geo">${p.geo}</p><p class="geo">${p.date}</p></div><div><p class="label">REPORTED OUTCOMES</p><p>${p.outcome}</p>${links(p)}</div><div><p class="label">SPONSORS & PARTNERS</p><p>${p.partners}</p>${p.tel?`<a class="phone" href="tel:${p.tel}">${p.phone}</a>`:`<a class="phone" href="mailto:${p.email}">${p.email}</a>`}<p class="contact-note">${p.contact}</p><a href="${p.contactSource}" target="_blank" rel="noopener">Contact source ↗</a></div></article>`;
 document.querySelector('#programs').innerHTML=programs.filter(p=>!p.related).map(renderProgram).join('');
 document.querySelector('#related-programs').innerHTML=programs.filter(p=>p.related).map(renderProgram).join('');
-// v1.2.3: filter visible profiles without rebuilding cards or moving keyboard focus.
+// v1.2.4: filter visible profiles without rebuilding cards or moving keyboard focus.
 function normalizeSearch(value){return value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();}
 function matchingProjectIds(query){
  const terms=normalizeSearch(query).trim().split(/\s+/).filter(Boolean);
  return new Set(programs.filter(p=>{const text=normalizeSearch(Object.values(p).filter(v=>typeof v==='string').join(' '));return terms.every(term=>text.includes(term));}).map(p=>p.id));
 }
-// v1.2.3: mark matches in text nodes only, preserving links and profile markup.
+// v1.2.4: mark matches in text nodes only, preserving links and profile markup.
 function highlightProfileMatches(query){
  const cards=document.querySelectorAll('article.program');
  const terms=[...new Set(normalizeSearch(query).trim().split(/\s+/).filter(Boolean))].sort((a,b)=>b.length-a.length);
@@ -71,10 +71,11 @@ function prioritizeProfiles(place){
 const map=document.querySelector('#map'),tip=document.querySelector('#tooltip');
 let activeLocationName=null,activeLocationKey=null;
 function showDetail(place){place=searchPlace(place);if(!place.ids.length)return;const key=place.name+'|'+place.ids.join(',');if(activeLocationKey===key)return;activeLocationKey=key;activeLocationName=place.name;document.querySelectorAll('.marker').forEach(b=>{const chosen=b.dataset.name===place.name;b.classList.toggle('selected',chosen);b.setAttribute('aria-pressed',String(chosen));});document.querySelector('#detail').classList.toggle('multiple-projects',place.ids.length>1);document.querySelector('#detail').innerHTML=`<p class="eyebrow">${place.ids.length>1?"SELECTED LOCATIONS":"SELECTED LOCATION"}</p><h2>${place.name}</h2>`+place.ids.map(id=>{const p=programs.find(p=>p.id===id);return `<div class="detail-block">${badge(p)}<h3>${p.name}</h3><p class="metric">${p.metric}</p><p class="metric-label">${p.metricLabel}</p>${p.metric.includes("AUC")?aucExplanation:""}<p>${p.short}</p><p class="contact-note">${p.date}${place.ids.includes('ave')&&id==='ave'?' · Five-country aggregate':''}</p><a href="#${p.id}">Outcomes, sponsors & contact ↓</a></div>`}).join('');document.querySelector('#detail').scrollTop=0;}
+let pinnedTipButton=null;
 let tipButton=null, tipTimer=null, overTip=false, overMarker=false, touchTipButton=null, touchInteraction=false;
 function cancelTipClose(){clearTimeout(tipTimer);tipTimer=null;}
 const tipDock=document.createElement('div');tipDock.className='tooltip-dock';tipDock.hidden=true;map.parentElement.after(tipDock);
-function closeTip(){tipDock.hidden=true;touchTipButton=null;cancelTipClose();tip.hidden=true;tipButton?.removeAttribute('aria-describedby');tipButton=null;overTip=false;overMarker=false;}
+function closeTip(force=false){if(pinnedTipButton&&!force)return;pinnedTipButton=null;tipDock.hidden=true;touchTipButton=null;cancelTipClose();tip.hidden=true;tipButton?.removeAttribute('aria-describedby');tipButton=null;overTip=false;overMarker=false;}
 function scheduleTipClose(){cancelTipClose();tipTimer=setTimeout(()=>{if(!touchTipButton&&!overTip&&!overMarker&&document.activeElement!==tipButton&&!tip.contains(document.activeElement))closeTip();},650);}
 tip.addEventListener('mouseenter',()=>{overTip=true;cancelTipClose();});
 tip.addEventListener('mouseleave',()=>{overTip=false;scheduleTipClose();});
@@ -118,7 +119,7 @@ function chooseTipPosition(bounds,size,anchor,obstacles){
  }
  return best;
 }
-function showTip(place,button){place=searchPlace(place);if(!place.ids.length)return;showDetail(place);cancelTipClose();if(tipButton!==button){tipButton?.removeAttribute('aria-describedby');overTip=false;}tipButton=button;tip.classList.toggle('multi-project',place.ids.length>1);tip.innerHTML=`<strong>${place.name}</strong><div class="tooltip-entries">`+place.ids.map(id=>{let p=programs.find(p=>p.id===id);return `<div class="tooltip-entry"><span class="tooltip-entry-title">${p.name}</span><small>${p.short}</small><a class="tooltip-profile" data-profile="${p.id}" href="#${p.id}" aria-label="View project profile: ${p.name}">View project profile →</a></div>`}).join('')+'</div>';tipDock.hidden=true;map.append(tip);tip.classList.remove('docked');tip.style.maxHeight='';tip.hidden=false;
+function showTip(place,button){if(pinnedTipButton&&pinnedTipButton!==button)return;place=searchPlace(place);if(!place.ids.length)return;showDetail(place);cancelTipClose();if(tipButton!==button){tipButton?.removeAttribute('aria-describedby');overTip=false;}tipButton=button;tip.classList.toggle('multi-project',place.ids.length>1);tip.innerHTML=`<strong>${place.name}</strong><div class="tooltip-entries">`+place.ids.map(id=>{let p=programs.find(p=>p.id===id);return `<div class="tooltip-entry"><span class="tooltip-entry-title">${p.name}</span><small>${p.short}</small><a class="tooltip-profile" data-profile="${p.id}" href="#${p.id}" aria-label="View project profile: ${p.name}">View project profile →</a></div>`}).join('')+'</div>';tipDock.hidden=true;map.append(tip);tip.classList.remove('docked');tip.style.maxHeight='';tip.hidden=false;
  const r=button.getBoundingClientRect(),m=map.getBoundingClientRect(),v=map.parentElement.getBoundingClientRect();
  const vv=window.visualViewport,screen={left:vv?.offsetLeft||0,top:vv?.offsetTop||0,width:vv?.width||window.innerWidth,height:vv?.height||window.innerHeight};
  const bounds={left:Math.max(m.left,v.left,screen.left)+8,right:Math.min(m.right,v.right,screen.left+screen.width)-8,top:Math.max(m.top,screen.top)+8,bottom:Math.min(m.bottom,screen.top+screen.height)-8};
@@ -130,10 +131,10 @@ function showTip(place,button){place=searchPlace(place);if(!place.ids.length)ret
  button.setAttribute('aria-describedby','tooltip');
  if(!tipDock.hidden)requestAnimationFrame(()=>{if(!tip.hidden&&tipButton===button)tipDock.scrollIntoView({block:'nearest',inline:'nearest',behavior:'instant'});});}
 
-for(const place of places){const b=document.createElement('button');b.className='marker '+(place.left?'left ':'')+programs.find(p=>p.id===place.ids[0]).kind;b.style.left=((place.lon+110)/250*100)+'%';b.style.top=((57-place.lat)/103*100)+'%';b.dataset.name=place.name;b.setAttribute('aria-label',`${place.name}: ${place.ids.map(id=>programs.find(p=>p.id===id).name).join(', ')}. Show outcomes`);b.innerHTML=`${place.ids.length>1?place.ids.length:'•'}<span class="marker-label">${place.name}</span>`;b.addEventListener('pointerdown',e=>{touchInteraction=e.pointerType==='touch'||e.pointerType==='pen'});b.addEventListener('mouseenter',()=>{if(touchInteraction||window.matchMedia('(hover: none)').matches)return;overMarker=true;showTip(place,b)});b.addEventListener('focus',()=>{if(touchInteraction)return;overMarker=b.matches(':hover');showTip(place,b)});b.addEventListener('mouseleave',()=>{if(tipButton===b){overMarker=false;scheduleTipClose()}});b.addEventListener('blur',()=>{if(tipButton===b)scheduleTipClose()});b.addEventListener('click',()=>{if(touchInteraction||window.matchMedia('(hover: none)').matches){if(touchTipButton===b&&!tip.hidden)closeTip();else{closeTip();showTip(place,b);touchTipButton=b;}}else closeTip();showDetail(place);prioritizeProfiles(place)});document.querySelector('#markers').append(b)}
+for(const place of places){const b=document.createElement('button');b.className='marker '+(place.left?'left ':'')+programs.find(p=>p.id===place.ids[0]).kind;b.style.left=((place.lon+110)/250*100)+'%';b.style.top=((57-place.lat)/103*100)+'%';b.dataset.name=place.name;b.setAttribute('aria-label',`${place.name}: ${place.ids.map(id=>programs.find(p=>p.id===id).name).join(', ')}. Show outcomes`);b.innerHTML=`${place.ids.length>1?place.ids.length:'•'}<span class="marker-label">${place.name}</span>`;b.addEventListener('pointerdown',e=>{touchInteraction=e.pointerType==='touch'||e.pointerType==='pen'});b.addEventListener('mouseenter',()=>{if(touchInteraction||window.matchMedia('(hover: none)').matches)return;overMarker=true;showTip(place,b)});b.addEventListener('focus',()=>{if(touchInteraction)return;overMarker=b.matches(':hover');showTip(place,b)});b.addEventListener('mouseleave',()=>{if(tipButton===b){overMarker=false;scheduleTipClose()}});b.addEventListener('blur',()=>{if(tipButton===b)scheduleTipClose()});b.addEventListener('click',()=>{closeTip(true);showTip(place,b);pinnedTipButton=b;touchTipButton=b;showDetail(place);prioritizeProfiles(place)});document.querySelector('#markers').append(b)}
 document.addEventListener('pointerdown',e=>{if(!tip.hidden&&!tip.contains(e.target)&&!tipButton?.contains(e.target))closeTip();});
-document.addEventListener('keydown',e=>{touchInteraction=false;if(e.key==='Escape')closeTip()});
-// v1.2.3: open with Bombo selected, while preserving the shared coastal marker.
+document.addEventListener('keydown',e=>{touchInteraction=false;if(e.key==='Escape')closeTip(true)});
+// v1.2.4: open with Bombo selected, while preserving the shared coastal marker.
 const defaultPlace=places.find(p=>p.ids.includes('bombo'));
 showDetail({...defaultPlace,ids:['bombo']});
 prioritizeProfiles({name:programs.find(p=>p.id==='bombo').name,ids:['bombo']});
@@ -159,17 +160,17 @@ mapScroller.scrollLeft=Math.max(0,((defaultPlace.lon+110)/250)*mapScroller.scrol
 updateMapScrollCue();
 
 window.addEventListener('scroll',()=>{if(tip.hidden)return;const r=tip.getBoundingClientRect(),v=window.visualViewport,top=v?.offsetTop||0,bottom=top+(v?.height||window.innerHeight);if(tipDock.hidden||r.top<top||r.bottom>bottom)closeTip();},{passive:true});
-window.visualViewport?.addEventListener('resize',closeTip);
+window.visualViewport?.addEventListener('resize',()=>closeTip());
 window.visualViewport?.addEventListener('scroll',()=>{if(!tip.hidden&&tipDock.hidden)closeTip();});
 
 // Search is limited to project profiles; map geography remains available for exploration.
-// v1.2.3: native search clearing and restored browser state also reset all results.
+// v1.2.4: native search clearing and restored browser state also reset all results.
 for(const event of ['input','search','change'])document.querySelector('#project-search').addEventListener(event,filterProfiles);
 window.addEventListener('pageshow',filterProfiles);
 document.querySelector('#clear-search').addEventListener('click',()=>{const input=document.querySelector('#project-search');input.value='';filterProfiles();input.focus();});
 filterProfiles();
 
-// v1.2.3: normal openings begin at the page top; explicit anchors keep their destination.
+// v1.2.4: normal openings begin at the page top; explicit anchors keep their destination.
 if(!location.hash){
  if('scrollRestoration' in history)history.scrollRestoration='manual';
  const startAtTop=()=>{if(!location.hash)window.scrollTo({top:0,left:0,behavior:'instant'});};
@@ -177,7 +178,7 @@ if(!location.hash){
  window.addEventListener('pageshow',startAtTop);
 }
 
-// v1.2.3: keep search results, map coverage and the first result in sync.
+// v1.2.4: keep search results, map coverage and the first result in sync.
 function searchPlace(place){
  const query=document.querySelector('#project-search').value.trim();
  if(!query)return place;
@@ -185,7 +186,7 @@ function searchPlace(place){
  return {...place,ids:place.ids.filter(id=>ids.has(id))};
 }
 function syncSearchMap(){
- closeTip();filterProfiles();
+ closeTip(true);filterProfiles();
  const query=document.querySelector('#project-search').value.trim();
  const matches=matchingProjectIds(query);
  document.querySelectorAll('.marker').forEach(marker=>{

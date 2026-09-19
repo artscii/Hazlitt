@@ -1,5 +1,9 @@
 # Release history
 
+## 1.2.4
+
+- Pin clicked or tapped location previews while scrolling to profiles and back. Another location replaces the pinned preview; Escape or a changed search dismisses it.
+
 ## 1.2.3
 
 - Soften row hover outlines to a faint single-pixel edge and remove the outer glow.
