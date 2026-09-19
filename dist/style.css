@@ -175,3 +175,6 @@ mark.search-match{background:#dceffc;color:inherit;border-radius:2px;padding:0;b
 
 /* v2.7.3: consistent single-line input and dropdown height, including Safari. */
 .admin-section input:not([type="checkbox"]),.admin-section select{height:46px;min-height:46px;box-sizing:border-box}
+
+/* v2.7.5: sources remain collapsed until requested. */
+.sources-disclosure>summary{cursor:pointer;color:#076b70;padding:8px 0;font-size:.9375rem}.sources-disclosure[open]>summary{margin-bottom:12px}

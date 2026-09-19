@@ -1,3 +1,7 @@
+# 2.7.5 — 2026-09-19
+
+- Collapse the dynamic Sources reviewed directory by default behind a native accessible disclosure.
+
 # 2.7.4 — 2026-09-19
 
 - Remove Boolean search operators and their instructions; return to literal text terms.
