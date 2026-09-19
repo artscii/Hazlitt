@@ -1,3 +1,7 @@
+# 2.3.2 — 2026-09-19
+
+- Use a coordinated soft blue for selected profiles, country highlights, marker glows and connector halos.
+
 # 2.3.1 — 2026-09-19
 
 - Use Project 01, Project 02, etc. as the profile numbering labels.

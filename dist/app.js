@@ -1,4 +1,4 @@
-// Atlas v2.3.1 — Muted catalog record numbers remain consistent across filtered and reordered lists.
+// Atlas v2.3.2 — Muted catalog record numbers remain consistent across filtered and reordered lists.
 // On release: update the footer and source version comments, then add a CHANGELOG.md entry.
 (async()=>{
 const response=await fetch('/api/catalog',{cache:'no-store'});
