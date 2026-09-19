@@ -1,5 +1,9 @@
 # Release history
 
+## 1.3.5
+
+- Add a soft pale-yellow halo to dotted country connectors.
+
 ## 1.3.4
 
 - Draw subtle dotted country-center connectors on marker hover and keyboard focus without moving markers. Shared Kenya/Tanzania marker points to both countries.
