@@ -1,3 +1,8 @@
+# 2.7.4 — 2026-09-19
+
+- Remove Boolean search operators and their instructions; return to literal text terms.
+- Retain exact country-marker filtering using selected project IDs with comma-separated country names.
+
 # 2.7.3 — 2026-09-19
 
 - Match Admin dropdown and single-line input heights at 46px, preserving expanding textareas.

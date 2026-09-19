@@ -55,19 +55,12 @@ document.querySelector('#programs').innerHTML=programs.filter(p=>!p.related).map
 document.querySelector('#related-programs').innerHTML=programs.filter(p=>p.related).map(renderProgram).join('');
 // v1.3.11: filter visible profiles without rebuilding cards or moving keyboard focus.
 function normalizeSearch(value){return value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();}
-// v2.6.0: quoted phrases, implicit AND, and OR groups (AND takes precedence).
-function searchGroups(query){
- const groups=[[]];
- for(const match of query.matchAll(/"([^"]*)"|([^\s"]+)/g)){
-  const token=match[1]??match[2];
-  if(match[1]===undefined&&/^or$/i.test(token)){if(groups.at(-1).length)groups.push([]);}
-  else if(match[1]!==undefined||!/^and$/i.test(token)){const term=normalizeSearch(token).trim();if(term)groups.at(-1).push(term);}
- }
- return groups.filter(group=>group.length);
-}
+// v2.7.4: plain text search; words are literal, without Boolean operators.
+let markerProjectIds=null;
+function searchGroups(query){const terms=normalizeSearch(query).trim().split(/\s+/).filter(Boolean);return terms.length?[terms]:[];}
 function matchingProjectIds(query){
  const groups=searchGroups(query);
- return new Set(programs.filter(p=>{const raw=catalog.programs.find(r=>r.id===p.id);const text=normalizeSearch(Object.values(raw).flat().filter(v=>typeof v==='string').join(' '));return (!sharedProjectId||p.id===sharedProjectId)&&(!groups.length||groups.some(group=>group.every(term=>text.includes(term))));}).map(p=>p.id));
+ return new Set(programs.filter(p=>{const raw=catalog.programs.find(r=>r.id===p.id);const text=normalizeSearch(Object.values(raw).flat().filter(v=>typeof v==='string').join(' '));return (!sharedProjectId||p.id===sharedProjectId)&&(markerProjectIds?markerProjectIds.has(p.id):(!groups.length||groups.some(group=>group.every(term=>text.includes(term)))));}).map(p=>p.id));
 }
 // v1.3.11: mark matches in text nodes only, preserving links and profile markup.
 function highlightProfileMatches(query){
@@ -180,7 +173,7 @@ function showTip(place,button){if(pinnedTipButton&&pinnedTipButton!==button)retu
  button.setAttribute('aria-describedby','tooltip');
  if(!tipDock.hidden)requestAnimationFrame(()=>{if(!tip.hidden&&tipButton===button)tipDock.scrollIntoView({block:'nearest',inline:'nearest',behavior:'instant'});});}
 
-for(const place of places){const b=document.createElement('button');b.className='marker '+(place.left?'left ':'')+programs.find(p=>p.id===place.ids[0]).kind;b.style.left=projectX(place.lon)+'%';b.style.top=projectY(place.lat)+'%';b.dataset.name=place.name;b.setAttribute('aria-label',`${place.name}: ${place.ids.map(id=>programs.find(p=>p.id===id).name).join(', ')}. Show outcomes`);b.innerHTML=`${place.ids.length>1?place.ids.length:'•'}<span class="marker-label">${place.name}</span>`;b.addEventListener('pointerdown',e=>{touchInteraction=e.pointerType==='touch'||e.pointerType==='pen'});b.addEventListener('mouseenter',()=>{if(touchInteraction||window.matchMedia('(hover: none)').matches)return;overMarker=true;showTip(place,b)});b.addEventListener('focus',()=>{if(touchInteraction)return;overMarker=b.matches(':hover');showTip(place,b)});b.addEventListener('mouseleave',()=>{if(tipButton===b){overMarker=false;scheduleTipClose()}});b.addEventListener('blur',()=>{if(tipButton===b)scheduleTipClose()});b.addEventListener('click',()=>{clearSharedProject();document.querySelector('#project-search').value=place.countries.map(name=>name.includes(' ')?'"'+name+'"':name).join(' OR ');syncSearchMap();closeTip(true);showTip(place,b);pinnedTipButton=b;touchTipButton=b;showDetail(place);prioritizeProfiles(place)});document.querySelector('#markers').append(b)}
+for(const place of places){const b=document.createElement('button');b.className='marker '+(place.left?'left ':'')+programs.find(p=>p.id===place.ids[0]).kind;b.style.left=projectX(place.lon)+'%';b.style.top=projectY(place.lat)+'%';b.dataset.name=place.name;b.setAttribute('aria-label',`${place.name}: ${place.ids.map(id=>programs.find(p=>p.id===id).name).join(', ')}. Show outcomes`);b.innerHTML=`${place.ids.length>1?place.ids.length:'•'}<span class="marker-label">${place.name}</span>`;b.addEventListener('pointerdown',e=>{touchInteraction=e.pointerType==='touch'||e.pointerType==='pen'});b.addEventListener('mouseenter',()=>{if(touchInteraction||window.matchMedia('(hover: none)').matches)return;overMarker=true;showTip(place,b)});b.addEventListener('focus',()=>{if(touchInteraction)return;overMarker=b.matches(':hover');showTip(place,b)});b.addEventListener('mouseleave',()=>{if(tipButton===b){overMarker=false;scheduleTipClose()}});b.addEventListener('blur',()=>{if(tipButton===b)scheduleTipClose()});b.addEventListener('click',()=>{clearSharedProject();markerProjectIds=new Set(place.ids);document.querySelector('#project-search').value=place.countries.join(', ');syncSearchMap();closeTip(true);showTip(place,b);pinnedTipButton=b;touchTipButton=b;showDetail(place);prioritizeProfiles(place)});document.querySelector('#markers').append(b)}
 document.addEventListener('pointerdown',e=>{if(!tip.hidden&&!tip.contains(e.target)&&!tipButton?.contains(e.target))closeTip();});
 document.addEventListener('keydown',e=>{touchInteraction=false;if(e.key==='Escape')closeTip(true)});
 // v1.3.11: open with Bombo selected, while preserving the shared coastal marker.
@@ -348,6 +341,7 @@ const sharedMessage=document.createElement('span');
 const showAll=document.createElement('button');showAll.type='button';showAll.textContent='Show all projects';
 sharedNotice.append(sharedMessage,showAll);document.querySelector('.project-search').append(sharedNotice);
 function clearSharedProject(){
+ markerProjectIds=null;
  sharedProjectId=null;sharedNotice.hidden=true;
  const url=new URL(location.href);url.searchParams.delete('project');url.hash='';history.replaceState(null,'',url);
 }
