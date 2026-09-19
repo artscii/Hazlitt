@@ -1,5 +1,9 @@
 # Release history
 
+## 1.3.1
+
+- Offset selected markers with fine leader lines and geographic anchor dots so country outlines remain visible.
+
 ## 1.3.0
 
 - Display every location tooltip in the consistent strip below the map.
