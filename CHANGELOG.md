@@ -1,5 +1,9 @@
 # Release history
 
+## 1.1.3
+
+- Inset all result columns from the selection boundary, with balanced padding on desktop and phones.
+
 ## 1.1.2
 
 - Highlight matching words in visible project profiles with a light blue background; clear highlights when search is empty.
