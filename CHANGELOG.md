@@ -1,5 +1,9 @@
 # Release history
 
+## 1.3.9
+
+- Set country growth to 0.25 seconds and return to 0.25 seconds (0.5 seconds total).
+
 ## 1.3.8
 
 - Replace the double flash with a country selection animation from 100% to 150% and back to 100%.
