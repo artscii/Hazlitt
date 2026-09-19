@@ -1,4 +1,4 @@
-# Container recipe v1.0.0; serves Atlas UI v1.1.7 without a build step.
+# Container recipe v1.0.0; serves Atlas UI v1.2.0 without a build step.
 # Override NGINX_IMAGE with an immutable digest for reproducible deployments.
 ARG NGINX_IMAGE=nginxinc/nginx-unprivileged:stable-alpine
 FROM ${NGINX_IMAGE}

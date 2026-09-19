@@ -1,5 +1,10 @@
 # Release history
 
+## 1.2.0
+
+- Filter map markers and tooltip records to matching projects; highlight the first visible result and its locations in the geography panel.
+- Clear search to restore all map locations; show an explicit empty map state when no projects match.
+
 ## 1.1.7
 
 - Add a subtle blue outline around Project Geography on hover or keyboard focus within.
