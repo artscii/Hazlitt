@@ -296,6 +296,7 @@ function clearSharedProject(){
  sharedProjectId=null;sharedNotice.hidden=true;
  const url=new URL(location.href);url.searchParams.delete('project');url.hash='';history.replaceState(null,'',url);
 }
+document.querySelector('#clear-search').addEventListener('click',clearSharedProject,{capture:true});
 showAll.addEventListener('click',()=>{clearSharedProject();document.querySelector('#project-search').value='';syncSearchMap();});
 for(const event of ['input','search','change'])document.querySelector('#project-search').addEventListener(event,clearSharedProject,{capture:true});
 function openSharedProject(){
