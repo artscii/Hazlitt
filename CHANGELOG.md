@@ -1,3 +1,7 @@
+# 2.6.1 — 2026-09-19
+
+- Cap the country hover/selection pulse at 110 percent of its original size.
+
 # 2.6.0 — 2026-09-19
 
 - Expand the Reported outcomes editor to show its full contents on load and while typing.

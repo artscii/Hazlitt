@@ -113,7 +113,7 @@ mark.search-match{background:#dceffc;color:inherit;border-radius:2px;padding:0;b
 @media(prefers-reduced-motion:reduce){#country-hover-links line{animation:none}}
 
 /* v1.3.11: two low-contrast selection pulses, then return to the usual outline. */
-@keyframes country-selection-pulse{0%,100%{transform:scale(1);fill:#bedcf0}50%{transform:scale(1.25);fill:#bedcf0}}
+@keyframes country-selection-pulse{0%,100%{transform:scale(1);fill:#bedcf0}50%{transform:scale(1.10);fill:#bedcf0}}
 #country-outlines path.country-chosen{transform-box:fill-box;transform-origin:center;animation:country-selection-pulse .5s ease-in-out 1}
 @media(prefers-reduced-motion:reduce){#country-outlines path.country-chosen{animation:none}}
 /* Atlas 2.0.0 — accessible, compact administration surface. */
