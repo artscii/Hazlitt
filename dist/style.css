@@ -172,3 +172,6 @@ mark.search-match{background:#dceffc;color:inherit;border-radius:2px;padding:0;b
 
 /* v2.7.2: retain map context and fixed marker positions during filtering. */
 .marker.search-muted{opacity:.4;transition:opacity .15s ease}.marker.search-muted:hover,.marker.search-muted:focus-visible{opacity:1}
+
+/* v2.7.3: consistent single-line input and dropdown height, including Safari. */
+.admin-section input:not([type="checkbox"]),.admin-section select{height:46px;min-height:46px;box-sizing:border-box}

@@ -1,3 +1,7 @@
+# 2.7.3 — 2026-09-19
+
+- Match Admin dropdown and single-line input heights at 46px, preserving expanding textareas.
+
 # 2.7.2 — 2026-09-19
 
 - Keep unmatched markers visible at reduced opacity, in their original positions, and available for selection.
