@@ -1,5 +1,6 @@
 # 2.1.1 — 2026-09-19
 
+- Populate search with the shared project name while retaining exact-record filtering.
 - Add subtle record numbers to all project profiles, consistent across search, selection and sharing views.
 
 # 2.1.0 — 2026-09-19

@@ -305,7 +305,7 @@ function openSharedProject(){
  document.querySelector('#project-search').value='';
  const project=catalog.programs.find(p=>p.id===id);
  if(!project){syncSearchMap();sharedMessage.textContent='This shared project is no longer available. Showing all projects.';return;}
- sharedProjectId=id;sharedMessage.textContent='Shared project: '+project.name;
+ sharedProjectId=id;document.querySelector('#project-search').value=project.name;sharedMessage.textContent='Shared project: '+project.name;
  syncSearchMap();
  requestAnimationFrame(()=>requestAnimationFrame(()=>{const card=document.getElementById(id);card?.setAttribute('tabindex','-1');card?.focus({preventScroll:true});card?.scrollIntoView({block:'start',behavior:'instant'});}));
 }
