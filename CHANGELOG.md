@@ -1,5 +1,9 @@
 # Release history
 
+## 1.2.1
+
+- Add subtle blue hover and keyboard-focus outlines to each project profile row, preserving selected backgrounds.
+
 ## 1.2.0
 
 - Filter map markers and tooltip records to matching projects; highlight the first visible result and its locations in the geography panel.
