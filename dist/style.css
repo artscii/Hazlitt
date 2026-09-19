@@ -169,3 +169,6 @@ mark.search-match{background:#dceffc;color:inherit;border-radius:2px;padding:0;b
 
 /* v2.7.1: non-editable project reference within the record form. */
 .admin-project-reference{max-width:260px;margin:18px 0}.admin-section #edit-project-number{background:#edf3f6;color:#526c78;cursor:default}
+
+/* v2.7.2: retain map context and fixed marker positions during filtering. */
+.marker.search-muted{opacity:.4;transition:opacity .15s ease}.marker.search-muted:hover,.marker.search-muted:focus-visible{opacity:1}

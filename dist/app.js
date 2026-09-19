@@ -240,9 +240,10 @@ function syncSearchMap(){
  const matches=matchingProjectIds(query);
  document.querySelectorAll('.marker').forEach(marker=>{
   const place=places.find(p=>p.name===marker.dataset.name),ids=place.ids.filter(id=>matches.has(id));
-  marker.hidden=!ids.length;
-  marker.firstChild.textContent=ids.length>1?String(ids.length):'•';
-  marker.setAttribute('aria-label',`${place.name}: ${ids.map(id=>programs.find(p=>p.id===id).name).join(', ')}. Show outcomes`);
+  marker.hidden=false;marker.classList.toggle('search-muted',!ids.length);
+  const visibleIds=ids.length?ids:place.ids;
+  marker.firstChild.textContent=visibleIds.length>1?String(visibleIds.length):'•';
+  marker.setAttribute('aria-label',`${place.name}: ${visibleIds.map(id=>programs.find(p=>p.id===id).name).join(', ')}. Show outcomes`);
  });
  document.querySelectorAll('article.program').forEach(card=>{card.classList.remove('search-first');card.classList.toggle('selected-profile',!query&&!!card.closest('#selected-projects'));});
  const first=[...document.querySelectorAll('article.program')].find(card=>!card.hidden);

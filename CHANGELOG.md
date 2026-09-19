@@ -1,3 +1,7 @@
+# 2.7.2 — 2026-09-19
+
+- Keep unmatched markers visible at reduced opacity, in their original positions, and available for selection.
+
 # 2.7.1 — 2026-09-19
 
 - Show the current Atlas project number as a read-only field inside the edit form; new entries show Assigned after saving.
