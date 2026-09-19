@@ -139,3 +139,6 @@ mark.search-match{background:#dceffc;color:inherit;border-radius:2px;padding:0;b
 .admin-section #admin-delete{background:#b42318;border-color:#b42318;color:#fff}
 .admin-section #admin-delete:hover{background:#912018;border-color:#912018}
 .admin-section #admin-delete:focus-visible{outline:3px solid #f4aaa3;outline-offset:3px}
+
+/* v2.1.1: quiet catalog numbering, separate from selected-result counts. */
+.record-number{display:block;margin:0 0 .5rem;color:#6b7c85;font-size:.8125rem;line-height:1.4;font-weight:400;font-variant-numeric:tabular-nums;letter-spacing:.02em}

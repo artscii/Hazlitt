@@ -1,3 +1,7 @@
+# 2.1.1 — 2026-09-19
+
+- Add subtle record numbers to all project profiles, consistent across search, selection and sharing views.
+
 # 2.1.0 — 2026-09-19
 
 - Explain obligatory asterisk-marked fields in the editor, including country selection.
