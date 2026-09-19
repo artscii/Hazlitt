@@ -1,3 +1,7 @@
+# 2.7.6 — 2026-09-19
+
+- Sort Admin project-search matches by numeric Atlas project number ascending.
+
 # 2.7.5 — 2026-09-19
 
 - Collapse the dynamic Sources reviewed directory by default behind a native accessible disclosure.

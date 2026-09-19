@@ -29,6 +29,8 @@ function searchAdminProjects(){
  if(!query||!catalog){$('#admin-search-status').textContent='';return;}
  const terms=query.split(' '),matches=catalog.programs.filter(project=>{const text=canonical(Object.values(project).flat().filter(value=>typeof value==='string').join(' '));return terms.every(term=>text.includes(term));});
  $('#admin-search-status').textContent=matches.length?matches.length+' matching projects — choose one to edit.':'No matching projects.';
+ // v2.7.6: numeric order follows the displayed Atlas project numbers.
+ matches.sort((a,b)=>numberedIds.indexOf(a.id)-numberedIds.indexOf(b.id));
  for(const project of matches){const button=document.createElement('button');button.type='button';button.textContent='Project '+String(numberedIds.indexOf(project.id)+1).padStart(2,'0')+' · '+project.name;button.addEventListener('click',()=>{if(busy)return;load(project);results.hidden=true;$('#admin-search-status').textContent='Opened '+project.name;form.elements.name.focus();});results.append(button);}
 }
 for(const event of ['input','search'])$('#admin-project-search').addEventListener(event,searchAdminProjects);
