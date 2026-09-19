@@ -1,3 +1,10 @@
+# 2.6.0 — 2026-09-19
+
+- Expand the Reported outcomes editor to show its full contents on load and while typing.
+- Show compact geography totals when no search is active.
+- Populate search with marker countries, joined by OR for shared locations.
+- Support case-insensitive AND/OR, implicit AND and quoted phrases; omit operators from match highlights.
+
 # 2.5.0 — 2026-09-19
 
 - Add authenticated Admin lookup by the project number displayed in the Atlas, including Enter-key submission and missing-number feedback.

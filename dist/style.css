@@ -158,3 +158,8 @@ mark.search-match{background:#dceffc;color:inherit;border-radius:2px;padding:0;b
 
 /* v2.5.0: compact numbered lookup above the optional project dropdown. */
 .admin-number-lookup{margin:0 0 24px}.admin-number-lookup>div{display:flex;gap:10px;align-items:center;margin-top:6px}.admin-section #admin-project-number{width:140px;max-width:45%}.admin-number-lookup p{font-size:.875rem;color:#5f727d;margin:6px 0}.admin-number-lookup #project-number-status{color:#17313e}
+
+/* v2.6.0: concise search guidance. */
+.search-help{font-size:.8125rem;color:#657c88;margin:8px 0}
+
+.admin-section textarea[name="outcome"]{overflow-y:hidden;min-height:100px;resize:vertical}

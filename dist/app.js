@@ -55,14 +55,24 @@ document.querySelector('#programs').innerHTML=programs.filter(p=>!p.related).map
 document.querySelector('#related-programs').innerHTML=programs.filter(p=>p.related).map(renderProgram).join('');
 // v1.3.11: filter visible profiles without rebuilding cards or moving keyboard focus.
 function normalizeSearch(value){return value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();}
+// v2.6.0: quoted phrases, implicit AND, and OR groups (AND takes precedence).
+function searchGroups(query){
+ const groups=[[]];
+ for(const match of query.matchAll(/"([^"]*)"|([^\s"]+)/g)){
+  const token=match[1]??match[2];
+  if(match[1]===undefined&&/^or$/i.test(token)){if(groups.at(-1).length)groups.push([]);}
+  else if(match[1]!==undefined||!/^and$/i.test(token)){const term=normalizeSearch(token).trim();if(term)groups.at(-1).push(term);}
+ }
+ return groups.filter(group=>group.length);
+}
 function matchingProjectIds(query){
- const terms=normalizeSearch(query).trim().split(/\s+/).filter(Boolean);
- return new Set(programs.filter(p=>{const raw=catalog.programs.find(r=>r.id===p.id);const text=normalizeSearch(Object.values(raw).flat().filter(v=>typeof v==='string').join(' '));return (!sharedProjectId||p.id===sharedProjectId)&&terms.every(term=>text.includes(term));}).map(p=>p.id));
+ const groups=searchGroups(query);
+ return new Set(programs.filter(p=>{const raw=catalog.programs.find(r=>r.id===p.id);const text=normalizeSearch(Object.values(raw).flat().filter(v=>typeof v==='string').join(' '));return (!sharedProjectId||p.id===sharedProjectId)&&(!groups.length||groups.some(group=>group.every(term=>text.includes(term))));}).map(p=>p.id));
 }
 // v1.3.11: mark matches in text nodes only, preserving links and profile markup.
 function highlightProfileMatches(query){
  const cards=document.querySelectorAll('article.program');
- const terms=[...new Set(normalizeSearch(query).trim().split(/\s+/).filter(Boolean))].sort((a,b)=>b.length-a.length);
+ const terms=[...new Set(searchGroups(query).flat())].sort((a,b)=>b.length-a.length);
  cards.forEach(card=>{
   card.querySelectorAll('mark.search-match').forEach(mark=>mark.replaceWith(document.createTextNode(mark.textContent)));
   card.normalize();
@@ -170,7 +180,7 @@ function showTip(place,button){if(pinnedTipButton&&pinnedTipButton!==button)retu
  button.setAttribute('aria-describedby','tooltip');
  if(!tipDock.hidden)requestAnimationFrame(()=>{if(!tip.hidden&&tipButton===button)tipDock.scrollIntoView({block:'nearest',inline:'nearest',behavior:'instant'});});}
 
-for(const place of places){const b=document.createElement('button');b.className='marker '+(place.left?'left ':'')+programs.find(p=>p.id===place.ids[0]).kind;b.style.left=projectX(place.lon)+'%';b.style.top=projectY(place.lat)+'%';b.dataset.name=place.name;b.setAttribute('aria-label',`${place.name}: ${place.ids.map(id=>programs.find(p=>p.id===id).name).join(', ')}. Show outcomes`);b.innerHTML=`${place.ids.length>1?place.ids.length:'•'}<span class="marker-label">${place.name}</span>`;b.addEventListener('pointerdown',e=>{touchInteraction=e.pointerType==='touch'||e.pointerType==='pen'});b.addEventListener('mouseenter',()=>{if(touchInteraction||window.matchMedia('(hover: none)').matches)return;overMarker=true;showTip(place,b)});b.addEventListener('focus',()=>{if(touchInteraction)return;overMarker=b.matches(':hover');showTip(place,b)});b.addEventListener('mouseleave',()=>{if(tipButton===b){overMarker=false;scheduleTipClose()}});b.addEventListener('blur',()=>{if(tipButton===b)scheduleTipClose()});b.addEventListener('click',()=>{closeTip(true);showTip(place,b);pinnedTipButton=b;touchTipButton=b;showDetail(place);prioritizeProfiles(place)});document.querySelector('#markers').append(b)}
+for(const place of places){const b=document.createElement('button');b.className='marker '+(place.left?'left ':'')+programs.find(p=>p.id===place.ids[0]).kind;b.style.left=projectX(place.lon)+'%';b.style.top=projectY(place.lat)+'%';b.dataset.name=place.name;b.setAttribute('aria-label',`${place.name}: ${place.ids.map(id=>programs.find(p=>p.id===id).name).join(', ')}. Show outcomes`);b.innerHTML=`${place.ids.length>1?place.ids.length:'•'}<span class="marker-label">${place.name}</span>`;b.addEventListener('pointerdown',e=>{touchInteraction=e.pointerType==='touch'||e.pointerType==='pen'});b.addEventListener('mouseenter',()=>{if(touchInteraction||window.matchMedia('(hover: none)').matches)return;overMarker=true;showTip(place,b)});b.addEventListener('focus',()=>{if(touchInteraction)return;overMarker=b.matches(':hover');showTip(place,b)});b.addEventListener('mouseleave',()=>{if(tipButton===b){overMarker=false;scheduleTipClose()}});b.addEventListener('blur',()=>{if(tipButton===b)scheduleTipClose()});b.addEventListener('click',()=>{clearSharedProject();document.querySelector('#project-search').value=place.countries.map(name=>name.includes(' ')?'"'+name+'"':name).join(' OR ');syncSearchMap();closeTip(true);showTip(place,b);pinnedTipButton=b;touchTipButton=b;showDetail(place);prioritizeProfiles(place)});document.querySelector('#markers').append(b)}
 document.addEventListener('pointerdown',e=>{if(!tip.hidden&&!tip.contains(e.target)&&!tipButton?.contains(e.target))closeTip();});
 document.addEventListener('keydown',e=>{touchInteraction=false;if(e.key==='Escape')closeTip(true)});
 // v1.3.11: open with Bombo selected, while preserving the shared coastal marker.
@@ -244,7 +254,9 @@ function syncSearchMap(){
   showDetail({name:locations.map(p=>p.name).join(' · '),ids:orderedIds});
   document.querySelectorAll('.marker').forEach(marker=>{const selected=locations.some(p=>p.name===marker.dataset.name);marker.classList.toggle('selected',selected);marker.setAttribute('aria-pressed',String(selected));});
   const place=locations[0];if(place){mapScroller.scrollLeft=Math.max(0,projectX(place.lon)/100*mapScroller.scrollWidth-mapScroller.clientWidth/2);updateMapScrollCue();}
- }else if(!query){showDetail({name:'All project locations',ids:programs.map(p=>p.id)});
+ }else if(!query){
+ activeLocationKey=null;activeLocationName=null;updateCountryOutlines({name:'',ids:[]});
+ const detail=document.querySelector('#detail');detail.classList.remove('multiple-projects');detail.innerHTML=`<p class="eyebrow">PROJECT GEOGRAPHY</p><h2>All project locations</h2><p class="metric">${programs.length}</p><p class="metric-label">projects across ${covered.size} countries</p><p>${programs.filter(p=>!p.related).length} AI programs and studies · ${programs.filter(p=>p.related).length} related initiatives.</p><p>Choose a country marker to see its projects and reported outcomes.</p>`;detail.scrollTop=0;
  document.querySelectorAll('.marker').forEach(marker=>{marker.classList.remove('selected');marker.setAttribute('aria-pressed','false');});}
  else{
   activeLocationKey=null;activeLocationName=null;updateCountryOutlines({name:'',ids:[]});
@@ -361,6 +373,6 @@ document.addEventListener('click',async event=>{
  try{await navigator.clipboard.writeText(link.href);feedback.textContent='Link copied';}
  catch{feedback.replaceChildren();const input=document.createElement('input');input.readOnly=true;input.value=link.href;input.setAttribute('aria-label','Project share URL — copy this link');feedback.append(input);input.focus();input.select();}
 });
-if(new URL(location.href).searchParams.has('project'))openSharedProject();
+if(new URL(location.href).searchParams.has('project'))openSharedProject();else syncSearchMap();
 window.dispatchEvent(new Event('atlas-ready'));
 })().catch(error=>{const message=document.createElement('p');message.className='load-error';message.textContent=error.message;document.querySelector('#map-overview').before(message);console.error(error);});
