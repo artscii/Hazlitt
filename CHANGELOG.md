@@ -1,3 +1,8 @@
+# 2.4.0 — 2026-09-19
+
+- Replace the header asterisk and add an SVG favicon using a simplified Aprukuma symbol in atlas teal.
+- Symbol reference: https://www.nyamedua.org/2023/07/21/aprukuma/ (medicinal seed / health).
+
 # 2.3.3 — 2026-09-19
 
 - Explicitly identify NIH/NLM PubMed and PMC citations with live counts and database explanations.

@@ -149,3 +149,6 @@ mark.search-match{background:#dceffc;color:inherit;border-radius:2px;padding:0;b
 
 /* v2.3.0: catalog-driven source directory. */
 .source-group{padding:.65rem 0;border-bottom:1px solid #e3eaee}.source-group summary{cursor:pointer;font-size:.95rem}.source-group summary span{color:#71818a;font-size:.8125rem;margin-left:.5rem}.source-group li{margin:.85rem 0;overflow-wrap:anywhere}.source-group li p{margin:.25rem 0;font-size:.8125rem}
+
+/* v2.4.0: Aprukuma-inspired health symbol shared by the header and favicon. */
+.brand .aprukuma-icon{width:30px;height:34px;flex:0 0 30px;display:block}@media(max-width:540px){.brand .aprukuma-icon{width:26px;height:30px;flex-basis:26px}}
