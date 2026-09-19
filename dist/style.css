@@ -155,3 +155,6 @@ mark.search-match{background:#dceffc;color:inherit;border-radius:2px;padding:0;b
 
 /* v2.4.1: native, unobtrusive country-name tooltips for represented countries. */
 #markers{pointer-events:none}#markers .marker{pointer-events:auto}
+
+/* v2.5.0: compact numbered lookup above the optional project dropdown. */
+.admin-number-lookup{margin:0 0 24px}.admin-number-lookup>div{display:flex;gap:10px;align-items:center;margin-top:6px}.admin-section #admin-project-number{width:140px;max-width:45%}.admin-number-lookup p{font-size:.875rem;color:#5f727d;margin:6px 0}.admin-number-lookup #project-number-status{color:#17313e}

@@ -1,3 +1,8 @@
+# 2.5.0 — 2026-09-19
+
+- Add authenticated Admin lookup by the project number displayed in the Atlas, including Enter-key submission and missing-number feedback.
+- Show project numbers in the dropdown and confirm the loaded project name before editing.
+
 # 2.4.1 — 2026-09-19
 
 - Show native country-name tooltips on represented country shapes without changing selection.
