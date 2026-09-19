@@ -1,5 +1,9 @@
 # Release history
 
+## 1.3.8
+
+- Replace the double flash with a country selection animation from 100% to 150% and back to 100%.
+
 ## 1.3.7
 
 - Pulse selected countries twice on marker click or tap, with a steady highlight for reduced-motion preferences.
