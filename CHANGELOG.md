@@ -1,5 +1,9 @@
 # Release history
 
+## 1.3.3
+
+- Give markers stable offshore display positions, remove callout lines, and keep selection halos.
+
 ## 1.3.2
 
 - Place selected marker callouts clear of other markers and callouts, recomputing on selection and resize.
