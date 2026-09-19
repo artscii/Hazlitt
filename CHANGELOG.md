@@ -1,5 +1,9 @@
 # Release history
 
+## 1.2.3
+
+- Soften row hover outlines to a faint single-pixel edge and remove the outer glow.
+
 ## 1.2.2
 
 - Synchronize the Selected Locations panel with every matching project as search changes; clearing search restores all projects in the panel.
