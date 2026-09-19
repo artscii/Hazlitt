@@ -1,5 +1,9 @@
 # Release history
 
+## 1.3.11
+
+- Cap selected-country expansion at 125%, preserving timing and fill.
+
 ## 1.3.10
 
 - Fill the animated country shape pale yellow during expansion and retraction, restoring the usual fill afterwards.

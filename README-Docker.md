@@ -1,6 +1,6 @@
 # Hazlitt Creek Evidence Atlas — Docker
 
-Container recipe 1.0.0 packages the existing Atlas UI 1.3.10. The site is static:
+Container recipe 1.0.0 packages the existing Atlas UI 1.3.11. The site is static:
 no Node.js build, database, API keys, or environment variables are required.
 All site assets are included; external research links still require internet access.
 
@@ -18,9 +18,9 @@ Open http://localhost:8081. Stop with `docker compose down`.
 ## Dockerfile recipe without Compose
 
 ```sh
-docker build --pull -t hazlitt-creek-evidence-atlas:1.3.10 .
+docker build --pull -t hazlitt-creek-evidence-atlas:1.3.11 .
 docker run -d --name hazlitt-atlas --restart unless-stopped \
-  -p 127.0.0.1:8081:8080 hazlitt-creek-evidence-atlas:1.3.10
+  -p 127.0.0.1:8081:8080 hazlitt-creek-evidence-atlas:1.3.11
 ```
 
 Stop/remove with `docker rm -f hazlitt-atlas`.
@@ -62,7 +62,7 @@ builds, supply your verified image digest:
 
 ```sh
 docker build --build-arg NGINX_IMAGE=nginxinc/nginx-unprivileged@sha256:YOUR_VERIFIED_DIGEST \
-  -t hazlitt-creek-evidence-atlas:1.3.10 .
+  -t hazlitt-creek-evidence-atlas:1.3.11 .
 ```
 
 ## Validation status
