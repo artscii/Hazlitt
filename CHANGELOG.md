@@ -1,5 +1,9 @@
 # Release history
 
+## 1.2.2
+
+- Synchronize the Selected Locations panel with every matching project as search changes; clearing search restores all projects in the panel.
+
 ## 1.2.1
 
 - Add subtle blue hover and keyboard-focus outlines to each project profile row, preserving selected backgrounds.
