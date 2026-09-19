@@ -1,5 +1,9 @@
 # Release history
 
+## 1.1.5
+
+- Start normal openings at the top of the page while preserving explicit project anchor links.
+
 ## 1.1.4
 
 - Move search between the introduction and Project Geography.
