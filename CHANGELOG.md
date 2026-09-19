@@ -1,5 +1,9 @@
 # Release history
 
+## 1.1.2
+
+- Highlight matching words in visible project profiles with a light blue background; clear highlights when search is empty.
+
 ## 1.1.1
 
 - Explicitly restore all projects for empty or whitespace searches, native search clearing and browser page restoration.
