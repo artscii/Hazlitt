@@ -1,5 +1,9 @@
 # Release history
 
+## 1.3.10
+
+- Fill the animated country shape pale yellow during expansion and retraction, restoring the usual fill afterwards.
+
 ## 1.3.9
 
 - Set country growth to 0.25 seconds and return to 0.25 seconds (0.5 seconds total).
