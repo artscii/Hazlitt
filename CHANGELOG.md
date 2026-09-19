@@ -1,5 +1,9 @@
 # Release history
 
+## 1.1.7
+
+- Add a subtle blue outline around Project Geography on hover or keyboard focus within.
+
 ## 1.1.6
 
 - Add a soft blue search-field hover and focus halo while retaining keyboard focus visibility.
