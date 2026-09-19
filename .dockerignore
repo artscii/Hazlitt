@@ -1,8 +1,8 @@
-# Allow only the runtime assets and server configuration into the build context.
-**
-!Dockerfile
-!docker/
-!docker/default.conf
-!dist/
-!dist/**
+node_modules
+.git
+.env
+.env.*
+.local-data
+dist/server
+dist/.openai
 **/.DS_Store

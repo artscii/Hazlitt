@@ -1,3 +1,10 @@
+## 2.0.0
+- Shared, password-protected project editor and country-based markers.
+- Duplicate checks and optimistic edit conflict protection.
+- Private timestamp/IP audit history with per-record version rollback.
+- Rollback creates a new version; deleted records can be restored.
+- Country hover animation; persistent Docker database.
+
 # Release history
 
 ## 1.3.11

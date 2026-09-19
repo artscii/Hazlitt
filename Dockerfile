@@ -1,10 +1,20 @@
-# Container recipe v1.0.0; serves Atlas UI v1.3.11 without a build step.
-# Override NGINX_IMAGE with an immutable digest for reproducible deployments.
-ARG NGINX_IMAGE=nginxinc/nginx-unprivileged:stable-alpine
-FROM ${NGINX_IMAGE}
-COPY docker/default.conf /etc/nginx/conf.d/default.conf
-COPY dist/ /usr/share/nginx/html/
+# Atlas 2.0.0: shared editor, persistent SQLite and version history.
+FROM node:24-alpine AS build
+WORKDIR /app
+COPY package.json ./
+COPY scripts ./scripts
+COPY server ./server
+COPY data ./data
+COPY drizzle ./drizzle
+COPY dist ./dist
+COPY .openai ./.openai
+RUN node scripts/build.mjs
+FROM node:24-alpine
+WORKDIR /app
+COPY --from=build /app /app
+RUN mkdir /data && chown node:node /data
+USER node
+ENV DATA_DIR=/data PORT=8080
 EXPOSE 8080
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget -q -O /dev/null http://127.0.0.1:8080/healthz || exit 1
-CMD ["nginx", "-g", "daemon off;"]
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s CMD wget -q -O /dev/null http://127.0.0.1:8080/healthz || exit 1
+CMD ["node", "server/local.mjs"]

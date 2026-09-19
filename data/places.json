@@ -1,0 +1,118 @@
+[
+  {
+    "name": "Guanacaste, Costa Rica",
+    "lon": -85.4,
+    "lat": 10.4,
+    "ids": [
+      "guanacaste"
+    ]
+  },
+  {
+    "name": "Dschang, Cameroon",
+    "lon": 10.05,
+    "lat": 5.45,
+    "ids": [
+      "smartcervix"
+    ],
+    "left": true
+  },
+  {
+    "name": "Uganda",
+    "lon": 32.3,
+    "lat": 2.7,
+    "ids": [
+      "prescriptec",
+      "aspire"
+    ]
+  },
+  {
+    "name": "Bangladesh",
+    "lon": 90.3,
+    "lat": 23.7,
+    "ids": [
+      "prescriptec"
+    ]
+  },
+  {
+    "name": "Senegal",
+    "lon": -14.5,
+    "lat": 14.5,
+    "ids": [
+      "ave"
+    ],
+    "left": true
+  },
+  {
+    "name": "Rwanda / Kigali",
+    "lon": 29.9,
+    "lat": -1.9,
+    "ids": [
+      "ave",
+      "cervi",
+      "dawa"
+    ],
+    "left": true
+  },
+  {
+    "name": "Zambia",
+    "lon": 27,
+    "lat": -13.4,
+    "ids": [
+      "ave",
+      "dawa"
+    ],
+    "left": true
+  },
+  {
+    "name": "Malawi",
+    "lon": 35,
+    "lat": -13.5,
+    "ids": [
+      "ave"
+    ]
+  },
+  {
+    "name": "Zimbabwe",
+    "lon": 29.5,
+    "lat": -20,
+    "ids": [
+      "ave",
+      "ngyn",
+      "dawa"
+    ],
+    "left": true
+  },
+  {
+    "name": "Kinondo, Kenya / Tanga, Tanzania",
+    "lon": 39.3,
+    "lat": -4.7,
+    "ids": [
+      "kinondo",
+      "bombo"
+    ]
+  },
+  {
+    "name": "India",
+    "lon": 79,
+    "lat": 22,
+    "ids": [
+      "ngyn"
+    ]
+  },
+  {
+    "name": "Thailand",
+    "lon": 101,
+    "lat": 15,
+    "ids": [
+      "ngyn"
+    ]
+  },
+  {
+    "name": "Hubei, China",
+    "lon": 112.3,
+    "lat": 31,
+    "ids": [
+      "landing"
+    ]
+  }
+]

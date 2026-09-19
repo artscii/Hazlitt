@@ -1,0 +1,8 @@
+node_modules/
+dist/server/
+dist/.openai/
+.env
+.env.*
+!.env.example
+.local-data/
+.DS_Store

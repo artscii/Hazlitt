@@ -1,72 +1,15 @@
 # Hazlitt Creek Evidence Atlas — Docker
 
-Container recipe 1.0.0 packages the existing Atlas UI 1.3.11. The site is static:
-no Node.js build, database, API keys, or environment variables are required.
-All site assets are included; external research links still require internet access.
+Requires Docker Compose (or compatible Podman Compose) and Node.js 24 or newer for password setup.
 
-## Run
+1. Run `node scripts/password.mjs` and enter the admin password you want (the hosted atlas uses Bombo). This writes a local, ignored `.env` containing a salted hash.
+2. Run `docker compose up --build -d`.
+3. Open http://localhost:8081.
 
-Install and start Docker Desktop (macOS/Windows) or Docker Engine with Compose
-(Linux). From this directory:
+Admin appears above the footer. Unlock to add, edit or delete projects, choose countries, and restore versions in the edit log. Restoring creates a new version and preserves history. Exact normalized project names are blocked; shared evidence links trigger a possible-duplicate warning.
 
-```sh
-docker compose up --build -d
-```
+Records, sessions and edit history persist in the `atlas-data` volume. Normal restarts and rebuilds retain them. Do not run `docker compose down -v` unless you intend to erase the local database. Back up the database volume before maintenance.
 
-Open http://localhost:8081. Stop with `docker compose down`.
+The local container database is separate from the hosted atlas database. IP logging uses the immediate network peer in Docker; behind a proxy this can be the proxy address. The hosted site uses the platform-provided visitor IP. Logs are visible only after admin login. Keep the local service bound to localhost unless you configure HTTPS and an appropriate reverse proxy.
 
-## Dockerfile recipe without Compose
-
-```sh
-docker build --pull -t hazlitt-creek-evidence-atlas:1.3.11 .
-docker run -d --name hazlitt-atlas --restart unless-stopped \
-  -p 127.0.0.1:8081:8080 hazlitt-creek-evidence-atlas:1.3.11
-```
-
-Stop/remove with `docker rm -f hazlitt-atlas`.
-
-## Verify
-
-```sh
-docker compose ps
-curl --fail http://localhost:8081/healthz
-curl --fail -I http://localhost:8081/
-curl --fail -I http://localhost:8081/app.js
-curl --fail -I http://localhost:8081/style.css
-curl --fail -I http://localhost:8081/map.svg
-docker compose logs atlas
-```
-
-The health endpoint returns `ok`. The container should become healthy within
-30 seconds. Open the page to check the Bombo default selection, map tooltips,
-and profile navigation.
-
-## Editing and deployment
-
-Edit `dist/index.html`, `dist/style.css`, and `dist/app.js`, then rerun
-`docker compose up --build -d` to bake changes into the image. The map is `dist/map.svg`.
-The current Docker package does not change the existing hosted site.
-
-The default port binding is local to your computer. For a server, configure
-your HTTPS reverse proxy to forward to port 8080; change the host binding only
-if network access is intended. The image serves the atlas at the domain root.
-There is no authentication layer in this container.
-
-The recipe uses the upstream non-root NGINX Alpine image and its port 8080.
-It can be built on supported Intel and Apple Silicon Docker hosts without a
-hard-coded platform. Documentation:
-https://github.com/nginx/docker-nginx-unprivileged
-
-The `stable-alpine` tag tracks upstream updates. For reproducible production
-builds, supply your verified image digest:
-
-```sh
-docker build --build-arg NGINX_IMAGE=nginxinc/nginx-unprivileged@sha256:YOUR_VERIFIED_DIGEST \
-  -t hazlitt-creek-evidence-atlas:1.3.11 .
-```
-
-## Validation status
-
-Packaged assets and configuration were inspected. Docker is not available in
-the authoring environment, so an actual container build/run has not been tested.
-Use the verification commands above after starting Docker.
+The runtime uses Node built-in SQLite; no external database is needed. The Docker recipe has been reviewed but was not executed on a Docker engine in this workspace.
