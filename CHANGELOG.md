@@ -1,5 +1,10 @@
 # Release history
 
+## 1.1.0
+
+- Add live, case- and accent-insensitive project search with result counts and clear action.
+- Hide unmatched profiles and empty groups; profile links reveal their destination.
+
 ## 1.0.4
 
 - Add phone page gutters and consistent inset padding across all project profile text.
