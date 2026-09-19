@@ -1,5 +1,9 @@
 # Release history
 
+## 1.3.6
+
+- Slowly animate dotted country connectors, respecting reduced-motion preferences.
+
 ## 1.3.5
 
 - Add a soft pale-yellow halo to dotted country connectors.
