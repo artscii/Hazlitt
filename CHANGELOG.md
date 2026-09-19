@@ -1,3 +1,11 @@
+# 2.1.0 — 2026-09-19
+
+- Explain obligatory asterisk-marked fields in the editor, including country selection.
+- Make Delete red and require an explicit named-project confirmation.
+- Add copyable project share links using stable record IDs.
+- Shared URLs subset profiles, map markers and location details after catalog loading and focus the project.
+- Add Show all projects, search reset, browser-history handling and unavailable-record feedback.
+
 ## 2.0.0
 - Shared, password-protected project editor and country-based markers.
 - Duplicate checks and optimistic edit conflict protection.

@@ -1,4 +1,4 @@
-// Atlas v1.3.11 — Bombo is the default selected project and initial map location.
+// Atlas v2.1.0 — Stable share URLs select and subset one project after catalog loading.
 // On release: update the footer and source version comments, then add a CHANGELOG.md entry.
 (async()=>{
 const response=await fetch('/api/catalog',{cache:'no-store'});
@@ -6,6 +6,8 @@ if(!response.ok)throw new Error('Project records could not be loaded. Please ref
 const catalog=await response.json();window.atlasCatalog=catalog;
 const escapeHTML=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const programs=catalog.programs.map(p=>Object.fromEntries(Object.entries(p).map(([key,value])=>[key,typeof value==='string'?escapeHTML(value):value])));
+let sharedProjectId=null;
+const projectURL=id=>{const url=new URL(location.href);url.search='';url.searchParams.set('project',id);url.hash=id;return url.href;};
 const legacyPlaces=[{"name": "Guanacaste, Costa Rica", "lon": -85.4, "lat": 10.4, "ids": ["guanacaste"]}, {"name": "Dschang, Cameroon", "lon": 10.05, "lat": 5.45, "ids": ["smartcervix"], "left": true}, {"name": "Uganda", "lon": 32.3, "lat": 2.7, "ids": ["prescriptec", "aspire"]}, {"name": "Bangladesh", "lon": 90.3, "lat": 23.7, "ids": ["prescriptec"]}, {"name": "Senegal", "lon": -14.5, "lat": 14.5, "ids": ["ave"], "left": true}, {"name": "Rwanda / Kigali", "lon": 29.9, "lat": -1.9, "ids": ["ave", "cervi", "dawa"], "left": true}, {"name": "Zambia", "lon": 27, "lat": -13.4, "ids": ["ave", "dawa"], "left": true}, {"name": "Malawi", "lon": 35, "lat": -13.5, "ids": ["ave"]}, {"name": "Zimbabwe", "lon": 29.5, "lat": -20, "ids": ["ave", "ngyn", "dawa"], "left": true}, {"name": "Kinondo, Kenya / Tanga, Tanzania", "lon": 39.3, "lat": -4.7, "ids": ["kinondo", "bombo"]}, {"name": "India", "lon": 79, "lat": 22, "ids": ["ngyn"]}, {"name": "Thailand", "lon": 101, "lat": 15, "ids": ["ngyn"]}, {"name": "Hubei, China", "lon": 112.3, "lat": 31, "ids": ["landing"]}];
 const covered=new Set(programs.flatMap(p=>p.countries));
 const places=[];
@@ -28,14 +30,14 @@ const summary=document.querySelector('.summary');summary.innerHTML=`<div><strong
 const aucExplanation=`<div class="metric-help"><h4>AUC, in plain language</h4><p>AUC means “area under the curve.” It summarizes how well a test separates people with the condition from those without it, across different cutoffs for calling a result positive.</p><p><strong>0.5</strong> is chance-level separation; <strong>1.0</strong> is perfect separation in the tested data.</p><p>Here, <strong>0.91</strong> means that, for a randomly chosen pair—one woman with precancer and one without—the model would rank the woman with precancer higher about 91% of the time.</p><p>It does <strong>not</strong> mean 91% of patients are correctly diagnosed. It does not tell us how many cases a clinic will miss or how many false alarms it will produce at its chosen cutoff.</p></div>`;
 const badge=p=>`<span class="badge ${p.kind}">${p.status}</span>`;
 const links=p=>`<a href="${p.source}" target="_blank" rel="noopener">${p.sourceLabel||"Read the evidence"} ↗</a>${p.source2?` · <a href="${p.source2}" target="_blank" rel="noopener">${p.source2Label||"Related report"} ↗</a>`:''}`;
-const renderProgram=p=>`<article class="program" id="${p.id}"><div><a class="back-to-map" href="#map-overview"><svg class="map-return-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2Z"/><path d="M9 3v16M15 5v16"/></svg>Back to map</a>${badge(p)}<h3>${p.name}</h3><p class="geo">${p.geo}</p><p class="geo">${p.date}</p></div><div><p class="label">REPORTED OUTCOMES</p><p>${p.outcome}</p>${links(p)}</div><div><p class="label">SPONSORS & PARTNERS</p><p>${p.partners}</p>${p.tel?`<a class="phone" href="tel:${p.tel}">${p.phone}</a>`:p.email?`<a class="phone" href="mailto:${p.email}">${p.email}</a>`:''}<p class="contact-note">${p.contact}</p>${p.contactSource?`<a href="${p.contactSource}" target="_blank" rel="noopener">Contact source ↗</a>`:''}</div></article>`;
+const renderProgram=p=>`<article class="program" id="${p.id}"><div><a class="back-to-map" href="#map-overview"><svg class="map-return-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2Z"/><path d="M9 3v16M15 5v16"/></svg>Back to map</a>${badge(p)}<h3>${p.name}</h3><p class="geo">${p.geo}</p><p class="geo">${p.date}</p><a class="share-project" href="${escapeHTML(projectURL(p.id))}" aria-label="Share project: ${p.name}">Share project</a><span class="share-feedback" role="status"></span></div><div><p class="label">REPORTED OUTCOMES</p><p>${p.outcome}</p>${links(p)}</div><div><p class="label">SPONSORS & PARTNERS</p><p>${p.partners}</p>${p.tel?`<a class="phone" href="tel:${p.tel}">${p.phone}</a>`:p.email?`<a class="phone" href="mailto:${p.email}">${p.email}</a>`:''}<p class="contact-note">${p.contact}</p>${p.contactSource?`<a href="${p.contactSource}" target="_blank" rel="noopener">Contact source ↗</a>`:''}</div></article>`;
 document.querySelector('#programs').innerHTML=programs.filter(p=>!p.related).map(renderProgram).join('');
 document.querySelector('#related-programs').innerHTML=programs.filter(p=>p.related).map(renderProgram).join('');
 // v1.3.11: filter visible profiles without rebuilding cards or moving keyboard focus.
 function normalizeSearch(value){return value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();}
 function matchingProjectIds(query){
  const terms=normalizeSearch(query).trim().split(/\s+/).filter(Boolean);
- return new Set(programs.filter(p=>{const raw=catalog.programs.find(r=>r.id===p.id);const text=normalizeSearch(Object.values(raw).flat().filter(v=>typeof v==='string').join(' '));return terms.every(term=>text.includes(term));}).map(p=>p.id));
+ return new Set(programs.filter(p=>{const raw=catalog.programs.find(r=>r.id===p.id);const text=normalizeSearch(Object.values(raw).flat().filter(v=>typeof v==='string').join(' '));return (!sharedProjectId||p.id===sharedProjectId)&&terms.every(term=>text.includes(term));}).map(p=>p.id));
 }
 // v1.3.11: mark matches in text nodes only, preserving links and profile markup.
 function highlightProfileMatches(query){
@@ -62,7 +64,7 @@ function highlightProfileMatches(query){
 function filterProfiles(){
  const input=document.querySelector('#project-search');
  const query=input.value.trim();
- const matches=query?matchingProjectIds(query):new Set(programs.map(p=>p.id));
+ const matches=matchingProjectIds(query);
  document.querySelectorAll('article.program').forEach(card=>{card.hidden=!matches.has(card.id)});
  document.querySelectorAll('.directory').forEach(section=>{section.hidden=![...section.querySelectorAll('article.program')].some(card=>!card.hidden)});
  numberSelectedRows();
@@ -188,9 +190,9 @@ document.querySelector('#clear-search').addEventListener('click',()=>{const inpu
 filterProfiles();
 
 // v1.3.11: normal openings begin at the page top; explicit anchors keep their destination.
-if(!location.hash){
+if(!location.hash&&!new URL(location.href).searchParams.has('project')){
  if('scrollRestoration' in history)history.scrollRestoration='manual';
- const startAtTop=()=>{if(!location.hash)window.scrollTo({top:0,left:0,behavior:'instant'});};
+ const startAtTop=()=>{if(!location.hash&&!new URL(location.href).searchParams.has('project'))window.scrollTo({top:0,left:0,behavior:'instant'});};
  startAtTop();
  window.addEventListener('pageshow',startAtTop);
 }
@@ -198,7 +200,7 @@ if(!location.hash){
 // v1.3.11: keep search results, map coverage and the first result in sync.
 function searchPlace(place){
  const query=document.querySelector('#project-search').value.trim();
- if(!query)return place;
+ if(!query&&!sharedProjectId)return place;
  const ids=matchingProjectIds(query);
  return {...place,ids:place.ids.filter(id=>ids.has(id))};
 }
@@ -214,11 +216,11 @@ function syncSearchMap(){
  });
  document.querySelectorAll('article.program').forEach(card=>{card.classList.remove('search-first');card.classList.toggle('selected-profile',!query&&!!card.closest('#selected-projects'));});
  const first=[...document.querySelectorAll('article.program')].find(card=>!card.hidden);
- if(query&&first){
+ if((query||sharedProjectId)&&first){
   first.classList.add('search-first');
   const locations=places.filter(p=>p.ids.some(id=>matches.has(id)));
   const orderedIds=[...document.querySelectorAll('article.program')].filter(card=>!card.hidden).map(card=>card.id);
-  prioritizeProfiles({name:'Search results',ids:orderedIds});
+  prioritizeProfiles({name:sharedProjectId?programs.find(p=>p.id===sharedProjectId).name:'Search results',ids:orderedIds});
   showDetail({name:locations.map(p=>p.name).join(' · '),ids:orderedIds});
   document.querySelectorAll('.marker').forEach(marker=>{const selected=locations.some(p=>p.name===marker.dataset.name);marker.classList.toggle('selected',selected);marker.setAttribute('aria-pressed',String(selected));});
   const place=locations[0];if(place){mapScroller.scrollLeft=Math.max(0,projectX(place.lon)/100*mapScroller.scrollWidth-mapScroller.clientWidth/2);updateMapScrollCue();}
@@ -284,5 +286,37 @@ function pulseCountries(marker){
 }
 for(const marker of document.querySelectorAll('.marker'))for(const event of ['mouseenter','focus','click'])marker.addEventListener(event,()=>pulseCountries(marker));
 outlines.addEventListener('animationend',event=>event.target.classList.remove('country-chosen'));
+// v2.1.0: stable IDs survive edits; shared selection is applied after async catalog loading.
+const sharedNotice=document.createElement('div');sharedNotice.className='shared-project-notice';sharedNotice.hidden=true;
+const sharedMessage=document.createElement('span');
+const showAll=document.createElement('button');showAll.type='button';showAll.textContent='Show all projects';
+sharedNotice.append(sharedMessage,showAll);document.querySelector('.project-search').append(sharedNotice);
+function clearSharedProject(){
+ sharedProjectId=null;sharedNotice.hidden=true;
+ const url=new URL(location.href);url.searchParams.delete('project');url.hash='';history.replaceState(null,'',url);
+}
+showAll.addEventListener('click',()=>{clearSharedProject();document.querySelector('#project-search').value='';syncSearchMap();});
+for(const event of ['input','search','change'])document.querySelector('#project-search').addEventListener(event,clearSharedProject,{capture:true});
+function openSharedProject(){
+ const id=new URL(location.href).searchParams.get('project');
+ sharedProjectId=null;sharedNotice.hidden=!id;
+ if(!id){syncSearchMap();return;}
+ document.querySelector('#project-search').value='';
+ const project=catalog.programs.find(p=>p.id===id);
+ if(!project){syncSearchMap();sharedMessage.textContent='This shared project is no longer available. Showing all projects.';return;}
+ sharedProjectId=id;sharedMessage.textContent='Shared project: '+project.name;
+ syncSearchMap();
+ requestAnimationFrame(()=>requestAnimationFrame(()=>{const card=document.getElementById(id);card?.setAttribute('tabindex','-1');card?.focus({preventScroll:true});card?.scrollIntoView({block:'start',behavior:'instant'});}));
+}
+window.addEventListener('popstate',openSharedProject);
+document.addEventListener('click',async event=>{
+ const link=event.target.closest('a.share-project');
+ if(!link||event.button>0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
+ event.preventDefault();
+ const feedback=link.nextElementSibling;
+ try{await navigator.clipboard.writeText(link.href);feedback.textContent='Link copied';}
+ catch{feedback.replaceChildren();const input=document.createElement('input');input.readOnly=true;input.value=link.href;input.setAttribute('aria-label','Project share URL — copy this link');feedback.append(input);input.focus();input.select();}
+});
+if(new URL(location.href).searchParams.has('project'))openSharedProject();
 window.dispatchEvent(new Event('atlas-ready'));
 })().catch(error=>{const message=document.createElement('p');message.className='load-error';message.textContent=error.message;document.querySelector('#map-overview').before(message);console.error(error);});

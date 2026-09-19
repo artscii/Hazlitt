@@ -124,3 +124,18 @@ mark.search-match{background:#dceffc;color:inherit;border-radius:2px;padding:0;b
 
 /* 2.0.0: admin controls remain collapsed until explicitly opened. */
 .admin-disclosure>summary{cursor:pointer;color:var(--muted,#60716d);font-size:.9rem;list-style-position:inside;padding:.4rem 0;width:fit-content}.admin-disclosure>summary:focus-visible{outline:2px solid #b7ccc5;outline-offset:4px;border-radius:3px}.admin-content{padding-top:1rem}
+
+/* v2.1.0: compact share links and explicit shared-result reset. */
+.share-project{display:inline-flex;align-items:center;min-height:44px;font-size:.875rem;text-decoration:none;gap:.35rem}
+.share-project::before{content:'↗';font-size:1rem}
+.share-project:hover{text-decoration:underline}
+.share-feedback{display:block;font-size:.875rem;color:#526572;overflow-wrap:anywhere}
+.share-feedback input{width:100%;min-width:0;font-size:1rem}
+.shared-project-notice{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem 1rem;font-size:.9rem;margin-top:.75rem}
+.shared-project-notice[hidden]{display:none}
+.shared-project-notice button{padding:.5rem .75rem;background:#f3f7f9;border:1px solid #cbd6dc;border-radius:4px;color:inherit;cursor:pointer;font:inherit}
+
+/* v2.1.0: destructive action, always followed by confirmation. */
+.admin-section #admin-delete{background:#b42318;border-color:#b42318;color:#fff}
+.admin-section #admin-delete:hover{background:#912018;border-color:#912018}
+.admin-section #admin-delete:focus-visible{outline:3px solid #f4aaa3;outline-offset:3px}
