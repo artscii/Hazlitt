@@ -1,3 +1,7 @@
+# 2.1.2 — 2026-09-19
+
+- Rename profile numbering labels to Project #.
+
 # 2.1.1 — 2026-09-19
 
 - Populate search with the shared project name while retaining exact-record filtering.
