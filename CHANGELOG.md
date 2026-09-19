@@ -1,5 +1,10 @@
 # Release history
 
+## 1.3.2
+
+- Place selected marker callouts clear of other markers and callouts, recomputing on selection and resize.
+- Add a pale-yellow halo matching selected result rows.
+
 ## 1.3.1
 
 - Offset selected markers with fine leader lines and geographic anchor dots so country outlines remain visible.
