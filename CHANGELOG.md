@@ -1,5 +1,9 @@
 # Release history
 
+## 1.1.4
+
+- Move search between the introduction and Project Geography.
+
 ## 1.1.3
 
 - Inset all result columns from the selection boundary, with balanced padding on desktop and phones.
