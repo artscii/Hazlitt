@@ -1,4 +1,4 @@
-// Atlas v2.1.2 — Muted catalog record numbers remain consistent across filtered and reordered lists.
+// Atlas v2.2.0 — Muted catalog record numbers remain consistent across filtered and reordered lists.
 // On release: update the footer and source version comments, then add a CHANGELOG.md entry.
 (async()=>{
 const response=await fetch('/api/catalog',{cache:'no-store'});
@@ -237,18 +237,34 @@ for(const event of ['input','search','change'])document.querySelector('#project-
 document.querySelector('#clear-search').addEventListener('click',syncSearchMap);
 window.addEventListener('pageshow',()=>{if(document.querySelector('#project-search').value.trim())syncSearchMap();});
 
-// v1.3.11: stable offshore marker positions; selection never changes layout.
-const offshoreMarkers={
- 'Guanacaste, Costa Rica':[-91,6], 'Dschang, Cameroon':[2,1],
- 'Uganda':[54,11], 'Bangladesh':[89,17], 'Senegal':[-22,15],
- 'Rwanda / Kigali':[51,3], 'Zambia':[41,-20], 'Malawi':[43,-12],
- 'Zimbabwe':[40,-28], 'Kinondo, Kenya / Tanga, Tanzania':[51,-5],
- 'India':[69,12], 'Thailand':[96,8], 'Hubei, China':[127,25]
-};
-for(const marker of document.querySelectorAll('.marker')){
- const place=places.find(p=>p.name===marker.dataset.name);const coordinates=offshoreMarkers[marker.dataset.name]||[Math.min(175,place.lon+4),place.lat+2];
- const [lon,lat]=coordinates;marker.style.left=projectX(lon)+'%';marker.style.top=projectY(lat)+'%';
+// v2.2.0: deterministic water-only placement for every catalog country, including new records.
+// Rasterize the same geographic paths used by the map, then test the entire marker + halo.
+function placeMarkersOffshore(){
+ const width=Math.ceil(map.clientWidth),height=Math.ceil(map.clientHeight);if(!width||!height)return;
+ const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;
+ const context=canvas.getContext('2d',{willReadFrequently:true});
+ context.setTransform(width/bounds.width,0,0,height/bounds.height,-bounds.west*width/bounds.width,bounds.north*height/bounds.height);
+ for(const country of catalog.countries)for(const path of country.paths)context.fill(new Path2D(path));
+ const pixels=context.getImageData(0,0,width,height).data,stride=width+1;
+ const sums=new Uint32Array(stride*(height+1));
+ for(let y=0;y<height;y++){let row=0;for(let x=0;x<width;x++){row+=pixels[(y*width+x)*4+3]>0?1:0;sums[(y+1)*stride+x+1]=sums[y*stride+x+1]+row;}}
+ const landIn=(x,y,r)=>{const l=Math.floor(x-r),t=Math.floor(y-r),right=Math.ceil(x+r),bottom=Math.ceil(y+r);return sums[bottom*stride+right]-sums[t*stride+right]-sums[bottom*stride+l]+sums[t*stride+l];};
+ const occupied=[];
+ for(const marker of document.querySelectorAll('.marker')){
+  const place=places.find(p=>p.name===marker.dataset.name);
+  const origin={x:projectX(place.lon)*width/100,y:projectY(place.lat)*height/100};
+  const radius=Math.max(22,marker.offsetWidth/2+10);let best=null;
+  for(let y=radius;y<height-radius;y+=6)for(let x=radius;x<width-radius;x+=6){
+   const distance=(x-origin.x)**2+(y-origin.y)**2;
+   if(best&&distance>=best.distance)continue;
+   if(occupied.some(p=>Math.hypot(x-p.x,y-p.y)<radius+p.radius+6)||landIn(x,y,radius))continue;
+   best={x,y,radius,distance};
+  }
+  if(best){marker.style.left=best.x/width*100+'%';marker.style.top=best.y/height*100+'%';occupied.push(best);}
+ }
 }
+placeMarkersOffshore();
+let placementFrame;new ResizeObserver(()=>{cancelAnimationFrame(placementFrame);placementFrame=requestAnimationFrame(placeMarkersOffshore);}).observe(map);
 
 // v1.3.11: hover connectors use country centers, independent of fixed marker positions.
 const countryCenters={
@@ -287,6 +303,13 @@ function pulseCountries(marker){
 }
 for(const marker of document.querySelectorAll('.marker'))for(const event of ['mouseenter','focus','click'])marker.addEventListener(event,()=>pulseCountries(marker));
 outlines.addEventListener('animationend',event=>event.target.classList.remove('country-chosen'));
+// v2.2.0: hover/focus highlight survives the introductory pulse.
+function refreshHoverCountries(){
+ const names=new Set([...document.querySelectorAll('.marker')].filter(marker=>marker.matches(':hover,:focus-visible')).flatMap(marker=>places.find(p=>p.name===marker.dataset.name)?.countries||[]));
+ outlines.querySelectorAll('path').forEach(path=>path.classList.toggle('country-hovered',names.has(path.dataset.country)));
+}
+for(const marker of document.querySelectorAll('.marker'))for(const event of ['mouseenter','mouseleave','focus','blur'])marker.addEventListener(event,refreshHoverCountries);
+
 // v2.1.0: stable IDs survive edits; shared selection is applied after async catalog loading.
 const sharedNotice=document.createElement('div');sharedNotice.className='shared-project-notice';sharedNotice.hidden=true;
 const sharedMessage=document.createElement('span');

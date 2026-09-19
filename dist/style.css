@@ -142,3 +142,7 @@ mark.search-match{background:#dceffc;color:inherit;border-radius:2px;padding:0;b
 
 /* v2.1.1: quiet catalog numbering, separate from selected-result counts. */
 .record-number{display:block;margin:0 0 .5rem;color:#6b7c85;font-size:.8125rem;line-height:1.4;font-weight:400;font-variant-numeric:tabular-nums;letter-spacing:.02em}
+
+/* v2.2.0: retain yellow feedback for the full pointer/keyboard hover. */
+#country-outlines path.country-hovered{display:block;fill:#fff4b8;stroke:#c6ac45;fill-opacity:.85}
+.marker:hover,.marker:focus-visible{box-shadow:0 0 0 7px #fff4b8b3,0 0 15px 7px #fff4b866}

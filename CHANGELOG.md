@@ -1,3 +1,9 @@
+# 2.2.0 — 2026-09-19
+
+- Keep country and marker yellow highlighting visible throughout hover or keyboard focus.
+- Place markers and their halos in nearby open water using the actual country shapes, with spacing between markers.
+- Apply the same deterministic placement to newly added countries and responsive map sizes.
+
 # 2.1.2 — 2026-09-19
 
 - Rename profile numbering labels to Project #.
