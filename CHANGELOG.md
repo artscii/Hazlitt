@@ -1,5 +1,9 @@
 # Release history
 
+## 1.3.7
+
+- Pulse selected countries twice on marker click or tap, with a steady highlight for reduced-motion preferences.
+
 ## 1.3.6
 
 - Slowly animate dotted country connectors, respecting reduced-motion preferences.
