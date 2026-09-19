@@ -152,3 +152,6 @@ mark.search-match{background:#dceffc;color:inherit;border-radius:2px;padding:0;b
 
 /* v2.4.0: Aprukuma-inspired health symbol shared by the header and favicon. */
 .brand .aprukuma-icon{width:30px;height:34px;flex:0 0 30px;display:block}@media(max-width:540px){.brand .aprukuma-icon{width:26px;height:30px;flex-basis:26px}}
+
+/* v2.4.1: native, unobtrusive country-name tooltips for represented countries. */
+#markers{pointer-events:none}#markers .marker{pointer-events:auto}

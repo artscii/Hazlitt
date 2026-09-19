@@ -1,3 +1,7 @@
+# 2.4.1 — 2026-09-19
+
+- Show native country-name tooltips on represented country shapes without changing selection.
+
 # 2.4.0 — 2026-09-19
 
 - Replace the header asterisk and add an SVG favicon using a simplified Aprukuma symbol in atlas teal.
