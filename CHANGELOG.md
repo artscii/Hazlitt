@@ -1,3 +1,8 @@
+# 2.3.3 — 2026-09-19
+
+- Explicitly identify NIH/NLM PubMed and PMC citations with live counts and database explanations.
+- Recognize NIH ClinicalTrials.gov, RePORTER, NCI and legacy NCBI URLs when cited in project records.
+
 # 2.3.2 — 2026-09-19
 
 - Use a coordinated soft blue for selected profiles, country highlights, marker glows and connector halos.
