@@ -1,3 +1,7 @@
+# 2.7.0 — 2026-09-19
+
+- Add live full-text project lookup beside the Admin number/Open project row, with numbered clickable results and mobile stacking.
+
 # 2.6.1 — 2026-09-19
 
 - Cap the country hover/selection pulse at 110 percent of its original size.

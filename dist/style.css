@@ -163,3 +163,6 @@ mark.search-match{background:#dceffc;color:inherit;border-radius:2px;padding:0;b
 .search-help{font-size:.8125rem;color:#657c88;margin:8px 0}
 
 .admin-section textarea[name="outcome"]{overflow-y:hidden;min-height:100px;resize:vertical}
+
+/* v2.7.0: number and text lookups share a row, stacking on phones. */
+.admin-lookup-row{display:grid;grid-template-columns:minmax(260px,.8fr) minmax(280px,1.2fr);gap:24px;align-items:start}.admin-name-lookup>input{margin-top:6px}.admin-name-lookup>p{font-size:.875rem;color:#5f727d;margin:6px 0}.admin-search-results{max-height:260px;overflow:auto;display:grid;gap:6px;margin:10px 0 20px}.admin-search-results button{text-align:left;width:100%}@media(max-width:740px){.admin-lookup-row{grid-template-columns:1fr;gap:0}.admin-name-lookup{margin-bottom:20px}}
