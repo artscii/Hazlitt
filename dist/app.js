@@ -1,4 +1,4 @@
-// Atlas v2.2.0 — Muted catalog record numbers remain consistent across filtered and reordered lists.
+// Atlas v2.3.0 — Muted catalog record numbers remain consistent across filtered and reordered lists.
 // On release: update the footer and source version comments, then add a CHANGELOG.md entry.
 (async()=>{
 const response=await fetch('/api/catalog',{cache:'no-store'});
@@ -8,6 +8,22 @@ const escapeHTML=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&
 const programs=catalog.programs.map(p=>Object.fromEntries(Object.entries(p).map(([key,value])=>[key,typeof value==='string'?escapeHTML(value):value])));
 let sharedProjectId=null;
 const projectURL=id=>{const url=new URL(location.href);url.search='';url.searchParams.set('project',id);url.hash=id;return url.href;};
+// v2.3.0: derive source coverage from the live catalog; never imply a fresh database search.
+const sourceGroups=new Map();
+for(const project of catalog.programs)for(const field of ['source','source2']){
+ if(!project[field])continue;
+ let url;try{url=new URL(project[field]);}catch{continue;}
+ if(!['https:','http:'].includes(url.protocol))continue;
+ const host=url.hostname.replace(/^www\./,'');
+ const group=host==='pubmed.ncbi.nlm.nih.gov'?'NIH / NLM PubMed':host==='pmc.ncbi.nlm.nih.gov'?'PubMed Central':host.endsWith('cnki.net')?'CNKI journals':host==='cordis.europa.eu'?'European Commission CORDIS':host;
+ if(!sourceGroups.has(group))sourceGroups.set(group,new Map());
+ const entries=sourceGroups.get(group),key=url.href;
+ if(!entries.has(key))entries.set(key,{url:url.href,label:project[field+'Label']||project.name,projects:new Set(),dates:new Set()});
+ const entry=entries.get(key);entry.projects.add(project.name);if(project.date)entry.dates.add(project.date);
+}
+const sourceCount=[...sourceGroups.values()].reduce((count,entries)=>count+entries.size,0);
+document.querySelector('#source-directory').innerHTML=`<p>${sourceCount} distinct evidence links across ${sourceGroups.size} sources, cited by ${catalog.programs.length} project records covering ${new Set(catalog.programs.flatMap(p=>p.countries)).size} countries.</p>`;
+document.querySelector('#source-directory').innerHTML+=`<p>Updated automatically from the current project records. These are cited sources, not a claim that every database has been searched exhaustively. Study and review dates are shown with each reference.</p>`+[...sourceGroups].sort(([a],[b])=>a.localeCompare(b)).map(([group,entries])=>`<details class="source-group"><summary>${escapeHTML(group)} <span>${entries.size} ${entries.size===1?'reference':'references'}</span></summary><ul>${[...entries.values()].map(entry=>`<li><a href="${escapeHTML(entry.url)}" target="_blank" rel="noopener">${escapeHTML(entry.label)}</a><p>${escapeHTML([...entry.projects].join(' · '))}</p><p>${escapeHTML([...entry.dates].join(' · '))}</p></li>`).join('')}</ul></details>`).join('');
 const legacyPlaces=[{"name": "Guanacaste, Costa Rica", "lon": -85.4, "lat": 10.4, "ids": ["guanacaste"]}, {"name": "Dschang, Cameroon", "lon": 10.05, "lat": 5.45, "ids": ["smartcervix"], "left": true}, {"name": "Uganda", "lon": 32.3, "lat": 2.7, "ids": ["prescriptec", "aspire"]}, {"name": "Bangladesh", "lon": 90.3, "lat": 23.7, "ids": ["prescriptec"]}, {"name": "Senegal", "lon": -14.5, "lat": 14.5, "ids": ["ave"], "left": true}, {"name": "Rwanda / Kigali", "lon": 29.9, "lat": -1.9, "ids": ["ave", "cervi", "dawa"], "left": true}, {"name": "Zambia", "lon": 27, "lat": -13.4, "ids": ["ave", "dawa"], "left": true}, {"name": "Malawi", "lon": 35, "lat": -13.5, "ids": ["ave"]}, {"name": "Zimbabwe", "lon": 29.5, "lat": -20, "ids": ["ave", "ngyn", "dawa"], "left": true}, {"name": "Kinondo, Kenya / Tanga, Tanzania", "lon": 39.3, "lat": -4.7, "ids": ["kinondo", "bombo"]}, {"name": "India", "lon": 79, "lat": 22, "ids": ["ngyn"]}, {"name": "Thailand", "lon": 101, "lat": 15, "ids": ["ngyn"]}, {"name": "Hubei, China", "lon": 112.3, "lat": 31, "ids": ["landing"]}];
 const covered=new Set(programs.flatMap(p=>p.countries));
 const places=[];

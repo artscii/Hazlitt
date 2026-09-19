@@ -146,3 +146,6 @@ mark.search-match{background:#dceffc;color:inherit;border-radius:2px;padding:0;b
 /* v2.2.0: retain yellow feedback for the full pointer/keyboard hover. */
 #country-outlines path.country-hovered{display:block;fill:#fff4b8;stroke:#c6ac45;fill-opacity:.85}
 .marker:hover,.marker:focus-visible{box-shadow:0 0 0 7px #fff4b8b3,0 0 15px 7px #fff4b866}
+
+/* v2.3.0: catalog-driven source directory. */
+.source-group{padding:.65rem 0;border-bottom:1px solid #e3eaee}.source-group summary{cursor:pointer;font-size:.95rem}.source-group summary span{color:#71818a;font-size:.8125rem;margin-left:.5rem}.source-group li{margin:.85rem 0;overflow-wrap:anywhere}.source-group li p{margin:.25rem 0;font-size:.8125rem}

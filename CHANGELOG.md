@@ -1,3 +1,8 @@
+# 2.3.0 — 2026-09-19
+
+- Generate Sources reviewed from live record evidence links, grouped by provider with deduplicated references, project names and dates.
+- Preserve dated Canadian and EHDS review notes separately from the dynamic citation inventory.
+
 # 2.2.0 — 2026-09-19
 
 - Keep country and marker yellow highlighting visible throughout hover or keyboard focus.
