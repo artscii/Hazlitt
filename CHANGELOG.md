@@ -1,3 +1,7 @@
+# 2.3.1 — 2026-09-19
+
+- Use Project 01, Project 02, etc. as the profile numbering labels.
+
 # 2.3.0 — 2026-09-19
 
 - Generate Sources reviewed from live record evidence links, grouped by provider with deduplicated references, project names and dates.
