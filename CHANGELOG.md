@@ -1,5 +1,10 @@
 # Release history
 
+## 1.3.0
+
+- Display every location tooltip in the consistent strip below the map.
+- Outline selected countries, promote and highlight all selected matches, and number rows within the selected set.
+
 ## 1.2.4
 
 - Pin clicked or tapped location previews while scrolling to profiles and back. Another location replaces the pinned preview; Escape or a changed search dismisses it.
