@@ -1,5 +1,9 @@
 # Release history
 
+## 1.1.6
+
+- Add a soft blue search-field hover and focus halo while retaining keyboard focus visibility.
+
 ## 1.1.5
 
 - Start normal openings at the top of the page while preserving explicit project anchor links.
