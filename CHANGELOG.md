@@ -1,3 +1,7 @@
+# 2.7.1 — 2026-09-19
+
+- Show the current Atlas project number as a read-only field inside the edit form; new entries show Assigned after saving.
+
 # 2.7.0 — 2026-09-19
 
 - Add live full-text project lookup beside the Admin number/Open project row, with numbered clickable results and mobile stacking.
