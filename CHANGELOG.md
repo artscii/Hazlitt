@@ -1,3 +1,8 @@
+## 3.7.0
+
+- Add a pencil link on each project, password-gated direct editing, and a brief page-flip transition that respects reduced motion.
+- Open the chosen project automatically after Admin authentication.
+
 ## 3.6.1
 
 - Collapse Canadian review, EHDS review and evidence context by default using accessible, keyboard-friendly disclosure controls.

@@ -24,7 +24,7 @@ for(const [title,keys] of editorGroups){
 }
 const actionMessage=document.createElement('p');actionMessage.id='edit-action-message';$('.admin-actions').prepend(actionMessage);
 form.querySelector('button[type="submit"]').textContent='Save changes';
-// v3.6.1: navigate only the current ordered search subset, without discarding drafts.
+// v3.7.0: navigate only the current ordered search subset, without discarding drafts.
 const projectNavigation=document.createElement('div');projectNavigation.className='project-navigation';projectNavigation.innerHTML='<button type="button" id="project-prev" aria-label="Previous matching project">← Previous</button><span id="project-position" role="status" aria-live="polite"></span><button type="button" id="project-next" aria-label="Next matching project">Next →</button>';
 $('.admin-toolbar').after(projectNavigation);
 function draftSignature(){return JSON.stringify({values:fields.map(([key])=>form.elements[key].value),related:form.elements.related.checked,countries:[...form.querySelectorAll('[name=countries]:checked')].map(el=>el.value).sort()});}
@@ -45,7 +45,7 @@ new ResizeObserver(entries=>{const width=entries[0].contentRect.width;if(width!=
 function projectVersion(record,revision){return 'Project '+String(numberedIds.indexOf(record.id)+1).padStart(2,'0')+' · '+(revision>0?'v'+revision:'Original import');}
 function load(record,force=false){if(!force&&record?.id!==current?.id&&hasProjectDraft()&&!confirm('Discard unsaved changes and open another project?')){$('#admin-record').value=current?.id||'';updateProjectNavigation();return false;}versionDraft=null;form.querySelectorAll('.field-version-diff').forEach(el=>el.remove());form.querySelectorAll('.version-changed').forEach(el=>el.classList.remove('version-changed'));for(const control of form.elements)control.disabled=false;const number=record?numberedIds.indexOf(record.id)+1:0;$('#admin-project-number').value=number||'';$('#project-number-status').textContent=record?'Editing Project '+String(number).padStart(2,'0')+' · '+record.name:'';current=record;form.reset();$('#edit-record-reference').value=record?projectVersion(record,record.revision):'New project · Not saved';$('#country-filter').value='';$('#admin-countries').querySelectorAll('label').forEach(l=>l.hidden=false);for(const [name]of fields)form.elements[name].value=record?.[name]?? (name==='kind'?'':'');form.elements.related.checked=!!record?.related;form.querySelectorAll('[name=countries]').forEach(c=>c.checked=!!record?.countries.includes(c.value));$('#admin-delete').hidden=!record;$('#admin-record').value=record?.id||'';renderCountryPicker();requestAnimationFrame(fitOutcomes);loadRecordHistory(record);loadedDraft=draftSignature();updateProjectNavigation();return true;}
 function canonical(value){return value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();}
-async function unlock(){await refresh();$('#admin-editor').hidden=false;$('#admin-login').hidden=true;$('#admin-open').hidden=true;load(null);tell('Editor unlocked. Changes are saved for all visitors.');}
+async function unlock(){await refresh();$('#admin-editor').hidden=false;$('#admin-login').hidden=true;$('#admin-open').hidden=true;const requested=new URLSearchParams(location.search).get('project');const target=catalog.programs.find(p=>p.id===requested);load(target||null);tell(requested&&!target?'This project is no longer available. Choose another project.':'Editor unlocked. Changes are saved for all visitors.');}
 $('#admin-open').onclick=async()=>{try{const state=await api('/api/session');if(state.authenticated)await unlock();else{$('#admin-login').hidden=false;$('#admin-login input').focus();}}catch(e){tell(e.message);}};
 $('#admin-login').onsubmit=async event=>{event.preventDefault();if(busy)return;busy=true;try{await api('/api/login',{method:'POST',body:JSON.stringify({password:event.target.elements.password.value})});event.target.reset();await unlock();}catch(e){tell(e.message);}finally{busy=false;}};
 // v2.5.0: resolve the displayed catalog number to a stable record ID before editing.
@@ -238,3 +238,6 @@ restoreButton.onclick=async()=>{
 };
 $('#admin-open').click();
 })();
+
+// v3.7.0: finish the direct-edit transition; reduced motion skips it entirely.
+try{if(sessionStorage.getItem('atlas-editor-flip')){sessionStorage.removeItem('atlas-editor-flip');if(!matchMedia('(prefers-reduced-motion: reduce)').matches)document.querySelector('main').animate([{transform:'perspective(1600px) rotateY(8deg)',opacity:0},{transform:'perspective(1600px) rotateY(0deg)',opacity:1}],{duration:220,easing:'ease-out'});}}catch{}

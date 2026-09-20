@@ -50,7 +50,7 @@ const aucExplanation=`<div class="metric-help"><h4>AUC, in plain language</h4><p
 const badge=p=>`<span class="badge ${p.kind}">${p.status}</span>`;
 const links=p=>`<a href="${p.source}" target="_blank" rel="noopener">${p.sourceLabel||"Read the evidence"} ↗</a>${p.source2?` · <a href="${p.source2}" target="_blank" rel="noopener">${p.source2Label||"Related report"} ↗</a>`:''}`;
 const recordNumbers=new Map(programs.map((p,index)=>[p.id,index+1]));
-const renderProgram=p=>`<article class="program" id="${p.id}"><div><a class="back-to-map" href="#map-overview"><svg class="map-return-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2Z"/><path d="M9 3v16M15 5v16"/></svg>Back to map</a><span class="record-number" aria-label="Project number ${recordNumbers.get(p.id)}">Project ${String(recordNumbers.get(p.id)).padStart(2,'0')}</span>${badge(p)}<h3>${p.name}</h3><p class="geo">${p.geo}</p><p class="geo">${p.date}</p><a class="share-project" href="${escapeHTML(projectURL(p.id))}" aria-label="Share project: ${p.name}">Share project</a><span class="share-feedback" role="status"></span></div><div><p class="label">REPORTED OUTCOMES</p><p>${p.outcome}</p>${links(p)}</div><div><p class="label">SPONSORS & PARTNERS</p><p>${p.partners}</p>${p.tel?`<a class="phone" href="tel:${p.tel}">${p.phone}</a>`:p.email?`<a class="phone" href="mailto:${p.email}">${p.email}</a>`:''}<p class="contact-note">${p.contact}</p>${p.contactSource?`<a href="${p.contactSource}" target="_blank" rel="noopener">Contact source ↗</a>`:''}</div></article>`;
+const renderProgram=p=>`<article class="program" id="${p.id}"><a class="edit-project" href="/admin?project=${encodeURIComponent(p.id)}" aria-label="Edit project: ${p.name}" title="Edit project"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5 4 4M4 20l4-1L20 7a2.8 2.8 0 0 0-4-4L4 15Z"/></svg></a><div><a class="back-to-map" href="#map-overview"><svg class="map-return-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2Z"/><path d="M9 3v16M15 5v16"/></svg>Back to map</a><span class="record-number" aria-label="Project number ${recordNumbers.get(p.id)}">Project ${String(recordNumbers.get(p.id)).padStart(2,'0')}</span>${badge(p)}<h3>${p.name}</h3><p class="geo">${p.geo}</p><p class="geo">${p.date}</p><a class="share-project" href="${escapeHTML(projectURL(p.id))}" aria-label="Share project: ${p.name}">Share project</a><span class="share-feedback" role="status"></span></div><div><p class="label">REPORTED OUTCOMES</p><p>${p.outcome}</p>${links(p)}</div><div><p class="label">SPONSORS & PARTNERS</p><p>${p.partners}</p>${p.tel?`<a class="phone" href="tel:${p.tel}">${p.phone}</a>`:p.email?`<a class="phone" href="mailto:${p.email}">${p.email}</a>`:''}<p class="contact-note">${p.contact}</p>${p.contactSource?`<a href="${p.contactSource}" target="_blank" rel="noopener">Contact source ↗</a>`:''}</div></article>`;
 document.querySelector('#programs').innerHTML=programs.filter(p=>!p.related).map(renderProgram).join('');
 document.querySelector('#related-programs').innerHTML=programs.filter(p=>p.related).map(renderProgram).join('');
 // v1.3.11: filter visible profiles without rebuilding cards or moving keyboard focus.
@@ -378,3 +378,32 @@ document.addEventListener('click',async event=>{
 if(new URL(location.href).searchParams.has('project'))openSharedProject();else syncSearchMap();
 window.dispatchEvent(new Event('atlas-ready'));
 })().catch(error=>{const message=document.createElement('p');message.className='load-error';message.textContent=error.message;document.querySelector('#map-overview').before(message);console.error(error);});
+
+// v3.7.0: password-gated direct editing with a lightweight native page flip.
+(()=>{
+ const dialog=document.createElement('dialog');dialog.className='edit-access-dialog';dialog.setAttribute('aria-labelledby','edit-access-title');
+ dialog.innerHTML=`<form><h2 id="edit-access-title">Edit project</h2><p>Enter the Admin password to open this project in the editor.</p><label for="edit-access-password">Admin password</label><input id="edit-access-password" type="password" autocomplete="current-password" required><p class="edit-access-error" role="alert"></p><div class="edit-access-actions"><button type="button" data-cancel>Cancel</button><button type="submit">Open editor</button></div></form>`;
+ document.body.append(dialog);let destination='',pending=false;
+ window.addEventListener('pageshow',()=>{pending=false;document.querySelector('main').getAnimations().forEach(animation=>animation.cancel());});
+ const error=dialog.querySelector('.edit-access-error'),password=dialog.querySelector('input'),submit=dialog.querySelector('[type=submit]');
+ async function openEditor(url){
+  if(!matchMedia('(prefers-reduced-motion: reduce)').matches){
+   try{sessionStorage.setItem('atlas-editor-flip','1');const main=document.querySelector('main');await main.animate([{transform:'perspective(1600px) rotateY(0deg)',opacity:1},{transform:'perspective(1600px) rotateY(-8deg)',opacity:0}],{duration:180,easing:'ease-in',fill:'forwards'}).finished;}catch{}
+  }
+  location.assign(url);
+ }
+ document.addEventListener('click',async event=>{
+  const link=event.target.closest('a.edit-project');if(!link||event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
+  event.preventDefault();if(pending)return;pending=true;destination=link.href;
+  try{const response=await fetch('/api/session',{cache:'no-store'});if(response.ok&&(await response.json()).authenticated){await openEditor(destination);return;}}catch{}
+  pending=false;error.textContent='';password.value='';dialog.showModal();password.focus();
+ });
+ dialog.querySelector('[data-cancel]').onclick=()=>dialog.close();
+ dialog.addEventListener('close',()=>{password.value='';});
+ dialog.querySelector('form').onsubmit=async event=>{
+  event.preventDefault();if(pending)return;pending=true;submit.disabled=true;error.textContent='';
+  try{const response=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:password.value})});const result=await response.json();if(!response.ok)throw new Error(result.error||'Unable to unlock the editor.');dialog.close();await openEditor(destination);}
+  catch(e){error.textContent=e.message;password.focus();password.select();}
+  finally{pending=false;submit.disabled=false;}
+ };
+})();
