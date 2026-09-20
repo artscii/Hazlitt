@@ -7,8 +7,25 @@ let catalog=null,current=null,busy=false,numberedIds=[];
 const fields=[['name','Project name',true],['status','Evidence status',true],['kind','Category',true],['geo','Location description',true],['metric','Headline outcome',true],['metricLabel','Headline outcome explanation',true],['short','Short description',true],['outcome','Reported outcomes',true],['partners','Sponsors and partners',true],['phone','Contact phone'],['tel','Telephone link number'],['email','Contact email'],['contact','Contact notes'],['source','Primary evidence URL',true],['sourceLabel','Primary evidence link label'],['source2','Additional evidence URL'],['source2Label','Additional evidence link label'],['contactSource','Contact source URL'],['date','Evidence date / review note',true],['editNotes','Edit notes']];
 const long=new Set(['short','outcome','partners','contact','editNotes']);
 for(const [name,title,required] of fields){const label=document.createElement('label');label.textContent=title+(required?' *':'');let input;if(name==='kind'){input=document.createElement('select');for(const [value,text] of [['','Implementation / published study'],['deployed','Implementation'],['related','Related initiative'],['pilot','Pilot / preliminary study'],['historical','Historical / related initiative']]){const option=document.createElement('option');option.value=value;option.textContent=text;input.append(option);}}else{input=document.createElement(long.has(name)?'textarea':'input');if(input.tagName==='TEXTAREA')input.rows=4;else input.type=['source','source2','contactSource'].includes(name)?'url':name==='email'?'email':'text';input.maxLength=12000;}input.name=name;input.required=!!required;label.append(input);$('#admin-fields').append(label);}
+// v3.3.0: group related fields in reading order without changing control heights.
+const editorGroups=[
+ ['Project overview',['name','status','kind','geo','short']],
+ ['Outcomes & sponsors',['metric','metricLabel','outcome','partners']],
+ ['Evidence & sources',['source','sourceLabel','source2','source2Label','date']],
+ ['Contact details',['phone','tel','email','contactSource','contact']],
+ ['Editor observations',['editNotes']]
+];
+for(const [title,keys] of editorGroups){
+ const group=document.createElement('section');group.className='editor-field-group';
+ const heading=document.createElement('h3');heading.textContent=title;
+ const grid=document.createElement('div');grid.className='field-group-grid';
+ for(const key of keys)grid.append(form.elements[key].closest('label'));
+ group.append(heading,grid);$('#admin-fields').append(group);
+}
+const actionMessage=document.createElement('p');actionMessage.id='edit-action-message';$('.admin-actions').prepend(actionMessage);
+form.querySelector('button[type="submit"]').textContent='Save changes';
 async function api(path,options={}){const response=await fetch(path,{...options,headers:{'Content-Type':'application/json',...(options.headers||{})}});const data=await response.json();if(!response.ok)throw new Error(data.error||'Request failed');return data;}
-function tell(text){message.textContent=text;}
+function tell(text){message.textContent=text;if(actionMessage)actionMessage.textContent=text;}
 async function refresh(){catalog=await api('/api/catalog');numberedIds=(window.atlasCatalog?.programs||catalog.programs).map(p=>p.id);const select=$('#admin-record');select.replaceChildren(new Option('New project',''));for(const p of catalog.programs)select.add(new Option('Project '+String(numberedIds.indexOf(p.id)+1).padStart(2,'0')+' · '+p.name,p.id));const countries=$('#admin-countries');countries.replaceChildren();for(const country of catalog.countries){const label=document.createElement('label');label.className='check-label';const input=document.createElement('input');input.type='checkbox';input.name='countries';input.value=country.name;label.append(input,document.createTextNode(country.name));countries.append(label);}}
 function fitOutcomes(){const input=form.elements.outcome;input.style.height='auto';input.style.height=Math.max(100,input.scrollHeight+2)+'px';}
 form.elements.outcome.addEventListener('input',fitOutcomes);
@@ -83,7 +100,7 @@ versionActions.after($('#version-filter-status'),$('#version-diff'));
 const formHeading=document.createElement('div');formHeading.className='record-form-heading';
 formHeading.append($('#edit-record-reference').closest('label'),$('#required-fields-note'));form.prepend(formHeading);
 const reviewFields=()=>[...fields.map(([key])=>form.elements[key].closest('label')),form.querySelector('fieldset'),form.elements.related.closest('label')];
-function filterVersionFields(){const only=$('#version-changes-only').checked;for(const field of reviewFields())field.hidden=only&&!field.classList.contains('version-changed');$('#version-filter-status').textContent=only?(reviewFields().filter(field=>!field.hidden).length+' changed fields shown compared with the current saved version.'):'Showing all fields.';requestAnimationFrame(fitOutcomes);}
+function filterVersionFields(){const only=$('#version-changes-only').checked;for(const field of reviewFields())field.hidden=only&&!field.classList.contains('version-changed');$('#version-filter-status').textContent=only?(reviewFields().filter(field=>!field.hidden).length+' changed fields shown compared with the current saved version.'):'Showing all fields.';for(const group of form.querySelectorAll('.editor-field-group'))group.hidden=![...group.querySelectorAll('.field-group-grid > label')].some(label=>!label.hidden);requestAnimationFrame(fitOutcomes);}
 function selectVersion(index){if(busy||!historyEntries.length)return;slider.value=String(Math.max(0,Math.min(historyEntries.length-1,index)));renderVersion();}
 $('#version-prev').onclick=()=>selectVersion(Number(slider.value)-1);
 $('#version-next').onclick=()=>selectVersion(Number(slider.value)+1);

@@ -1,3 +1,7 @@
+## 3.3.0
+- Grouped edit fields by task, clarified the save action, and improved responsive spacing and focus visibility.
+- Show save feedback near form actions; hide empty groups in changed-fields-only mode.
+
 ## 3.2.4
 - Moved Version history below the edit form.
 - Added optional Edit notes to saved records, version diffs, and change summaries.
