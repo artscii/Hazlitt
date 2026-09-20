@@ -1,3 +1,8 @@
+## 3.1.1
+- Marker selection preserves the map position; docked previews no longer auto-scroll the page.
+- Added clickable version nodes and immediate form previews while scrubbing the history slider.
+- Kept all version labels accessible on narrow screens with a horizontally scrollable timeline.
+
 # 3.1.0 — 2026-09-20
 
 - Preview historical values in the form, mark changed fields and exact changed text in yellow, and preserve unsaved drafts when returning to the current version.
