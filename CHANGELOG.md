@@ -1,3 +1,8 @@
+## 3.2.0
+- Added previous/next, a version dropdown, current/preview context, and return-to-current controls.
+- Added changed-fields-only filtering and responsive current/preview comparisons.
+- Restore confirmation lists affected fields and preserves history as a new version.
+
 ## 3.1.2
 - Put version nodes directly on the slider track and added captured pointer dragging for continuous immediate previews.
 

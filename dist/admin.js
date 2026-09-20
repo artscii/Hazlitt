@@ -52,9 +52,19 @@ $('#admin-delete').onclick=async()=>{if(!current||busy||!confirm('Are you sure?'
 // v3.1.0: record-specific, read-only version review; restores create a new audit version.
 let historyToken=0,historyEntries=[],historyRevision=0,versionDraft=null;
 form.before($('#record-history'));
+// v3.2.0: explicit version review, filtering, and reversible restore controls.
+$('#history-controls').insertAdjacentHTML('afterbegin',`<div class="version-navigation"><button type="button" id="version-prev">← Previous</button><label>Saved version<select id="version-picker"></select></label><button type="button" id="version-next">Next →</button><button type="button" id="version-current">Return to current version</button></div><p id="version-badges" aria-live="polite"></p><label class="check-label"><input type="checkbox" id="version-changes-only"> Show changed fields only</label>`);
+const reviewFields=()=>[...fields.map(([key])=>form.elements[key].closest('label')),form.querySelector('fieldset'),form.elements.related.closest('label')];
+function filterVersionFields(){const only=$('#version-changes-only').checked;for(const field of reviewFields())field.hidden=only&&!field.classList.contains('version-changed');requestAnimationFrame(fitOutcomes);}
+function selectVersion(index){if(busy||!historyEntries.length)return;slider.value=String(Math.max(0,Math.min(historyEntries.length-1,index)));renderVersion();}
+$('#version-prev').onclick=()=>selectVersion(Number(slider.value)-1);
+$('#version-next').onclick=()=>selectVersion(Number(slider.value)+1);
+$('#version-picker').onchange=event=>selectVersion(Number(event.target.value));
+$('#version-current').onclick=()=>{ $('#version-changes-only').checked=false;selectVersion(historyEntries.length-1);};
+$('#version-changes-only').onchange=filterVersionFields;
 const historyStatus=$('#history-status'),historyControls=$('#history-controls'),slider=$('#version-slider'),restoreButton=$('#restore-version');
 async function loadRecordHistory(record){
- const token=++historyToken;historyEntries=[];historyControls.hidden=true;
+ const token=++historyToken;historyEntries=[];historyControls.hidden=true;$('#version-changes-only').checked=false;filterVersionFields();
  if(!record){historyStatus.textContent='Save this project before reviewing its version history.';return;}
  historyStatus.textContent='Loading versions…';
  try{const data=await api('/api/records/'+record.id+'/history');if(token!==historyToken)return;
@@ -67,9 +77,10 @@ async function loadRecordHistory(record){
 }
 // v3.1.1: preload version nodes once; scrubbing updates the form without a request.
 function buildVersionNodes(){
- const nodes=$('#version-nodes');nodes.replaceChildren();
+ const nodes=$('#version-nodes');nodes.replaceChildren();$('#version-picker').replaceChildren();
  $('.version-timeline').style.minWidth=Math.max(0,(historyEntries.length-1)*64+48)+'px';
  historyEntries.forEach((entry,index)=>{
+  const option=document.createElement('option');option.value=String(index);option.textContent='v'+entry.revision+(entry.revision===historyRevision?' · Current':'')+' · '+new Date(entry.at).toLocaleDateString();$('#version-picker').append(option);
   const button=document.createElement('button');button.type='button';button.className='version-node';button.textContent='v'+entry.revision;
   button.style.left=(historyEntries.length===1?50:index/(historyEntries.length-1)*100)+'%';
   button.title='Version '+entry.revision+' · '+new Date(entry.at).toLocaleString();
@@ -84,15 +95,18 @@ function renderVersion(){
  $('#version-description').textContent='v'+entry.revision+' · '+new Date(entry.at).toLocaleString()+' · '+entry.action+' · compared with current v'+historyRevision;
  const container=$('#version-diff');container.replaceChildren();
  const historical=entry.revision!==historyRevision;
+ $('#version-picker').value=slider.value;$('#version-prev').disabled=Number(slider.value)===0||busy;$('#version-next').disabled=Number(slider.value)===historyEntries.length-1||busy;$('#version-current').disabled=!historical||busy;
+ $('#version-badges').textContent='Current: v'+historyRevision+(historical?'  ·  Previewing: v'+entry.revision+' (read-only)':'  ·  Editing current version');
+ $('#version-changes-only').disabled=!historical;if(!historical)$('#version-changes-only').checked=false;
  if(historical&&!versionDraft)versionDraft={values:Object.fromEntries(fields.map(([key])=>[key,form.elements[key].value])),countries:[...form.querySelectorAll('[name=countries]:checked')].map(el=>el.value),related:form.elements.related.checked};
- const display=historical?(snapshot||{}):(versionDraft?{...versionDraft.values,countries:versionDraft.countries,related:versionDraft.related}:current);
+ const display=historical?(snapshot||{}):(versionDraft?{...versionDraft.values,countries:versionDraft.countries,related:versionDraft.related}:{...Object.fromEntries(fields.map(([key])=>[key,form.elements[key].value])),countries:[...form.querySelectorAll('[name=countries]:checked')].map(el=>el.value),related:form.elements.related.checked});
  for(const [key]of fields)form.elements[key].value=display[key]??'';
  form.elements.related.checked=!!display.related;form.querySelectorAll('[name=countries]').forEach(el=>el.checked=!!display.countries?.includes(el.value));
  for(const control of form.elements)control.disabled=historical;
  $('#edit-record-version').value=historical?'Preview v'+entry.revision+' · current v'+historyRevision:'v'+historyRevision;
  form.querySelectorAll('.field-version-diff').forEach(el=>el.remove());form.querySelectorAll('.version-changed').forEach(el=>el.classList.remove('version-changed'));
  const format=value=>Array.isArray(value)?value.join(', '):typeof value==='boolean'?(value?'Yes':'No'):String(value??'');
- let changes=0;
+ let changes=0;const changedNames=[];
  function diffLine(title,text,other){
   const line=document.createElement('p'),heading=document.createElement('strong');heading.textContent=title+': ';line.append(heading);
   let start=0;while(start<text.length&&start<other.length&&text[start]===other[start])start++;
@@ -100,15 +114,18 @@ function renderVersion(){
   line.append(document.createTextNode(text.slice(0,start)));const mark=document.createElement('mark');mark.textContent=text.slice(start,end)||'∅';line.append(mark,document.createTextNode(text.slice(end)));return line;
  }
  for(const key of [...fields.map(([key])=>key),'countries','related']){
-  const reviewed=format(snapshot?.[key]),saved=format(current[key]);if(reviewed===saved)continue;changes++;
+  const reviewed=format(snapshot?.[key]),saved=format(current[key]);if(reviewed===saved)continue;changes++;changedNames.push(fields.find(([name])=>name===key)?.[1]|| (key==='countries'?'Countries':'Related initiative'));
   const target=key==='countries'?form.querySelector('fieldset'):form.elements[key].closest('label');target.classList.add('version-changed');
   const diff=document.createElement('div');diff.className='field-version-diff';diff.append(diffLine('Current v'+historyRevision,saved,reviewed),diffLine('Preview v'+entry.revision,reviewed,saved));target.append(diff);
  }
  const notice=document.createElement('p');notice.textContent=!snapshot?'This version is a deleted state. Restore to remove the current record.':historical?(changes+' changed fields highlighted below. Historical preview is read-only.'):'Current version. You can edit the fields below.';container.append(notice);
+ if(historical&&changes){const summary=document.createElement('p');summary.className='version-change-summary';summary.textContent='Changes: '+changedNames.join(', ')+'.';container.append(summary);}
+ restoreButton.dataset.summary=changedNames.join(', ');
+ filterVersionFields();
  if(!historical)versionDraft=null;
  requestAnimationFrame(fitOutcomes);
  restoreButton.disabled=entry.revision===historyRevision||(!changes&&!!snapshot)||busy;
- restoreButton.textContent=snapshot?'Restore v'+entry.revision:'Restore deleted state';
+ restoreButton.textContent=snapshot?'Restore v'+entry.revision+' as a new version':'Restore deleted state as a new version';
 }
 slider.addEventListener('input',renderVersion);
 // v3.1.2: capture the pointer so dragging keeps scrubbing beyond the thumb.
@@ -130,7 +147,7 @@ slider.addEventListener('lostpointercapture',()=>{scrubPointer=null;});
 restoreButton.onclick=async()=>{
  const entry=historyEntries[Number(slider.value)];if(!current||!entry||busy||restoreButton.disabled)return;
  const target=current,id=target.id;
- if(!confirm('Restore '+target.name+' to '+(entry.after?'v'+entry.revision:'the deleted state')+'? Unsaved form edits will be replaced. This creates a new version and preserves existing history.'))return;
+ if(!confirm('Restore '+target.name+' to '+(entry.after?'v'+entry.revision:'the deleted state')+'?\n\nFields affected: '+restoreButton.dataset.summary+'.\n\nUnsaved form edits will be replaced. This creates a new version and preserves all existing history.'))return;
  busy=true;restoreButton.disabled=true;
  try{await api('/api/rollback/'+entry.id,{method:'POST',body:JSON.stringify({side:'after',revision:historyRevision})});await refresh();load(catalog.programs.find(project=>project.id===id)||null);tell('Version restored. A new version was recorded.');}
  catch(error){historyStatus.textContent=error.message;}
