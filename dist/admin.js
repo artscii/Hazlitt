@@ -111,6 +111,22 @@ function renderVersion(){
  restoreButton.textContent=snapshot?'Restore v'+entry.revision:'Restore deleted state';
 }
 slider.addEventListener('input',renderVersion);
+// v3.1.2: capture the pointer so dragging keeps scrubbing beyond the thumb.
+let scrubPointer=null;
+function scrubAt(clientX){
+ const bounds=slider.getBoundingClientRect(),inset=9;
+ const fraction=Math.max(0,Math.min(1,(clientX-bounds.left-inset)/Math.max(1,bounds.width-inset*2)));
+ const next=String(Math.round(fraction*(historyEntries.length-1)));
+ if(slider.value!==next){slider.value=next;renderVersion();}
+}
+slider.addEventListener('pointerdown',event=>{
+ if(slider.disabled||busy||event.button!==0)return;
+ event.preventDefault();scrubPointer=event.pointerId;slider.setPointerCapture(scrubPointer);
+ slider.focus({preventScroll:true});scrubAt(event.clientX);
+});
+slider.addEventListener('pointermove',event=>{if(event.pointerId===scrubPointer)scrubAt(event.clientX);});
+slider.addEventListener('pointerup',event=>{if(event.pointerId===scrubPointer){scrubAt(event.clientX);slider.releasePointerCapture(scrubPointer);scrubPointer=null;}});
+slider.addEventListener('lostpointercapture',()=>{scrubPointer=null;});
 restoreButton.onclick=async()=>{
  const entry=historyEntries[Number(slider.value)];if(!current||!entry||busy||restoreButton.disabled)return;
  const target=current,id=target.id;
