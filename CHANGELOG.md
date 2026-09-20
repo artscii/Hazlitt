@@ -1,3 +1,7 @@
+## 3.2.2
+- Moved version change summaries and metadata above the slider.
+- Consolidated review actions and tightened form spacing without changing field heights.
+
 ## 3.2.1
 - Added concise saved-change summaries generated from recorded version snapshots, including existing history.
 - Combined the read-only project and version reference.

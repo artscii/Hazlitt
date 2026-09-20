@@ -56,6 +56,16 @@ let historyToken=0,historyEntries=[],historyRevision=0,versionDraft=null;
 form.before($('#record-history'));
 // v3.2.0: explicit version review, filtering, and reversible restore controls.
 $('#history-controls').insertAdjacentHTML('afterbegin',`<div class="version-navigation"><button type="button" id="version-prev">← Previous</button><label>Saved version<select id="version-picker"></select></label><button type="button" id="version-next">Next →</button><button type="button" id="version-current">Return to current version</button></div><p id="version-badges" aria-live="polite"></p><label class="check-label"><input type="checkbox" id="version-changes-only"> Show changed fields only</label><p id="version-filter-status" role="status"></p>`);
+// v3.2.2: keep the selected version's context together above the timeline.
+const versionContext=document.createElement('div');versionContext.className='version-context';
+versionContext.append($('#version-badges'),$('#version-description'),$('#version-summary'));
+const sliderLabel=$('label[for="version-slider"]');sliderLabel.before(versionContext);sliderLabel.classList.add('version-slider-label');
+const versionActions=document.createElement('div');versionActions.className='version-review-actions';
+versionActions.append($('#version-changes-only').closest('label'),$('#restore-version'));
+$('.version-scroll').after(versionActions);
+versionActions.after($('#version-filter-status'),$('#version-diff'));
+const formHeading=document.createElement('div');formHeading.className='record-form-heading';
+formHeading.append($('#edit-record-reference').closest('label'),$('#required-fields-note'));form.prepend(formHeading);
 const reviewFields=()=>[...fields.map(([key])=>form.elements[key].closest('label')),form.querySelector('fieldset'),form.elements.related.closest('label')];
 function filterVersionFields(){const only=$('#version-changes-only').checked;for(const field of reviewFields())field.hidden=only&&!field.classList.contains('version-changed');$('#version-filter-status').textContent=only?(reviewFields().filter(field=>!field.hidden).length+' changed fields shown compared with the current saved version.'):'Showing all fields.';requestAnimationFrame(fitOutcomes);}
 function selectVersion(index){if(busy||!historyEntries.length)return;slider.value=String(Math.max(0,Math.min(historyEntries.length-1,index)));renderVersion();}
@@ -74,7 +84,7 @@ async function loadRecordHistory(record){
  if(!historyEntries.length){historyStatus.textContent='No saved versions yet. The first edit will create v1.';return;}
  slider.max=String(historyEntries.length-1);slider.value=slider.max;slider.disabled=historyEntries.length===1;historyControls.hidden=false;
  buildVersionNodes();
- historyStatus.textContent='Slide to preview saved versions in the form. Yellow marks show changes from the current saved record. Restore a version to make it current.';renderVersion();
+ historyStatus.textContent='Browse saved versions; yellow highlights compare with the current record.';renderVersion();
  }catch(error){if(token===historyToken)historyStatus.textContent=error.message;}
 }
 // v3.1.1: preload version nodes once; scrubbing updates the form without a request.
@@ -94,8 +104,8 @@ function renderVersion(){
  const entry=historyEntries[Number(slider.value)];if(!entry||!current)return;
  $('#version-nodes').querySelectorAll('button').forEach((button,index)=>button.setAttribute('aria-pressed',String(index===Number(slider.value))));
  const snapshot=entry.after;slider.setAttribute('aria-valuetext','Version '+entry.revision);
- $('#version-description').textContent='v'+entry.revision+' · '+new Date(entry.at).toLocaleString()+' · '+entry.action+' · compared with current v'+historyRevision;
- $('#version-summary').textContent='Saved changes: '+(entry.summary||'Summary unavailable.');
+ $('#version-description').textContent='v'+entry.revision+' · '+new Date(entry.at).toLocaleString()+' · '+entry.action;
+ $('#version-summary').textContent=entry.summary||'Summary unavailable.';
  const container=$('#version-diff');container.replaceChildren();
  const historical=entry.revision!==historyRevision;
  $('#version-picker').value=slider.value;$('#version-prev').disabled=Number(slider.value)===0||busy;$('#version-next').disabled=Number(slider.value)===historyEntries.length-1||busy;$('#version-current').disabled=!historical||busy;
