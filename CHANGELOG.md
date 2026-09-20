@@ -1,3 +1,7 @@
+## 3.6.1
+
+- Collapse Canadian review, EHDS review and evidence context by default using accessible, keyboard-friendly disclosure controls.
+
 ## 3.6.0
 - Added Previous/Next navigation and position counts within matching projects.
 - Preserve unsaved drafts during live search and confirm before switching projects.

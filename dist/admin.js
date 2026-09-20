@@ -24,7 +24,7 @@ for(const [title,keys] of editorGroups){
 }
 const actionMessage=document.createElement('p');actionMessage.id='edit-action-message';$('.admin-actions').prepend(actionMessage);
 form.querySelector('button[type="submit"]').textContent='Save changes';
-// v3.6.0: navigate only the current ordered search subset, without discarding drafts.
+// v3.6.1: navigate only the current ordered search subset, without discarding drafts.
 const projectNavigation=document.createElement('div');projectNavigation.className='project-navigation';projectNavigation.innerHTML='<button type="button" id="project-prev" aria-label="Previous matching project">← Previous</button><span id="project-position" role="status" aria-live="polite"></span><button type="button" id="project-next" aria-label="Next matching project">Next →</button>';
 $('.admin-toolbar').after(projectNavigation);
 function draftSignature(){return JSON.stringify({values:fields.map(([key])=>form.elements[key].value),related:form.elements.related.checked,countries:[...form.querySelectorAll('[name=countries]:checked')].map(el=>el.value).sort()});}
