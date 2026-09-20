@@ -1,3 +1,10 @@
+# 3.1.0 — 2026-09-20
+
+- Preview historical values in the form, mark changed fields and exact changed text in yellow, and preserve unsaved drafts when returning to the current version.
+- Replace the separate log page with a per-record version slider and field differences inside Admin.
+- Restore reviewed versions as new audited revisions, retaining stale-version and authentication checks.
+- Redirect old log links to Admin; no versions before v1 are offered.
+
 # 3.0.1 — 2026-09-20
 
 - Display current record version read-only in Admin.

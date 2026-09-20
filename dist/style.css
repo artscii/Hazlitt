@@ -184,3 +184,9 @@ mark.search-match{background:#dceffc;color:inherit;border-radius:2px;padding:0;b
 
 /* v3.0.1: read-only version and unavailable rollback state. */
 .admin-section #edit-record-version{background:#edf3f6;color:#526c78}.admin-section button:disabled{opacity:.5;cursor:not-allowed}
+
+/* v3.1.0: version review within the selected record editor. */
+.record-history{margin-top:36px;padding-top:24px;border-top:1px solid #cddce3}.record-history h2{margin-bottom:12px}.admin-section #version-slider{padding:0;width:100%;accent-color:#00777e}.version-change{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}.version-change h3{grid-column:1/-1;margin:0;font-size:15px}.version-change>div{padding:12px;background:#edf4f8;border-radius:5px;min-width:0}.version-change>div:nth-of-type(2){background:#f4f7f8}.version-change p{white-space:pre-wrap;overflow-wrap:anywhere;margin:6px 0;font-size:14px}.version-change strong{font-size:13px;color:#526c78}@media(max-width:740px){.version-change{grid-template-columns:1fr}}
+
+/* v3.1.0: exact changed text alongside historical form values. */
+.admin-section .version-changed{background:#fffbe7;border-radius:6px;padding:10px;outline:1px solid #ebd98a}.field-version-diff{font-size:13px;overflow-wrap:anywhere;white-space:pre-wrap;margin-top:8px}.field-version-diff p{margin:6px 0}.field-version-diff mark{background:#ffe88e;color:#17313e}.admin-section #record-form :disabled{opacity:1;color:#526c78}.record-history{margin:20px 0 28px}

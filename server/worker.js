@@ -50,6 +50,12 @@ export default {async fetch(request,env){
    if(path==='/api/session'&&request.method==='GET')return json({authenticated:!!auth});
    if(!auth)return json({error:'Sign in to edit records'},401);
    if(path==='/api/audit'&&request.method==='GET'){const result=await database(env).prepare('SELECT id,at,action,record_id,name,ip,revision FROM audit_log ORDER BY at DESC LIMIT 200').all();return json({entries:result.results});}
+   const recordHistory=path.match(/^\/api\/records\/([a-zA-Z0-9-]+)\/history$/);
+   if(recordHistory&&request.method==='GET'){
+    const entries=(await database(env).prepare('SELECT id,at,action,revision,before,after FROM audit_log WHERE record_id=? ORDER BY revision ASC').bind(recordHistory[1]).all()).results;
+    const row=await database(env).prepare('SELECT revision FROM records WHERE id=?').bind(recordHistory[1]).first();
+    return json({currentRevision:row?.revision??0,entries:entries.map(entry=>({...entry,before:entry.before?JSON.parse(entry.before):null,after:entry.after?JSON.parse(entry.after):null}))});
+   }
    const historyMatch=path.match(/^\/api\/audit\/([a-zA-Z0-9-]+)$/);
    if(historyMatch&&request.method==='GET'){
     const entry=await database(env).prepare('SELECT * FROM audit_log WHERE id = ?').bind(historyMatch[1]).first();if(!entry)return json({error:'Version not found'},404);
@@ -90,7 +96,8 @@ export default {async fetch(request,env){
    return json({error:'Not found'},404);
   }
   if(path==='/healthz'){await database(env).prepare('SELECT COUNT(*) AS n FROM records').first();return new Response('ok');}
-  const asset=ASSETS[path==='/'?'/index.html':path==='/admin'||path==='/admin/'?'/admin.html':path==='/log'||path==='/log/'?'/log.html':path];if(!asset)return new Response('Not found',{status:404});
+  if(['/log','/log/','/log.html'].includes(path))return Response.redirect(url.origin+'/admin#record-history',302);
+  const asset=ASSETS[path==='/'?'/index.html':path==='/admin'||path==='/admin/'?'/admin.html':path];if(!asset)return new Response('Not found',{status:404});
   if(!['GET','HEAD'].includes(request.method))return new Response('Method not allowed',{status:405});
   return new Response(request.method==='HEAD'?null:asset.body,{headers:{'Content-Type':asset.type,'Cache-Control':'no-cache','X-Content-Type-Options':'nosniff','Referrer-Policy':'strict-origin-when-cross-origin'}});
  }catch(error){console.error('Atlas request failed',error.message);return json({error:path.startsWith('/api/')&&['POST','PUT'].includes(request.method)&&!(error.message||'').includes('SQL')?error.message:'The data service is unavailable. Please retry.'},400);}
