@@ -50,6 +50,8 @@ const aucExplanation=`<div class="metric-help"><h4>AUC, in plain language</h4><p
 const badge=p=>`<span class="badge ${p.kind}">${p.status}</span>`;
 const links=p=>`<a href="${p.source}" target="_blank" rel="noopener">${p.sourceLabel||"Read the evidence"} ↗</a>${p.source2?` · <a href="${p.source2}" target="_blank" rel="noopener">${p.source2Label||"Related report"} ↗</a>`:''}`;
 const recordNumbers=new Map(programs.map((p,index)=>[p.id,index+1]));
+// v3.9.2: order every selected/search subset numerically, independent of previous selections.
+const orderProjectIds=ids=>[...ids].sort((a,b)=>recordNumbers.get(a)-recordNumbers.get(b));
 const renderProgram=p=>`<article class="program" id="${p.id}"><a class="edit-project" href="/admin?project=${encodeURIComponent(p.id)}" aria-label="Edit project: ${p.name}" title="Edit project"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5 4 4M4 20l4-1L20 7a2.8 2.8 0 0 0-4-4L4 15Z"/></svg></a><div><a class="back-to-map" href="#map-overview"><svg class="map-return-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2Z"/><path d="M9 3v16M15 5v16"/></svg>Back to map</a><span class="record-number" aria-label="Project number ${recordNumbers.get(p.id)}">Project ${String(recordNumbers.get(p.id)).padStart(2,'0')}</span>${badge(p)}<h3>${p.name}</h3><p class="geo">${p.geo}</p><p class="geo">${p.date}</p><a class="share-project" href="${escapeHTML(projectURL(p.id))}" aria-label="Share project: ${p.name}">Share project</a><span class="share-feedback" role="status"></span></div><div><p class="label">REPORTED OUTCOMES</p><p>${p.outcome}</p>${links(p)}</div><div><p class="label">SPONSORS & PARTNERS</p><p>${p.partners}</p>${p.tel?`<a class="phone" href="tel:${p.tel}">${p.phone}</a>`:p.email?`<a class="phone" href="mailto:${p.email}">${p.email}</a>`:''}<p class="contact-note">${p.contact}</p>${p.contactSource?`<a href="${p.contactSource}" target="_blank" rel="noopener">Contact source ↗</a>`:''}</div></article>`;
 document.querySelector('#programs').innerHTML=programs.filter(p=>!p.related).map(renderProgram).join('');
 document.querySelector('#related-programs').innerHTML=programs.filter(p=>p.related).map(renderProgram).join('');
@@ -230,9 +232,9 @@ if(!location.hash&&!new URL(location.href).searchParams.has('project')){
 // v1.3.11: keep search results, map coverage and the first result in sync.
 function searchPlace(place){
  const query=document.querySelector('#project-search').value.trim();
- if(!query&&!sharedProjectId)return place;
+ if(!query&&!sharedProjectId)return {...place,ids:orderProjectIds(place.ids)};
  const ids=matchingProjectIds(query);
- return {...place,ids:place.ids.filter(id=>ids.has(id))};
+ return {...place,ids:orderProjectIds(place.ids.filter(id=>ids.has(id)))};
 }
 function syncSearchMap({preserveMapPosition=false}={}){
  closeTip(true);filterProfiles();
@@ -248,11 +250,12 @@ function syncSearchMap({preserveMapPosition=false}={}){
  document.querySelectorAll('article.program').forEach(card=>{card.classList.remove('search-first');card.classList.toggle('selected-profile',!query&&!!card.closest('#selected-projects'));});
  const first=[...document.querySelectorAll('article.program')].find(card=>!card.hidden);
  if((query||sharedProjectId)&&first){
-  first.classList.add('search-first');
+  first.classList.remove('search-first');
   const locations=places.filter(p=>p.ids.some(id=>matches.has(id)));
-  const orderedIds=[...document.querySelectorAll('article.program')].filter(card=>!card.hidden).map(card=>card.id);
+  const orderedIds=orderProjectIds([...matches]);
   prioritizeProfiles({name:sharedProjectId?programs.find(p=>p.id===sharedProjectId).name:'Search results',ids:orderedIds});
   showDetail({name:locations.map(p=>p.name).join(' · '),ids:orderedIds});
+  document.getElementById(orderedIds[0])?.classList.add('search-first');
   document.querySelectorAll('.marker').forEach(marker=>{const selected=locations.some(p=>p.name===marker.dataset.name);marker.classList.toggle('selected',selected);marker.setAttribute('aria-pressed',String(selected));});
   const place=locations[0];if(place&&!preserveMapPosition){mapScroller.scrollLeft=Math.max(0,projectX(place.lon)/100*mapScroller.scrollWidth-mapScroller.clientWidth/2);updateMapScrollCue();}
  }else if(!query){

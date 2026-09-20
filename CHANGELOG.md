@@ -1,3 +1,8 @@
+## 3.9.2
+
+- Always sort Atlas search and location subsets by numeric project number, including selected-location details and tooltip records.
+- Highlight the lowest-numbered search match; retain Admin numeric subset ordering.
+
 ## 3.9.1
 
 - Apply the configured card-flip transition to the home page Admin link, retaining normal Admin sign-in and modified-click behavior.
