@@ -1,3 +1,11 @@
+## 4.0.0
+
+- Add Excel import/export above Admin configuration, with off-thread workbook processing and a reusable template.
+- Preview duplicates and changed matches; require explicit update selection and confirm atomic bulk imports.
+- Download a review-only bulk import diff workbook with row decisions and yellow-highlighted current/proposed field comparisons.
+- Log completed exports, imports and undo actions in global version history; protect later edits when undoing imports.
+- Preserve Edit notes, enforce schema validation, and bold the Project name field.
+
 ## 3.9.2
 
 - Label each record’s sharing link “Share project link”.

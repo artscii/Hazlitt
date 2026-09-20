@@ -29,6 +29,13 @@
       "when": 1789936081298,
       "tag": "0003_site_configuration",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1789939144497,
+      "tag": "0004_file_operations",
+      "breakpoints": true
     }
   ]
 }

@@ -6,3 +6,6 @@ dist/.openai/
 !.env.example
 .local-data/
 .DS_Store
+
+dist/exceljs.min.js
+dist/exceljs-LICENSE.txt

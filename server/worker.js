@@ -31,7 +31,7 @@ async function records(env){
  return [...all.values()];
 }
 async function session(request,env){const token=request.headers.get('Cookie')?.match(/(?:^|;\s*)atlas_session=([a-f0-9]{64})(?:;|$)/)?.[1];if(!token)return null;const key=await hash(token);const row=await database(env).prepare('SELECT token FROM sessions WHERE token = ? AND expires > ?').bind(key,Date.now()).first();return row?key:null;}
-async function body(request){if(Number(request.headers.get('content-length'))>65536)throw new Error('Request too large');const text=await request.text();if(text.length>65536)throw new Error('Request too large');return JSON.parse(text);}
+async function body(request,limit=65536){if(Number(request.headers.get('content-length'))>limit)throw new Error('Request too large');const text=await request.text();if(text.length>limit)throw new Error('Request too large');return JSON.parse(text);}
 const fields=['name','status','kind','geo','metric','metricLabel','short','outcome','partners','phone','tel','email','contact','source','sourceLabel','source2','source2Label','contactSource','date','editNotes'];
 function validate(input){
  const out={};for(const field of fields){const value=input[field]??'';if(typeof value!=='string'||value.length>12000)throw new Error('Invalid '+field);out[field]=value.trim();}
@@ -65,6 +65,7 @@ export default {async fetch(request,env){
    const auth=await session(request,env);
    if(path==='/api/session'&&request.method==='GET')return json({authenticated:!!auth});
    if(!auth)return json({error:'Sign in to edit records'},401);
+   const transfer=await transferRoute(request,env,path,url);if(transfer)return transfer;
    if(path==='/api/config'&&request.method==='PUT'){
     const input=await body(request);
     if(typeof input.editFlipEnabled!=='boolean'||!Number.isInteger(input.editFlipDuration)||input.editFlipDuration<300||input.editFlipDuration>1600)return json({error:'Choose a duration between 300 and 1600 milliseconds.'},400);
