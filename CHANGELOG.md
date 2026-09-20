@@ -1,3 +1,7 @@
+## 3.6.0
+- Added Previous/Next navigation and position counts within matching projects.
+- Preserve unsaved drafts during live search and confirm before switching projects.
+
 ## 3.5.1
 - Version review now displays changed fields only; the full form remains intact.
 
