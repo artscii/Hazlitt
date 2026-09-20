@@ -2,7 +2,7 @@
 function summarizeVersion(action,before,after){
  if(!after)return 'Deleted project.';
  if(!before)return action==='rollback'?'Restored deleted project.':'Created project.';
- const labels={"name": "Project name", "status": "Evidence status", "kind": "Category", "geo": "Location description", "metric": "Headline outcome", "metricLabel": "Headline outcome explanation", "short": "Short description", "outcome": "Reported outcomes", "partners": "Sponsors and partners", "phone": "Contact phone", "tel": "Telephone link number", "email": "Contact email", "contact": "Contact notes", "source": "Primary evidence URL", "sourceLabel": "Primary evidence link label", "source2": "Additional evidence URL", "source2Label": "Additional evidence link label", "contactSource": "Contact source URL", "date": "Evidence date / review note", "countries": "Country or countries", "related": "Related initiative (AI not documented)"};
+ const labels={"name": "Project name", "status": "Evidence status", "kind": "Category", "geo": "Location description", "metric": "Headline outcome", "metricLabel": "Headline outcome explanation", "short": "Short description", "outcome": "Reported outcomes", "partners": "Sponsors and partners", "phone": "Contact phone", "tel": "Telephone link number", "email": "Contact email", "contact": "Contact notes", "source": "Primary evidence URL", "sourceLabel": "Primary evidence link label", "source2": "Additional evidence URL", "source2Label": "Additional evidence link label", "contactSource": "Contact source URL", "date": "Evidence date / review note", "editNotes": "Edit notes", "countries": "Country or countries", "related": "Related initiative (AI not documented)"};
  const changed=Object.keys(labels).filter(key=>JSON.stringify(before[key]??'')!==JSON.stringify(after[key]??''));
  if(!changed.length)return 'Saved without field changes.';
  // v3.2.3: match visible form labels and explicitly identify them as fields.
@@ -32,7 +32,7 @@ async function records(env){
 }
 async function session(request,env){const token=request.headers.get('Cookie')?.match(/(?:^|;\s*)atlas_session=([a-f0-9]{64})(?:;|$)/)?.[1];if(!token)return null;const key=await hash(token);const row=await database(env).prepare('SELECT token FROM sessions WHERE token = ? AND expires > ?').bind(key,Date.now()).first();return row?key:null;}
 async function body(request){if(Number(request.headers.get('content-length'))>65536)throw new Error('Request too large');const text=await request.text();if(text.length>65536)throw new Error('Request too large');return JSON.parse(text);}
-const fields=['name','status','kind','geo','metric','metricLabel','short','outcome','partners','phone','tel','email','contact','source','sourceLabel','source2','source2Label','contactSource','date'];
+const fields=['name','status','kind','geo','metric','metricLabel','short','outcome','partners','phone','tel','email','contact','source','sourceLabel','source2','source2Label','contactSource','date','editNotes'];
 function validate(input){
  const out={};for(const field of fields){const value=input[field]??'';if(typeof value!=='string'||value.length>12000)throw new Error('Invalid '+field);out[field]=value.trim();}
  for(const required of ['name','status','geo','metric','metricLabel','short','outcome','partners','source','date'])if(!out[required])throw new Error('Please complete '+required);

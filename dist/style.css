@@ -208,3 +208,6 @@ mark.search-match{background:#dceffc;color:inherit;border-radius:2px;padding:0;b
 
 /* v3.2.3: emphasize field names only within version summaries. */
 .version-node-summary strong{font-weight:700;color:#294955}
+
+/* v3.2.4: country picker shows results only during search. */
+#selected-countries{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}#selected-countries:empty{display:none}.admin-section .country-chip{min-height:36px;padding:5px 10px;font-size:14px;background:#e9f3f6;border-color:#c6d8df}#country-results{max-height:200px;overflow-y:auto;border:1px solid #c6d8df;border-radius:5px;padding:4px;margin-top:4px}.admin-section #country-results button{display:block;width:100%;text-align:left;background:white;border:0;border-radius:3px}.admin-section #country-results button:hover,.admin-section #country-results button:focus-visible{background:#e9f3f6}

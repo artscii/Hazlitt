@@ -1,3 +1,8 @@
+## 3.2.4
+- Moved Version history below the edit form.
+- Added optional Edit notes to saved records, version diffs, and change summaries.
+- Replaced the visible country checkbox grid with a search picker and compact removable selections.
+
 ## 3.2.3
 - Version node summaries use exact form labels in bold and explicitly describe changed fields.
 
