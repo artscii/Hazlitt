@@ -89,7 +89,7 @@ export default {async fetch(request,env){
    return json({error:'Not found'},404);
   }
   if(path==='/healthz'){await database(env).prepare('SELECT COUNT(*) AS n FROM records').first();return new Response('ok');}
-  const asset=ASSETS[path==='/'?'/index.html':path];if(!asset)return new Response('Not found',{status:404});
+  const asset=ASSETS[path==='/'?'/index.html':path==='/admin'||path==='/admin/'?'/admin.html':path==='/log'||path==='/log/'?'/log.html':path];if(!asset)return new Response('Not found',{status:404});
   if(!['GET','HEAD'].includes(request.method))return new Response('Method not allowed',{status:405});
   return new Response(request.method==='HEAD'?null:asset.body,{headers:{'Content-Type':asset.type,'Cache-Control':'no-cache','X-Content-Type-Options':'nosniff','Referrer-Policy':'strict-origin-when-cross-origin'}});
  }catch(error){console.error('Atlas request failed',error.message);return json({error:path.startsWith('/api/')&&['POST','PUT'].includes(request.method)&&!(error.message||'').includes('SQL')?error.message:'The data service is unavailable. Please retry.'},400);}

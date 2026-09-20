@@ -1,3 +1,9 @@
+# 3.0.0 — 2026-09-20
+
+- Move project editing to /admin and audit/rollback history to /log.
+- Reuse the Atlas header, favicon, stylesheet and footer; add navigation across pages.
+- Preserve server-enforced authentication and share existing sessions across management pages.
+
 # 2.7.8 — 2026-09-19
 
 - Automatically populate the edit form with the first numbered search match, preserving search focus and avoiding reload of the same record.
