@@ -1,5 +1,6 @@
 ## 3.9.2
 
+- Label each record’s sharing link “Share project link”.
 - Always sort Atlas search and location subsets by numeric project number, including selected-location details and tooltip records.
 - Highlight the lowest-numbered search match; retain Admin numeric subset ordering.
 
