@@ -1,3 +1,6 @@
+## 3.4.1
+- Fixed Save and Delete text contrast in active and disabled historical-preview states.
+
 ## 3.4.0
 - Added map pan buttons, larger marker hit areas, skip navigation, and direct access to filtered results.
 - Improved mobile introduction spacing, profile readability, and expandable map context.
