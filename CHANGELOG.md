@@ -1,3 +1,13 @@
+## 3.8.0
+
+- Add site-wide Admin configuration for enabling the full-screen edit card flip and setting its total duration (0.3–1.6 seconds).
+- Store settings behind Admin authentication; preserve reduced-motion preferences.
+
+## 3.7.1
+
+- Turn the full page edge-on and reveal Admin as the reverse face, with matched 360ms half-turns and reduced-motion support.
+- Wait for the selected record before revealing the editor; preserve browser Back recovery.
+
 ## 3.7.0
 
 - Add a pencil link on each project, password-gated direct editing, and a brief page-flip transition that respects reduced motion.

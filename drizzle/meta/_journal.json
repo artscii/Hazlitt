@@ -22,6 +22,13 @@
       "when": 1789843831178,
       "tag": "0002_groovy_sprite",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1789936081298,
+      "tag": "0003_site_configuration",
+      "breakpoints": true
     }
   ]
 }

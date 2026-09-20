@@ -384,11 +384,12 @@ window.dispatchEvent(new Event('atlas-ready'));
  const dialog=document.createElement('dialog');dialog.className='edit-access-dialog';dialog.setAttribute('aria-labelledby','edit-access-title');
  dialog.innerHTML=`<form><h2 id="edit-access-title">Edit project</h2><p>Enter the Admin password to open this project in the editor.</p><label for="edit-access-password">Admin password</label><input id="edit-access-password" type="password" autocomplete="current-password" required><p class="edit-access-error" role="alert"></p><div class="edit-access-actions"><button type="button" data-cancel>Cancel</button><button type="submit">Open editor</button></div></form>`;
  document.body.append(dialog);let destination='',pending=false;
- window.addEventListener('pageshow',()=>{pending=false;document.querySelector('main').getAnimations().forEach(animation=>animation.cancel());});
+ window.addEventListener('pageshow',()=>{pending=false;document.body.getAnimations().forEach(animation=>animation.cancel());document.documentElement.classList.remove('screen-flipping');document.body.style.transformOrigin='';});
  const error=dialog.querySelector('.edit-access-error'),password=dialog.querySelector('input'),submit=dialog.querySelector('[type=submit]');
  async function openEditor(url){
-  if(!matchMedia('(prefers-reduced-motion: reduce)').matches){
-   try{sessionStorage.setItem('atlas-editor-flip','1');const main=document.querySelector('main');await main.animate([{transform:'perspective(1600px) rotateY(0deg)',opacity:1},{transform:'perspective(1600px) rotateY(-8deg)',opacity:0}],{duration:180,easing:'ease-in',fill:'forwards'}).finished;}catch{}
+  const config=window.atlasCatalog?.config||{editFlipEnabled:true,editFlipDuration:720};
+  if(config.editFlipEnabled&&!matchMedia('(prefers-reduced-motion: reduce)').matches){
+   try{sessionStorage.setItem('atlas-editor-flip',JSON.stringify({duration:config.editFlipDuration}));document.documentElement.classList.add('screen-flipping');document.body.style.transformOrigin='50% '+(scrollY+innerHeight/2)+'px';await document.body.animate([{transform:'perspective(1800px) rotateY(0deg)',filter:'brightness(1)'},{transform:'perspective(1800px) rotateY(-90deg)',filter:'brightness(.72)'}],{duration:config.editFlipDuration/2,easing:'cubic-bezier(.55,0,1,.45)',fill:'forwards'}).finished;}catch{}
   }
   location.assign(url);
  }

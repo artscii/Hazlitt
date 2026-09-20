@@ -44,10 +44,14 @@ function validate(input){
  out.countries=[...new Set(input.countries)];out.related=!!input.related;return out;
 }
 function auditStatement(env,request,action,record,before,deleted=false){return database(env).prepare('INSERT INTO audit_log (id,at,action,record_id,name,ip,before,after,revision) SELECT ?,?,?,?,?,?,?,?,(SELECT revision FROM records WHERE id=?) WHERE changes() > 0').bind(crypto.randomUUID(),Date.now(),action,record.id,record.name,request.headers.get('CF-Connecting-IP')||'Unavailable',before?JSON.stringify(before):null,action==='delete'||deleted?null:JSON.stringify(record),record.id);}
+// v3.8.0: shared presentation settings; writes require the existing Admin session.
+const defaultConfig={editFlipEnabled:true,editFlipDuration:720};
+async function siteConfig(env){const row=await database(env).prepare('SELECT payload FROM site_settings WHERE key=?').bind('presentation').first();return row?{...defaultConfig,...JSON.parse(row.payload)}:{...defaultConfig};}
 export default {async fetch(request,env){
  const url=new URL(request.url),path=url.pathname;
  try{
-  if(path==='/api/catalog'&&request.method==='GET')return json({programs:await records(env),countries:COUNTRIES});
+  if(path==='/api/catalog'&&request.method==='GET')return json({programs:await records(env),countries:COUNTRIES,config:await siteConfig(env)});
+  if(path==='/api/config'&&request.method==='GET')return json(await siteConfig(env));
   if(path.startsWith('/api/')){
    if(!['GET','HEAD'].includes(request.method)&&request.headers.get('Origin')!==url.origin)return json({error:'Invalid request origin'},403);
    if(path==='/api/login'&&request.method==='POST'){
@@ -61,6 +65,13 @@ export default {async fetch(request,env){
    const auth=await session(request,env);
    if(path==='/api/session'&&request.method==='GET')return json({authenticated:!!auth});
    if(!auth)return json({error:'Sign in to edit records'},401);
+   if(path==='/api/config'&&request.method==='PUT'){
+    const input=await body(request);
+    if(typeof input.editFlipEnabled!=='boolean'||!Number.isInteger(input.editFlipDuration)||input.editFlipDuration<300||input.editFlipDuration>1600)return json({error:'Choose a duration between 300 and 1600 milliseconds.'},400);
+    const config={editFlipEnabled:input.editFlipEnabled,editFlipDuration:input.editFlipDuration};
+    await database(env).prepare('INSERT INTO site_settings (key,payload) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET payload=excluded.payload').bind('presentation',JSON.stringify(config)).run();return json(config);
+   }
+
    if(path==='/api/audit'&&request.method==='GET'){const result=await database(env).prepare('SELECT id,at,action,record_id,name,ip,revision FROM audit_log ORDER BY at DESC LIMIT 200').all();return json({entries:result.results});}
    const recordHistory=path.match(/^\/api\/records\/([a-zA-Z0-9-]+)\/history$/);
    if(recordHistory&&request.method==='GET'){

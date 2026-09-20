@@ -5,7 +5,8 @@ const head=source.match(/<head>[\s\S]*?<\/head>/)[0].replace(/<script[\s\S]*?<\/
 const header=source.match(/<header>[\s\S]*?<\/header>/)[0].replace('href="#"','href="/"');
 const footer=source.match(/<footer>[\s\S]*?<\/footer>/)[0];
 for(const [name,title] of [['admin','Admin']]){
- const pageHead=head.replace('<title>Hazlitt Creek Evidence Atlas</title>',`<title>${title} · Hazlitt Creek Evidence Atlas</title>`).replace('</head>',`<script defer src="/${name}.js"></script></head>`);
+ const flipBootstrap=`<script>try{if(sessionStorage.getItem('atlas-editor-flip')&&!matchMedia('(prefers-reduced-motion: reduce)').matches){document.documentElement.classList.add('editor-flip-pending');setTimeout(()=>document.documentElement.classList.remove('editor-flip-pending'),3000);}}catch{}</script><style>.editor-flip-pending body{visibility:hidden}</style>`;
+ const pageHead=head.replace('<head>','<head>'+flipBootstrap).replace('<title>Hazlitt Creek Evidence Atlas</title>',`<title>${title} · Hazlitt Creek Evidence Atlas</title>`).replace('</head>',`<script defer src="/${name}.js"></script></head>`);
  fs.writeFileSync(`dist/${name}.html`,`<!doctype html><html lang="en">${pageHead}<body>${header}<main class="management-page"><nav class="page-navigation" aria-label="Management navigation"><a href="/">Back to Atlas</a><a href="/admin" ${name==='admin'?'aria-current="page"':''}>Admin</a></nav><h1>${title}</h1><div id="${name}-page" class="${name==='log'?'admin-section edit-log':''}"></div></main>${footer}</body></html>`);
 }
 const assets={};for(const name of ['index.html','admin.html','app.js','admin.js','style.css','map.svg'])assets['/'+name]={body:fs.readFileSync('dist/'+name,'utf8'),type:({'html':'text/html; charset=utf-8','js':'application/javascript; charset=utf-8','css':'text/css; charset=utf-8','svg':'image/svg+xml'})[name.split('.').pop()]};
