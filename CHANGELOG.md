@@ -1,3 +1,8 @@
+## 3.2.1
+- Added concise saved-change summaries generated from recorded version snapshots, including existing history.
+- Combined the read-only project and version reference.
+- Enabled changed-fields-only review across the timeline with an explicit result count.
+
 ## 3.2.0
 - Added previous/next, a version dropdown, current/preview context, and return-to-current controls.
 - Added changed-fields-only filtering and responsive current/preview comparisons.

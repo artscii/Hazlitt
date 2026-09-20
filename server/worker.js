@@ -1,3 +1,13 @@
+// v3.2.1: summaries use the immutable before/after snapshots, including older versions.
+function summarizeVersion(action,before,after){
+ if(!after)return 'Deleted project.';
+ if(!before)return action==='rollback'?'Restored deleted project.':'Created project.';
+ const labels={name:'project name',status:'evidence status',kind:'category',geo:'location description',countries:'countries',metric:'headline outcome',metricLabel:'outcome explanation',short:'short description',outcome:'reported outcomes',partners:'sponsors and partners',phone:'contact phone',tel:'telephone link',email:'contact email',contact:'contact notes',source:'primary evidence URL',sourceLabel:'primary evidence label',source2:'additional evidence URL',source2Label:'additional evidence label',contactSource:'contact source',date:'evidence date',related:'related initiative flag'};
+ const changed=Object.keys(labels).filter(key=>JSON.stringify(before[key]??'')!==JSON.stringify(after[key]??''));
+ if(!changed.length)return 'Saved without field changes.';
+ const shown=changed.slice(0,4).map(key=>labels[key]);
+ return (action==='rollback'?'Restored version; changed ':'Updated ')+shown.join(', ')+(changed.length>4?' and '+(changed.length-4)+' more fields':'')+'.';
+}
 // Atlas 2.0.0: shared records and server-verified administrator sessions.
 const json=(data,status=200,headers={})=>new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff',...headers}});
 const hex=bytes=>Array.from(new Uint8Array(bytes),b=>b.toString(16).padStart(2,'0')).join('');
@@ -54,7 +64,7 @@ export default {async fetch(request,env){
    if(recordHistory&&request.method==='GET'){
     const entries=(await database(env).prepare('SELECT id,at,action,revision,before,after FROM audit_log WHERE record_id=? ORDER BY revision ASC').bind(recordHistory[1]).all()).results;
     const row=await database(env).prepare('SELECT revision FROM records WHERE id=?').bind(recordHistory[1]).first();
-    return json({currentRevision:row?.revision??0,entries:entries.map(entry=>({...entry,before:entry.before?JSON.parse(entry.before):null,after:entry.after?JSON.parse(entry.after):null}))});
+    return json({currentRevision:row?.revision??0,entries:entries.map(entry=>{const before=entry.before?JSON.parse(entry.before):null,after=entry.after?JSON.parse(entry.after):null;return {...entry,before,after,summary:summarizeVersion(entry.action,before,after)};})});
    }
    const historyMatch=path.match(/^\/api\/audit\/([a-zA-Z0-9-]+)$/);
    if(historyMatch&&request.method==='GET'){
