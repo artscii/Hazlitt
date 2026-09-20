@@ -1,3 +1,7 @@
+# 2.7.8 — 2026-09-19
+
+- Automatically populate the edit form with the first numbered search match, preserving search focus and avoiding reload of the same record.
+
 # 2.7.7 — 2026-09-19
 
 - Populate the Admin project menu with the live search subset, ordered by project number.

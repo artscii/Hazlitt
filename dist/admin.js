@@ -35,6 +35,8 @@ function searchAdminProjects(){
  select.disabled=!matches.length;
  select.value=matches.some(p=>p.id===current?.id)?current.id:'';
  $('#admin-search-status').textContent=query?matches.length+' matching projects in the Project menu.':'';
+ // v2.7.8: load the first match without moving focus out of the search field.
+ if(query&&matches.length&&!busy&&current?.id!==matches[0].id)load(matches[0]);
 }
 for(const event of ['input','search'])$('#admin-project-search').addEventListener(event,searchAdminProjects);
 $('#admin-project-search').addEventListener('keydown',event=>{if(event.key==='Escape'){$('#admin-project-search').value='';searchAdminProjects();}if(event.key==='Enter'){event.preventDefault();const select=$('#admin-record');if(select.options.length===2&&select.options[1].value){load(catalog.programs.find(p=>p.id===select.options[1].value));form.elements.name.focus();}else select.focus();}});
