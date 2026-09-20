@@ -394,8 +394,10 @@ window.dispatchEvent(new Event('atlas-ready'));
   location.assign(url);
  }
  document.addEventListener('click',async event=>{
-  const link=event.target.closest('a.edit-project');if(!link||event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
+  // v3.9.1: the home Admin navigation shares the pencil card transition.
+  const link=event.target.closest('a.edit-project, a[href="/admin"]');if(!link||event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
   event.preventDefault();if(pending)return;pending=true;destination=link.href;
+  if(!link.classList.contains('edit-project')){await openEditor(destination);return;}
   try{const response=await fetch('/api/session',{cache:'no-store'});if(response.ok&&(await response.json()).authenticated){await openEditor(destination);return;}}catch{}
   pending=false;error.textContent='';password.value='';dialog.showModal();password.focus();
  });

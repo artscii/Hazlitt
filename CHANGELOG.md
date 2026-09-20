@@ -1,3 +1,7 @@
+## 3.9.1
+
+- Apply the configured card-flip transition to the home page Admin link, retaining normal Admin sign-in and modified-click behavior.
+
 ## 3.9.0
 
 - Bound version timeline to five nearby nodes (three on mobile), with First/Latest and Previous/Next navigation.
