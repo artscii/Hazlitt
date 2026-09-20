@@ -67,7 +67,7 @@ function renderCountryPicker(){
   const chip=document.createElement('button');chip.type='button';chip.className='country-chip';chip.textContent=input.value+(search.disabled?'':' ×');chip.disabled=search.disabled;chip.setAttribute('aria-label','Remove '+input.value);
   chip.onclick=()=>{input.checked=false;renderCountryPicker();search.focus();};selected.append(chip);
  }
- results.hidden=!query||search.disabled;
+ syncReviewEditors();results.hidden=!query||search.disabled;
  if(results.hidden)return;
  const matches=inputs.filter(input=>!input.checked&&canonical(input.value).includes(query));
  for(const input of matches){const button=document.createElement('button');button.type='button';button.textContent=input.value;button.onclick=()=>{input.checked=true;search.value='';renderCountryPicker();search.focus();};results.append(button);}
@@ -99,8 +99,38 @@ $('.version-scroll').after(versionActions);
 versionActions.after($('#version-filter-status'),$('#version-diff'));
 const formHeading=document.createElement('div');formHeading.className='record-form-heading';
 formHeading.append($('#edit-record-reference').closest('label'),$('#required-fields-note'));form.prepend(formHeading);
-const reviewFields=()=>[...fields.map(([key])=>form.elements[key].closest('label')),form.querySelector('fieldset'),form.elements.related.closest('label')];
-function filterVersionFields(){const only=$('#version-changes-only').checked;for(const field of reviewFields())field.hidden=only&&!field.classList.contains('version-changed');$('#version-filter-status').textContent=only?(reviewFields().filter(field=>!field.hidden).length+' changed fields shown compared with the current saved version.'):'Showing all fields.';for(const group of form.querySelectorAll('.editor-field-group'))group.hidden=![...group.querySelectorAll('.field-group-grid > label')].some(label=>!label.hidden);requestAnimationFrame(fitOutcomes);}
+// v3.5.0: review copies share the main form's draft; history never replaces it.
+function filterVersionFields(){
+ const cards=[...$('#version-diff').querySelectorAll('.version-edit-card')],only=$('#version-changes-only').checked;
+ for(const card of cards)card.hidden=only&&!card.classList.contains('version-changed');
+ const count=cards.filter(card=>!card.hidden).length;
+ $('#version-filter-status').textContent=only?(count+' changed fields shown. The full form above remains available.'):'All fields shown below. Edits update the same draft as the full form.';
+}
+function draftValue(key){return key==='countries'?[...form.querySelectorAll('[name=countries]:checked')].map(el=>el.value):key==='related'?form.elements.related.checked:form.elements[key].value;}
+function syncReviewEditors(){
+ for(const control of section.querySelectorAll('[data-review-field]')){
+  const key=control.dataset.reviewField,value=draftValue(key);
+  if(key==='countries')for(const option of control.options)option.selected=value.includes(option.value);
+  else if(key==='related')control.checked=value;
+  else if(control.value!==value)control.value=value;
+ }
+}
+form.addEventListener('input',syncReviewEditors);form.addEventListener('change',syncReviewEditors);
+function reviewEditor(key,title){
+ const label=document.createElement('label');label.className='version-draft-editor';label.append(document.createTextNode('Edit current '+title.toLowerCase()));
+ let control;
+ if(key==='countries'){
+  control=document.createElement('select');control.multiple=true;control.size=5;
+  for(const country of catalog.countries)control.add(new Option(country.name,country.name));
+ }else{control=form.elements[key].cloneNode(true);control.removeAttribute('id');control.removeAttribute('name');control.removeAttribute('style');control.disabled=false;}
+ control.dataset.reviewField=key;
+ control.addEventListener(key==='countries'||key==='related'?'change':'input',()=>{
+  if(key==='countries'){const selected=[...control.selectedOptions].map(option=>option.value);form.querySelectorAll('[name=countries]').forEach(input=>input.checked=selected.includes(input.value));renderCountryPicker();}
+  else{const original=form.elements[key];if(key==='related')original.checked=control.checked;else original.value=control.value;original.dispatchEvent(new Event('input',{bubbles:true}));}
+  $('#review-draft-status').textContent='Unsaved changes · shared with the full form above.';
+ });
+ label.append(control);return label;
+}
 function selectVersion(index){if(busy||!historyEntries.length)return;slider.value=String(Math.max(0,Math.min(historyEntries.length-1,index)));renderVersion();}
 $('#version-prev').onclick=()=>selectVersion(Number(slider.value)-1);
 $('#version-next').onclick=()=>selectVersion(Number(slider.value)+1);
@@ -117,7 +147,7 @@ async function loadRecordHistory(record){
  if(!historyEntries.length){historyStatus.textContent='No saved versions yet. The first edit will create v1.';return;}
  slider.max=String(historyEntries.length-1);slider.value=slider.max;slider.disabled=historyEntries.length===1;historyControls.hidden=false;
  buildVersionNodes();
- historyStatus.textContent='Browse saved versions; yellow highlights compare with the current record.';renderVersion();
+ historyStatus.textContent='Compare saved versions and edit your current draft below.';renderVersion();
  }catch(error){if(token===historyToken)historyStatus.textContent=error.message;}
 }
 // v3.1.1: preload version nodes once; scrubbing updates the form without a request.
@@ -136,42 +166,37 @@ function buildVersionNodes(){
 }
 function renderVersion(){
  const entry=historyEntries[Number(slider.value)];if(!entry||!current)return;
+ const snapshot=entry.after,historical=entry.revision!==historyRevision;
  $('#version-nodes').querySelectorAll('button').forEach((button,index)=>button.setAttribute('aria-pressed',String(index===Number(slider.value))));
- const snapshot=entry.after;slider.setAttribute('aria-valuetext','Version '+entry.revision);
+ slider.setAttribute('aria-valuetext','Version '+entry.revision);$('#version-picker').value=slider.value;
  $('#version-description').textContent='v'+entry.revision+' · '+new Date(entry.at).toLocaleString()+' · '+entry.action;
- 
+ $('#version-prev').disabled=Number(slider.value)===0||busy;$('#version-next').disabled=Number(slider.value)===historyEntries.length-1||busy;$('#version-current').disabled=!historical||busy;
+ $('#version-badges').textContent=projectVersion(current,entry.revision)+(historical?' · Comparing with current v'+historyRevision:' · Current');
  const container=$('#version-diff');container.replaceChildren();
- const historical=entry.revision!==historyRevision;
- $('#version-picker').value=slider.value;$('#version-prev').disabled=Number(slider.value)===0||busy;$('#version-next').disabled=Number(slider.value)===historyEntries.length-1||busy;$('#version-current').disabled=!historical||busy;
- $('#version-badges').textContent=projectVersion(current,entry.revision)+(historical?' · Preview (current: v'+historyRevision+')':' · Current');
- $('#version-changes-only').disabled=false;
- if(historical&&!versionDraft)versionDraft={values:Object.fromEntries(fields.map(([key])=>[key,form.elements[key].value])),countries:[...form.querySelectorAll('[name=countries]:checked')].map(el=>el.value),related:form.elements.related.checked};
- const display=historical?(snapshot||{}):(versionDraft?{...versionDraft.values,countries:versionDraft.countries,related:versionDraft.related}:{...Object.fromEntries(fields.map(([key])=>[key,form.elements[key].value])),countries:[...form.querySelectorAll('[name=countries]:checked')].map(el=>el.value),related:form.elements.related.checked});
- for(const [key]of fields)form.elements[key].value=display[key]??'';
- form.elements.related.checked=!!display.related;form.querySelectorAll('[name=countries]').forEach(el=>el.checked=!!display.countries?.includes(el.value));
- for(const control of form.elements)control.disabled=historical;renderCountryPicker();
- $('#edit-record-reference').value=projectVersion(current,entry.revision)+(historical?' · Preview':' · Current');
- form.querySelectorAll('.field-version-diff').forEach(el=>el.remove());form.querySelectorAll('.version-changed').forEach(el=>el.classList.remove('version-changed'));
+ const heading=document.createElement('h3');heading.textContent='Review & edit fields';container.append(heading);
+ const explanation=document.createElement('p');explanation.textContent='Yellow highlights compare saved versions. Editable values below belong to your current draft; browsing history does not replace them.';container.append(explanation);
  const format=value=>Array.isArray(value)?value.join(', '):typeof value==='boolean'?(value?'Yes':'No'):String(value??'');
- let changes=0;const changedNames=[];
  function diffLine(title,text,other){
-  const line=document.createElement('p'),heading=document.createElement('strong');heading.textContent=title+': ';line.append(heading);
+  const line=document.createElement('p'),heading=document.createElement('strong');heading.textContent=title;line.append(heading);
+  if(text===other){line.append(document.createTextNode(text||'Not set'));return line;}
   let start=0;while(start<text.length&&start<other.length&&text[start]===other[start])start++;
   let end=text.length,otherEnd=other.length;while(end>start&&otherEnd>start&&text[end-1]===other[otherEnd-1]){end--;otherEnd--;}
   line.append(document.createTextNode(text.slice(0,start)));const mark=document.createElement('mark');mark.textContent=text.slice(start,end)||'∅';line.append(mark,document.createTextNode(text.slice(end)));return line;
  }
- for(const key of [...fields.map(([key])=>key),'countries','related']){
-  const reviewed=format(snapshot?.[key]),saved=format(current[key]);if(reviewed===saved)continue;changes++;changedNames.push(fields.find(([name])=>name===key)?.[1]|| (key==='countries'?'Countries':'Related initiative'));
-  const target=key==='countries'?form.querySelector('fieldset'):form.elements[key].closest('label');target.classList.add('version-changed');
-  const diff=document.createElement('div');diff.className='field-version-diff';diff.append(diffLine('Current v'+historyRevision,saved,reviewed),diffLine('Preview v'+entry.revision,reviewed,saved));target.append(diff);
+ const changedNames=[];
+ for(const [key,title] of [...fields,['countries','Country or countries'],['related','Related initiative']]){
+  const saved=format(current[key]),reviewed=format(snapshot?.[key]),changed=saved!==reviewed;
+  if(changed)changedNames.push(title);
+  const card=document.createElement('section');card.className='version-edit-card'+(changed?' version-changed':'');
+  const titleElement=document.createElement('h4');titleElement.textContent=title;card.append(titleElement);
+  if(changed){const diff=document.createElement('div');diff.className='field-version-diff';diff.append(diffLine('Current saved v'+historyRevision,saved,reviewed),diffLine('Selected v'+entry.revision,reviewed,saved));card.append(diff);}
+  card.append(reviewEditor(key,title));container.append(card);
  }
- const notice=document.createElement('p');notice.textContent=!snapshot?'This version is a deleted state. Restore to remove the current record.':historical?(changes+' changed fields highlighted below. Historical preview is read-only.'):'Current version. You can edit the fields below.';container.append(notice);
- 
+ const status=document.createElement('p');status.id='review-draft-status';status.setAttribute('role','status');
+ const save=document.createElement('button');save.type='button';save.className='review-save';save.textContent='Save current draft';save.disabled=busy;save.onclick=()=>{if(!form.checkValidity()){const invalid=form.querySelector(':invalid');invalid?.scrollIntoView({block:'center'});form.reportValidity();return;}form.requestSubmit();};
+ container.append(status,save);syncReviewEditors();filterVersionFields();
  restoreButton.dataset.summary=changedNames.join(', ');
- filterVersionFields();
- if(!historical)versionDraft=null;
- requestAnimationFrame(fitOutcomes);
- restoreButton.disabled=entry.revision===historyRevision||(!changes&&!!snapshot)||busy;
+ restoreButton.disabled=!historical||(!changedNames.length&&!!snapshot)||busy;
  restoreButton.textContent=snapshot?'Restore v'+entry.revision+' as a new version':'Restore deleted state as a new version';
 }
 slider.addEventListener('input',renderVersion);

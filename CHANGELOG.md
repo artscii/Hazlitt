@@ -1,3 +1,7 @@
+## 3.5.0
+- Added synchronized editable field copies beneath the version slider with saved-value comparisons.
+- Kept the full form editable and unchanged while browsing or filtering version history.
+
 ## 3.4.1
 - Fixed Save and Delete text contrast in active and disabled historical-preview states.
 
