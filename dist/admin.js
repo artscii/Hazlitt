@@ -237,13 +237,27 @@ restoreButton.onclick=async()=>{
  finally{busy=false;renderVersion();}
 };
 // v3.8.0: configuration is separate from the project draft and saves independently.
-const configuration=document.createElement('section');configuration.className='atlas-configuration';configuration.id='atlas-configuration';configuration.innerHTML=`<h2>Configuration</h2><p>Site-wide display settings.</p><form id="config-form"><label class="check-label"><input id="config-flip-enabled" type="checkbox"> Flip the screen when opening a project for editing</label><div class="config-duration-row"><label for="config-flip-duration">Flip duration <output id="config-duration-value" for="config-flip-duration">0.72 seconds</output></label><input id="config-flip-duration" type="range" min="300" max="1600" step="10" value="720" aria-describedby="config-motion-note"><div class="config-range-labels"><span>Quicker · 0.3s</span><span>Slower · 1.6s</span></div></div><p id="config-motion-note">Includes both halves of the card flip. Visitors who prefer reduced motion will always see an instant transition.</p><button type="submit">Save configuration</button><p id="config-status" role="status" aria-live="polite"></p></form>`;
+const configuration=document.createElement('section');configuration.className='atlas-configuration';configuration.id='atlas-configuration';configuration.innerHTML=`<h2>Configuration</h2><p>Site-wide display settings.</p><form id="config-form"><label class="check-label"><input id="config-flip-enabled" type="checkbox"> Flip the screen between the Atlas and editor</label><div class="config-duration-row"><label for="config-flip-duration">Flip duration <output id="config-duration-value" for="config-flip-duration">0.72 seconds</output></label><input id="config-flip-duration" type="range" min="300" max="1600" step="10" value="720" aria-describedby="config-motion-note"><div class="config-range-labels"><span>Quicker · 0.3s</span><span>Slower · 1.6s</span></div></div><p id="config-motion-note">Includes both halves of the card flip. Visitors who prefer reduced motion will always see an instant transition.</p><button type="submit">Save configuration</button><p id="config-status" role="status" aria-live="polite"></p></form>`;
 $('#admin-editor').append(configuration);
 const configForm=$('#config-form'),flipEnabled=$('#config-flip-enabled'),flipDuration=$('#config-flip-duration');
 function updateConfigDuration(){flipDuration.disabled=!flipEnabled.checked;const value=(Number(flipDuration.value)/1000).toFixed(2)+' seconds';$('#config-duration-value').textContent=value;flipDuration.setAttribute('aria-valuetext',value);}
 function loadConfiguration(){const config=catalog.config||{editFlipEnabled:true,editFlipDuration:720};flipEnabled.checked=config.editFlipEnabled;flipDuration.value=config.editFlipDuration;updateConfigDuration();}
 flipEnabled.onchange=updateConfigDuration;flipDuration.oninput=updateConfigDuration;
 configForm.onsubmit=async event=>{event.preventDefault();const button=configForm.querySelector('button');button.disabled=true;$('#config-status').textContent='Saving configuration…';try{catalog.config=await api('/api/config',{method:'PUT',body:JSON.stringify({editFlipEnabled:flipEnabled.checked,editFlipDuration:Number(flipDuration.value)})});$('#config-status').textContent='Configuration saved. Applies the next time visitors load the Atlas.';}catch(error){$('#config-status').textContent=error.message;}finally{button.disabled=false;}};
+// v3.8.1: reverse the card turn on all Admin links back to the Atlas.
+let returningToAtlas=false;
+window.addEventListener('pageshow',event=>{if(event.persisted){returningToAtlas=false;document.body.getAnimations().forEach(a=>a.cancel());document.documentElement.classList.remove('screen-flipping');document.body.style.transformOrigin='';}});
+document.addEventListener('click',async event=>{
+ const link=event.target.closest('a[href="/"]');if(!link||event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
+ event.preventDefault();if(returningToAtlas)return;
+ if(hasProjectDraft()&&!confirm('Discard unsaved project changes and return to the Atlas?'))return;
+ returningToAtlas=true;
+ let config=catalog?.config;try{if(!config)config=await api('/api/config');}catch{}
+ if(config?.editFlipEnabled&&!matchMedia('(prefers-reduced-motion: reduce)').matches){
+  try{sessionStorage.setItem('atlas-return-flip',JSON.stringify({duration:config.editFlipDuration}));document.documentElement.classList.add('screen-flipping');document.body.style.transformOrigin='50% '+(scrollY+innerHeight/2)+'px';await document.body.animate([{transform:'perspective(1800px) rotateY(0deg)',filter:'brightness(1)'},{transform:'perspective(1800px) rotateY(90deg)',filter:'brightness(.72)'}],{duration:config.editFlipDuration/2,easing:'cubic-bezier(.55,0,1,.45)',fill:'forwards'}).finished;}catch{}
+ }
+ location.assign(link.href);
+});
 $('#admin-open').click();
 })();
 

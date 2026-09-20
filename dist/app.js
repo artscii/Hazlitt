@@ -384,7 +384,7 @@ window.dispatchEvent(new Event('atlas-ready'));
  const dialog=document.createElement('dialog');dialog.className='edit-access-dialog';dialog.setAttribute('aria-labelledby','edit-access-title');
  dialog.innerHTML=`<form><h2 id="edit-access-title">Edit project</h2><p>Enter the Admin password to open this project in the editor.</p><label for="edit-access-password">Admin password</label><input id="edit-access-password" type="password" autocomplete="current-password" required><p class="edit-access-error" role="alert"></p><div class="edit-access-actions"><button type="button" data-cancel>Cancel</button><button type="submit">Open editor</button></div></form>`;
  document.body.append(dialog);let destination='',pending=false;
- window.addEventListener('pageshow',()=>{pending=false;document.body.getAnimations().forEach(animation=>animation.cancel());document.documentElement.classList.remove('screen-flipping');document.body.style.transformOrigin='';});
+ window.addEventListener('pageshow',event=>{if(!event.persisted)return;pending=false;document.body.getAnimations().forEach(animation=>animation.cancel());document.documentElement.classList.remove('screen-flipping');document.body.style.transformOrigin='';});
  const error=dialog.querySelector('.edit-access-error'),password=dialog.querySelector('input'),submit=dialog.querySelector('[type=submit]');
  async function openEditor(url){
   const config=window.atlasCatalog?.config||{editFlipEnabled:true,editFlipDuration:720};
@@ -408,3 +408,13 @@ window.dispatchEvent(new Event('atlas-ready'));
   finally{pending=false;submit.disabled=false;}
  };
 })();
+
+// v3.8.1: reveal the Atlas front face after returning from the editor.
+window.addEventListener('load',()=>{
+ let saved;try{saved=JSON.parse(sessionStorage.getItem('atlas-return-flip')||'null');sessionStorage.removeItem('atlas-return-flip');}catch{}
+ const root=document.documentElement;root.classList.remove('atlas-flip-pending');
+ if(!saved||matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+ const duration=Math.max(300,Math.min(1600,Number(saved.duration)||720));root.classList.add('screen-flipping');document.body.style.transformOrigin='50% '+(scrollY+innerHeight/2)+'px';
+ const animation=document.body.animate([{transform:'perspective(1800px) rotateY(-90deg)',filter:'brightness(.72)'},{transform:'perspective(1800px) rotateY(0deg)',filter:'brightness(1)'}],{duration:duration/2,easing:'cubic-bezier(0,.55,.45,1)'});
+ animation.finished.catch(()=>{}).finally(()=>{root.classList.remove('screen-flipping');document.body.style.transformOrigin='';});
+});

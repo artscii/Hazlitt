@@ -1,3 +1,7 @@
+## 3.8.1
+
+- Reverse the configured card flip on Admin links back to Atlas, with an unsaved-project guard and reduced-motion support.
+
 ## 3.8.0
 
 - Add site-wide Admin configuration for enabling the full-screen edit card flip and setting its total duration (0.3–1.6 seconds).

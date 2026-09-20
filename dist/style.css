@@ -235,3 +235,6 @@ html.screen-flipping,html.editor-flip-pending{background:#dce6ec;overflow-x:clip
 
 /* v3.8.0: configuration is visually separate from individual record editing. */
 .atlas-configuration{border-top:1px solid #cbdbe3;margin-top:32px;padding-top:24px}.atlas-configuration>p,.atlas-configuration #config-motion-note{color:#526c78;font-size:14px}.atlas-configuration form{max-width:640px;background:#edf3f6;border:1px solid #d6e2e8;border-radius:10px;padding:20px}.config-duration-row{margin:20px 0 8px}.config-duration-row label{display:flex;justify-content:space-between;gap:12px}.config-duration-row output{font-weight:400;color:#526c78}.admin-section #config-flip-duration{width:100%;height:44px;min-height:44px;padding:0;accent-color:#175b67}.config-range-labels{display:flex;justify-content:space-between;font-size:13px;color:#526c78}#config-status:empty{display:none}.atlas-configuration button[type=submit]{background:#175b67;color:white;border-color:#175b67;min-height:44px}@media(max-width:740px){.atlas-configuration form{padding:16px}}
+
+/* v3.8.1: keep the incoming front face hidden until its turn begins. */
+.atlas-flip-pending body{visibility:hidden}html.atlas-flip-pending{background:#dce6ec}@media(prefers-reduced-motion:reduce){.atlas-flip-pending body{visibility:visible}}
