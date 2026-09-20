@@ -92,7 +92,7 @@ function filterProfiles(){
  document.querySelectorAll('.directory').forEach(section=>{section.hidden=![...section.querySelectorAll('article.program')].some(card=>!card.hidden)});
  numberSelectedRows();
  highlightProfileMatches(query);
- document.querySelector('#clear-search').hidden=!input.value;
+ document.querySelector('#clear-search').hidden=!input.value;document.querySelector('#view-search-results').hidden=!matches.size;
  document.querySelector('#search-status').textContent=matches.size?`${matches.size} of ${programs.length} projects shown`:'No matching projects. Try another term or clear your search.';
 }
 function updateCountryOutlines(place){
@@ -192,9 +192,15 @@ function updateMapScrollCue(){
  mapShell.classList.toggle('has-overflow',overflow);
  mapShell.classList.toggle('can-scroll-left',overflow&&left);
  mapShell.classList.toggle('can-scroll-right',overflow&&right);
+ document.querySelector('#map-pan-left').disabled=!left;document.querySelector('#map-pan-right').disabled=!right;
  swipeHint.hidden=!overflow;
  swipeHint.innerHTML=left?(right?'← Swipe to explore →':'← Swipe to explore'):'Swipe to explore <span aria-hidden="true">→</span>';
 }
+// v3.4.0: explicit map panning and direct access to the filtered results.
+for(const [id,direction] of [['map-pan-left',-1],['map-pan-right',1]])document.getElementById(id).onclick=()=>mapScroller.scrollBy({left:direction*mapScroller.clientWidth*.7,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
+function jumpToResults(event){const card=[...document.querySelectorAll('article.program')].find(card=>!card.hidden);if(!card)return;event.preventDefault();card.setAttribute('tabindex','-1');card.focus({preventScroll:true});card.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});}
+document.querySelector('#view-search-results').addEventListener('click',jumpToResults);
+document.querySelector('#project-search').addEventListener('keydown',event=>{if(event.key==='Enter')jumpToResults(event);});
 mapScroller.addEventListener('scroll',()=>{closeTip();updateMapScrollCue()},{passive:true});
 window.addEventListener('resize',()=>{closeTip();updateMapScrollCue()});
 new ResizeObserver(updateMapScrollCue).observe(mapScroller);

@@ -1,3 +1,7 @@
+## 3.4.0
+- Added map pan buttons, larger marker hit areas, skip navigation, and direct access to filtered results.
+- Improved mobile introduction spacing, profile readability, and expandable map context.
+
 ## 3.3.0
 - Grouped edit fields by task, clarified the save action, and improved responsive spacing and focus visibility.
 - Show save feedback near form actions; hide empty groups in changed-fields-only mode.
