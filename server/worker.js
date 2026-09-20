@@ -2,11 +2,13 @@
 function summarizeVersion(action,before,after){
  if(!after)return 'Deleted project.';
  if(!before)return action==='rollback'?'Restored deleted project.':'Created project.';
- const labels={name:'project name',status:'evidence status',kind:'category',geo:'location description',countries:'countries',metric:'headline outcome',metricLabel:'outcome explanation',short:'short description',outcome:'reported outcomes',partners:'sponsors and partners',phone:'contact phone',tel:'telephone link',email:'contact email',contact:'contact notes',source:'primary evidence URL',sourceLabel:'primary evidence label',source2:'additional evidence URL',source2Label:'additional evidence label',contactSource:'contact source',date:'evidence date',related:'related initiative flag'};
+ const labels={"name": "Project name", "status": "Evidence status", "kind": "Category", "geo": "Location description", "metric": "Headline outcome", "metricLabel": "Headline outcome explanation", "short": "Short description", "outcome": "Reported outcomes", "partners": "Sponsors and partners", "phone": "Contact phone", "tel": "Telephone link number", "email": "Contact email", "contact": "Contact notes", "source": "Primary evidence URL", "sourceLabel": "Primary evidence link label", "source2": "Additional evidence URL", "source2Label": "Additional evidence link label", "contactSource": "Contact source URL", "date": "Evidence date / review note", "countries": "Country or countries", "related": "Related initiative (AI not documented)"};
  const changed=Object.keys(labels).filter(key=>JSON.stringify(before[key]??'')!==JSON.stringify(after[key]??''));
  if(!changed.length)return 'Saved without field changes.';
- const shown=changed.slice(0,4).map(key=>labels[key]);
- return (action==='rollback'?'Restored version; changed ':'Updated ')+shown.join(', ')+(changed.length>4?' and '+(changed.length-4)+' more fields':'')+'.';
+ // v3.2.3: match visible form labels and explicitly identify them as fields.
+ const shown=changed.slice(0,4).map(key=>'“'+labels[key]+'”');
+ const names=shown.length===1?shown[0]:shown.slice(0,-1).join(', ')+' and '+shown[shown.length-1];
+ return (action==='rollback'?'Restored version; changed the ':'Updated the ')+names+(shown.length===1?' field':' fields')+(changed.length>4?', plus '+(changed.length-4)+' other fields':'')+'.';
 }
 // Atlas 2.0.0: shared records and server-verified administrator sessions.
 const json=(data,status=200,headers={})=>new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff',...headers}});

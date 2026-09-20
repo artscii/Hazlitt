@@ -1,3 +1,6 @@
+## 3.2.3
+- Version node summaries use exact form labels in bold and explicitly describe changed fields.
+
 ## 3.2.2
 - Attached short change summaries exclusively to their version labels on the timeline; retained selected-version metadata above it.
 - Consolidated review actions and tightened form spacing without changing field heights.

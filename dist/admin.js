@@ -94,7 +94,7 @@ function buildVersionNodes(){
  historyEntries.forEach((entry,index)=>{
   const option=document.createElement('option');option.value=String(index);option.textContent='v'+entry.revision+(entry.revision===historyRevision?' · Current':'')+' · '+new Date(entry.at).toLocaleDateString();$('#version-picker').append(option);
   const button=document.createElement('button');button.type='button';button.className='version-node';button.textContent='v'+entry.revision;
-  const summary=document.createElement('span');summary.className='version-node-summary';summary.textContent=entry.summary||'No summary available.';button.append(summary);
+  const summary=document.createElement('span');summary.className='version-node-summary';for(const part of (entry.summary||'No summary available.').split(/(“[^”]+”)/g)){if(part.startsWith('“')&&part.endsWith('”')){const name=document.createElement('strong');name.textContent=part.slice(1,-1);summary.append(name);}else summary.append(document.createTextNode(part));}button.append(summary);
   button.style.left=(historyEntries.length===1?50:index/(historyEntries.length-1)*100)+'%';
   button.title='Version '+entry.revision+' · '+new Date(entry.at).toLocaleString()+' · '+(entry.summary||'');
   button.setAttribute('aria-label','Preview version '+entry.revision+(entry.revision===historyRevision?' (current)':''));

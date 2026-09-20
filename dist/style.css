@@ -205,3 +205,6 @@ mark.search-match{background:#dceffc;color:inherit;border-radius:2px;padding:0;b
 
 /* Version summaries belong exclusively to their timeline labels. */
 .version-timeline{margin-left:80px;margin-right:80px;padding-bottom:114px}.admin-section .version-node{width:152px;max-width:152px;min-height:44px;padding:12px 6px 6px;white-space:normal;font-size:14px}.version-node-summary{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;font-size:13px;line-height:1.4;font-weight:400;margin-top:4px;color:#526c78}.version-context #version-description{align-self:center}
+
+/* v3.2.3: emphasize field names only within version summaries. */
+.version-node-summary strong{font-weight:700;color:#294955}
