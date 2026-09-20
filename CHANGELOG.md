@@ -1,3 +1,8 @@
+# 2.7.7 — 2026-09-19
+
+- Populate the Admin project menu with the live search subset, ordered by project number.
+- Clearing search restores all menu entries; no-match searches retain the current edit form.
+
 # 2.7.6 — 2026-09-19
 
 - Sort Admin project-search matches by numeric Atlas project number ascending.
