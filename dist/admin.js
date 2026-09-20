@@ -99,7 +99,7 @@ $('#admin-delete').onclick=async()=>{if(!current||busy||!confirm('Are you sure?'
 let historyToken=0,historyEntries=[],historyRevision=0,versionDraft=null;
 form.after($('#record-history'));
 // v3.2.0: explicit version review, filtering, and reversible restore controls.
-$('#history-controls').insertAdjacentHTML('afterbegin',`<div class="version-navigation"><button type="button" id="version-prev">← Previous</button><label>Saved version<select id="version-picker"></select></label><button type="button" id="version-next">Next →</button><button type="button" id="version-current">Return to current version</button></div><p id="version-badges" aria-live="polite"></p><label class="check-label" hidden><input type="checkbox" id="version-changes-only" checked> Show changed fields only</label><p id="version-filter-status" role="status"></p>`);
+$('#history-controls').insertAdjacentHTML('afterbegin',`<div class="version-navigation"><button type="button" id="version-prev">← Previous</button><label for="version-search">Find a version<input id="version-search" type="search" placeholder="Version, date or changed field…" autocomplete="off" aria-controls="version-picker"><select id="version-picker" aria-label="Matching saved versions"></select><span id="version-search-status" role="status"></span></label><button type="button" id="version-next">Next →</button><button type="button" id="version-first">First</button><button type="button" id="version-current">Latest</button></div><p id="version-badges" aria-live="polite"></p><label class="check-label" hidden><input type="checkbox" id="version-changes-only" checked> Show changed fields only</label><p id="version-filter-status" role="status"></p>`);
 // v3.2.2: keep the selected version's context together above the timeline.
 const versionContext=document.createElement('div');versionContext.className='version-context';
 versionContext.append($('#version-badges'),$('#version-description'));
@@ -107,6 +107,7 @@ const sliderLabel=$('label[for="version-slider"]');sliderLabel.before(versionCon
 const versionActions=document.createElement('div');versionActions.className='version-review-actions';
 versionActions.append($('#version-changes-only').closest('label'),$('#restore-version'));
 $('.version-scroll').after(versionActions);
+const selectedSummary=document.createElement('p');selectedSummary.id='selected-version-summary';selectedSummary.setAttribute('aria-live','polite');$('.version-scroll').after(selectedSummary);
 versionActions.after($('#version-filter-status'),$('#version-diff'));
 const formHeading=document.createElement('div');formHeading.className='record-form-heading';
 formHeading.append($('#edit-record-reference').closest('label'),$('#required-fields-note'));form.prepend(formHeading);
@@ -142,43 +143,61 @@ function reviewEditor(key,title){
  });
  label.append(control);return label;
 }
-function selectVersion(index){if(busy||!historyEntries.length)return;slider.value=String(Math.max(0,Math.min(historyEntries.length-1,index)));renderVersion();}
+function selectVersion(index){if(busy||!historyEntries.length)return;slider.min='0';slider.max=String(historyEntries.length-1);slider.value=String(Math.max(0,Math.min(historyEntries.length-1,index)));renderVersion();}
+$('#version-search').oninput=filterVersionPicker;
+$('#version-first').onclick=()=>selectVersion(0);
 $('#version-prev').onclick=()=>selectVersion(Number(slider.value)-1);
 $('#version-next').onclick=()=>selectVersion(Number(slider.value)+1);
-$('#version-picker').onchange=event=>selectVersion(Number(event.target.value));
+$('#version-picker').onchange=event=>{if(event.target.value!=='')selectVersion(Number(event.target.value));};
 $('#version-current').onclick=()=>{ $('#version-changes-only').checked=true;selectVersion(historyEntries.length-1);};
 $('#version-changes-only').onchange=filterVersionFields;
 const historyStatus=$('#history-status'),historyControls=$('#history-controls'),slider=$('#version-slider'),restoreButton=$('#restore-version');
 async function loadRecordHistory(record){
- const token=++historyToken;historyEntries=[];historyControls.hidden=true;$('#version-changes-only').checked=true;filterVersionFields();
+ const token=++historyToken;historyEntries=[];$('#version-search').value='';historyControls.hidden=true;$('#version-changes-only').checked=true;filterVersionFields();
  if(!record){historyStatus.textContent='Save this project before reviewing its version history.';return;}
  historyStatus.textContent='Loading versions…';
  try{const data=await api('/api/records/'+record.id+'/history');if(token!==historyToken)return;
  historyRevision=data.currentRevision;historyEntries=data.entries.filter(entry=>entry.revision>=1);
  if(!historyEntries.length){historyStatus.textContent='No saved versions yet. The first edit will create v1.';return;}
- slider.max=String(historyEntries.length-1);slider.value=slider.max;slider.disabled=historyEntries.length===1;historyControls.hidden=false;
+ slider.min='0';slider.max=String(historyEntries.length-1);slider.value=slider.max;slider.disabled=historyEntries.length===1;historyControls.hidden=false;
  buildVersionNodes();
  historyStatus.textContent='Compare saved versions and edit your current draft below.';renderVersion();
  }catch(error){if(token===historyToken)historyStatus.textContent=error.message;}
 }
-// v3.1.1: preload version nodes once; scrubbing updates the form without a request.
-function buildVersionNodes(){
- const nodes=$('#version-nodes');nodes.replaceChildren();$('#version-picker').replaceChildren();
- $('.version-timeline').style.minWidth=Math.max(0,(historyEntries.length-1)*168+48)+'px';
+// v3.9.0: keep a bounded window of nodes; every saved version remains searchable.
+const compactHistory=matchMedia('(max-width:740px)');
+compactHistory.addEventListener('change',()=>{if(historyEntries.length)buildVersionNodes();});
+function filterVersionPicker(){
+ const picker=$('#version-picker'),query=canonical($('#version-search').value),terms=query.split(' ').filter(Boolean);picker.replaceChildren();let count=0;
  historyEntries.forEach((entry,index)=>{
-  const option=document.createElement('option');option.value=String(index);option.textContent='v'+entry.revision+(entry.revision===historyRevision?' · Current':'')+' · '+new Date(entry.at).toLocaleDateString();$('#version-picker').append(option);
-  const button=document.createElement('button');button.type='button';button.className='version-node';button.textContent='v'+entry.revision;
-  const summary=document.createElement('span');summary.className='version-node-summary';for(const part of (entry.summary||'No summary available.').split(/(“[^”]+”)/g)){if(part.startsWith('“')&&part.endsWith('”')){const name=document.createElement('strong');name.textContent=part.slice(1,-1);summary.append(name);}else summary.append(document.createTextNode(part));}button.append(summary);
-  button.style.left=(historyEntries.length===1?50:index/(historyEntries.length-1)*100)+'%';
-  button.title='Version '+entry.revision+' · '+new Date(entry.at).toLocaleString()+' · '+(entry.summary||'');
-  button.setAttribute('aria-label','Preview version '+entry.revision+(entry.revision===historyRevision?' (current)':''));
-  button.onclick=()=>{slider.value=String(index);renderVersion();};nodes.append(button);
+  const changedFields=[...fields,['countries','Country or countries'],['related','Related initiative']].filter(([key])=>JSON.stringify(entry.before?.[key]??'')!==JSON.stringify(entry.after?.[key]??'')).map(([,label])=>label).join(' ');
+  const date=new Date(entry.at),text=canonical('v'+entry.revision+' version '+entry.revision+' '+date.toLocaleString()+' '+date.toISOString().slice(0,10)+' '+(entry.summary||'')+' '+changedFields);
+  if(!terms.every(term=>text.includes(term)))return;
+  const option=new Option('v'+entry.revision+(entry.revision===historyRevision?' · Current':'')+' · '+date.toLocaleDateString(),String(index));picker.add(option);count++;
  });
+ if(!count)picker.add(new Option('No matching versions',''));
+ picker.value=[...picker.options].some(option=>option.value===slider.value)?slider.value:'';picker.disabled=!count;
+ $('#version-search-status').textContent=query?count+' matching versions':'Version '+(Number(slider.value)+1)+' of '+historyEntries.length;
+}
+function buildVersionNodes(){
+ const nodes=$('#version-nodes'),selected=Number(slider.value),size=Math.min(historyEntries.length,compactHistory.matches?3:5);
+ const start=Math.max(0,Math.min(historyEntries.length-size,selected-Math.floor(size/2))),end=start+size-1;
+ slider.min=String(start);slider.max=String(end);slider.value=String(selected);
+ nodes.replaceChildren();$('.version-timeline').style.minWidth='0';
+ for(let index=start;index<=end;index++){
+  const entry=historyEntries[index],button=document.createElement('button');button.type='button';button.className='version-node';button.textContent='v'+entry.revision;button.dataset.index=String(index);
+  button.style.left=(size===1?50:(index-start)/(size-1)*100)+'%';button.setAttribute('aria-pressed',String(index===selected));button.setAttribute('aria-label','Preview version '+entry.revision);button.onclick=()=>selectVersion(index);nodes.append(button);
+ }
+ filterVersionPicker();
 }
 function renderVersion(){
  const entry=historyEntries[Number(slider.value)];if(!entry||!current)return;
  const snapshot=entry.after,historical=entry.revision!==historyRevision;
- $('#version-nodes').querySelectorAll('button').forEach((button,index)=>button.setAttribute('aria-pressed',String(index===Number(slider.value))));
+ if(scrubPointer===null)buildVersionNodes();
+ $('#version-nodes').querySelectorAll('button').forEach(button=>button.setAttribute('aria-pressed',String(Number(button.dataset.index)===Number(slider.value))));
+ selectedSummary.replaceChildren();for(const part of (entry.summary||'No summary available.').split(/(“[^”]+”)/g)){if(part.startsWith('“')&&part.endsWith('”')){const strong=document.createElement('strong');strong.textContent=part.slice(1,-1);selectedSummary.append(strong);}else selectedSummary.append(document.createTextNode(part));}
+ $('#version-first').disabled=Number(slider.value)===0||busy;
+ $('#version-search-status').textContent=$('#version-search').value?$('#version-search-status').textContent:'Version '+(Number(slider.value)+1)+' of '+historyEntries.length;
  slider.setAttribute('aria-valuetext','Version '+entry.revision);$('#version-picker').value=slider.value;
  $('#version-description').textContent='v'+entry.revision+' · '+new Date(entry.at).toLocaleString()+' · '+entry.action;
  $('#version-prev').disabled=Number(slider.value)===0||busy;$('#version-next').disabled=Number(slider.value)===historyEntries.length-1||busy;$('#version-current').disabled=!historical||busy;
@@ -216,7 +235,7 @@ let scrubPointer=null;
 function scrubAt(clientX){
  const bounds=slider.getBoundingClientRect(),inset=9;
  const fraction=Math.max(0,Math.min(1,(clientX-bounds.left-inset)/Math.max(1,bounds.width-inset*2)));
- const next=String(Math.round(fraction*(historyEntries.length-1)));
+ const next=String(Math.round(Number(slider.min)+fraction*(Number(slider.max)-Number(slider.min))));
  if(slider.value!==next){slider.value=next;renderVersion();}
 }
 slider.addEventListener('pointerdown',event=>{
@@ -226,7 +245,8 @@ slider.addEventListener('pointerdown',event=>{
 });
 slider.addEventListener('pointermove',event=>{if(event.pointerId===scrubPointer)scrubAt(event.clientX);});
 slider.addEventListener('pointerup',event=>{if(event.pointerId===scrubPointer){scrubAt(event.clientX);slider.releasePointerCapture(scrubPointer);scrubPointer=null;}});
-slider.addEventListener('lostpointercapture',()=>{scrubPointer=null;});
+slider.addEventListener('lostpointercapture',()=>{scrubPointer=null;if(historyEntries.length)buildVersionNodes();});
+slider.addEventListener('keydown',event=>{if(['ArrowLeft','ArrowDown','ArrowRight','ArrowUp','Home','End'].includes(event.key)){event.preventDefault();selectVersion(event.key==='Home'?0:event.key==='End'?historyEntries.length-1:Number(slider.value)+(['ArrowLeft','ArrowDown'].includes(event.key)?-1:1));}});
 restoreButton.onclick=async()=>{
  const entry=historyEntries[Number(slider.value)];if(!current||!entry||busy||restoreButton.disabled)return;
  const target=current,id=target.id;

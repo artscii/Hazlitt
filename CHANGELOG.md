@@ -1,3 +1,10 @@
+## 3.9.0
+
+- Bound version timeline to five nearby nodes (three on mobile), with First/Latest and Previous/Next navigation.
+- Search saved versions by number, date or changed field; show one selected summary with bold field names.
+- Preserve instant diff previews and separate explicit restoration.
+- Verify Edit notes snapshots, version summaries and restore behavior with regression checks; include every changed field in version search.
+
 ## 3.8.1
 
 - Reverse the configured card flip on Admin links back to Atlas, with an unsaved-project guard and reduced-motion support.

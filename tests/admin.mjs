@@ -24,6 +24,19 @@ assert.equal((await call('/api/rollback/'+edit.id,'POST',{side:'before',revision
 assert.equal((await call('/api/records/'+id,'DELETE',{revision:3})).status,200);assert(!(await call('/api/catalog')).data.programs.some(p=>p.id===id));
 logs=(await call('/api/audit')).data.entries;const deletion=logs.find(l=>l.action==='delete');assert.equal((await call('/api/rollback/'+deletion.id,'POST',{side:'before',revision:4})).status,200);assert((await call('/api/catalog')).data.programs.some(p=>p.id===id));
 const create=logs.find(l=>l.action==='create');assert.equal((await call('/api/rollback/'+create.id,'POST',{side:'before',revision:5})).status,400);record=(await call('/api/catalog')).data.programs.find(p=>p.id===id);assert.equal(record.revision,5);assert.equal((await call('/api/rollback/'+create.id,'POST',{side:'after',revision:5})).status,200);record=(await call('/api/catalog')).data.programs.find(p=>p.id===id);assert.equal(record.revision,6);assert.equal(record.name,'Test project');
+// Edit notes participate in snapshots, summaries, diffs and restoration like other fields.
+record=(await call('/api/catalog')).data.programs.find(p=>p.id===id);
+assert.equal((await call('/api/records/'+id,'PUT',{...record,editNotes:'First observation'})).status,200);
+record=(await call('/api/catalog')).data.programs.find(p=>p.id===id);
+assert.equal((await call('/api/records/'+id,'PUT',{...record,editNotes:'Revised observation'})).status,200);
+let noteHistory=(await call('/api/records/'+id+'/history')).data.entries;
+const noteEdit=noteHistory.at(-1),firstNote=noteHistory.at(-2);
+assert.equal(noteEdit.before.editNotes,'First observation');assert.equal(noteEdit.after.editNotes,'Revised observation');
+assert.match(noteEdit.summary,/“Edit notes” field/);
+assert.equal((await call('/api/rollback/'+firstNote.id,'POST',{side:'after',revision:noteEdit.revision})).status,200);
+assert.equal((await call('/api/catalog')).data.programs.find(p=>p.id===id).editNotes,'First observation');
+noteHistory=(await call('/api/records/'+id+'/history')).data.entries;
+assert.equal(noteHistory.at(-1).before.editNotes,'Revised observation');assert.equal(noteHistory.at(-1).after.editNotes,'First observation');
 assert.equal((await call('/api/logout','POST',{})).status,200);assert.equal((await call('/api/audit')).status,401);
 assert.equal((await call('/api/config','PUT',{editFlipEnabled:true,editFlipDuration:720})).status,401);
 console.log('PASS: configuration persistence, validation and authorization; authentication, protected audit access, CRUD, duplicate names, CSRF, URL validation, stale revisions, edit IPs, rollback, deletion restoration and logout.');

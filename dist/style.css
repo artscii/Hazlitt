@@ -238,3 +238,6 @@ html.screen-flipping,html.editor-flip-pending{background:#dce6ec;overflow-x:clip
 
 /* v3.8.1: keep the incoming front face hidden until its turn begins. */
 .atlas-flip-pending body{visibility:hidden}html.atlas-flip-pending{background:#dce6ec}@media(prefers-reduced-motion:reduce){.atlas-flip-pending body{visibility:visible}}
+
+/* v3.9.0: bounded version timeline with one readable summary. */
+.version-scroll{overflow:visible;padding:4px 0 8px}.version-timeline{margin:0 28px;padding-bottom:48px;min-width:0!important}.admin-section .version-node{width:auto;max-width:80px;min-width:44px;padding:12px 6px 4px;white-space:nowrap;font-size:14px}#selected-version-summary{padding:12px 14px;background:#edf3f6;border-radius:6px;font-size:14px;line-height:1.6;margin:8px 0 16px;overflow-wrap:anywhere}#version-search-status{font-size:13px;color:#526c78;font-weight:400;display:block;margin-top:5px}.version-navigation label{flex-basis:280px}.version-navigation input{margin-bottom:8px}.version-navigation select{max-width:100%}.version-navigation{align-items:center}@media(max-width:740px){.version-navigation label{min-width:0;width:100%}.version-navigation button{flex:1 1 40%}.version-timeline{margin:0 26px}}
