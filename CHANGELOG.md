@@ -1,3 +1,8 @@
+# 3.0.1 — 2026-09-20
+
+- Display current record version read-only in Admin.
+- Disable rollback before v1 and enforce the same restriction on the server. Restoring v1 itself remains available.
+
 # 3.0.0 — 2026-09-20
 
 - Move project editing to /admin and audit/rollback history to /log.

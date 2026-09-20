@@ -60,6 +60,7 @@ export default {async fetch(request,env){
    if(rollbackMatch&&request.method==='POST'){
     const input=await body(request);if(!['before','after'].includes(input.side)||!Number.isInteger(input.revision))return json({error:'Choose a version to restore'},400);
     const entry=await database(env).prepare('SELECT * FROM audit_log WHERE id = ?').bind(rollbackMatch[1]).first();if(!entry)return json({error:'Version not found'},404);
+    if(input.side==='before'&&entry.revision<=1)return json({error:'Cannot restore a record to a version before v1.'},400);
     const row=await database(env).prepare('SELECT * FROM records WHERE id = ?').bind(entry.record_id).first();
     if(!row||row.revision!==input.revision)return json({error:'Record changed. Review the latest version before restoring.'},409);
     const snapshot=entry[input.side]?JSON.parse(entry[input.side]):null;

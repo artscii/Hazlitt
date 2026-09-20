@@ -181,3 +181,6 @@ mark.search-match{background:#dceffc;color:inherit;border-radius:2px;padding:0;b
 
 /* v3.0.0: shared shell for independent editor and audit pages. */
 .site-navigation,.page-navigation{display:flex;gap:18px;flex-wrap:wrap}.site-navigation a,.page-navigation a{text-decoration:none}.page-navigation{margin:26px 0}.page-navigation [aria-current]{font-weight:700;color:#17313e}.management-page h1{font-size:34px;margin-bottom:20px}.management-page .admin-section{margin:0;padding:0 0 32px;border:0;max-width:none}.management-page #log-page{min-height:240px}.management-page #audit-entries{overflow-x:auto}.management-page .admin-content>p:first-child{margin-top:0}footer{flex-wrap:wrap;gap:16px}.admin-section [hidden]{display:none!important}
+
+/* v3.0.1: read-only version and unavailable rollback state. */
+.admin-section #edit-record-version{background:#edf3f6;color:#526c78}.admin-section button:disabled{opacity:.5;cursor:not-allowed}
