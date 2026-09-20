@@ -88,7 +88,7 @@ $('#admin-delete').onclick=async()=>{if(!current||busy||!confirm('Are you sure?'
 let historyToken=0,historyEntries=[],historyRevision=0,versionDraft=null;
 form.after($('#record-history'));
 // v3.2.0: explicit version review, filtering, and reversible restore controls.
-$('#history-controls').insertAdjacentHTML('afterbegin',`<div class="version-navigation"><button type="button" id="version-prev">← Previous</button><label>Saved version<select id="version-picker"></select></label><button type="button" id="version-next">Next →</button><button type="button" id="version-current">Return to current version</button></div><p id="version-badges" aria-live="polite"></p><label class="check-label"><input type="checkbox" id="version-changes-only"> Show changed fields only</label><p id="version-filter-status" role="status"></p>`);
+$('#history-controls').insertAdjacentHTML('afterbegin',`<div class="version-navigation"><button type="button" id="version-prev">← Previous</button><label>Saved version<select id="version-picker"></select></label><button type="button" id="version-next">Next →</button><button type="button" id="version-current">Return to current version</button></div><p id="version-badges" aria-live="polite"></p><label class="check-label" hidden><input type="checkbox" id="version-changes-only" checked> Show changed fields only</label><p id="version-filter-status" role="status"></p>`);
 // v3.2.2: keep the selected version's context together above the timeline.
 const versionContext=document.createElement('div');versionContext.className='version-context';
 versionContext.append($('#version-badges'),$('#version-description'));
@@ -101,7 +101,7 @@ const formHeading=document.createElement('div');formHeading.className='record-fo
 formHeading.append($('#edit-record-reference').closest('label'),$('#required-fields-note'));form.prepend(formHeading);
 // v3.5.0: review copies share the main form's draft; history never replaces it.
 function filterVersionFields(){
- const cards=[...$('#version-diff').querySelectorAll('.version-edit-card')],only=$('#version-changes-only').checked;
+ const cards=[...$('#version-diff').querySelectorAll('.version-edit-card')],only=true;
  for(const card of cards)card.hidden=only&&!card.classList.contains('version-changed');
  const count=cards.filter(card=>!card.hidden).length;
  $('#version-filter-status').textContent=only?(count+' changed fields shown. The full form above remains available.'):'All fields shown below. Edits update the same draft as the full form.';
@@ -135,11 +135,11 @@ function selectVersion(index){if(busy||!historyEntries.length)return;slider.valu
 $('#version-prev').onclick=()=>selectVersion(Number(slider.value)-1);
 $('#version-next').onclick=()=>selectVersion(Number(slider.value)+1);
 $('#version-picker').onchange=event=>selectVersion(Number(event.target.value));
-$('#version-current').onclick=()=>{ $('#version-changes-only').checked=false;selectVersion(historyEntries.length-1);};
+$('#version-current').onclick=()=>{ $('#version-changes-only').checked=true;selectVersion(historyEntries.length-1);};
 $('#version-changes-only').onchange=filterVersionFields;
 const historyStatus=$('#history-status'),historyControls=$('#history-controls'),slider=$('#version-slider'),restoreButton=$('#restore-version');
 async function loadRecordHistory(record){
- const token=++historyToken;historyEntries=[];historyControls.hidden=true;$('#version-changes-only').checked=false;filterVersionFields();
+ const token=++historyToken;historyEntries=[];historyControls.hidden=true;$('#version-changes-only').checked=true;filterVersionFields();
  if(!record){historyStatus.textContent='Save this project before reviewing its version history.';return;}
  historyStatus.textContent='Loading versions…';
  try{const data=await api('/api/records/'+record.id+'/history');if(token!==historyToken)return;
@@ -186,7 +186,7 @@ function renderVersion(){
  const changedNames=[];
  for(const [key,title] of [...fields,['countries','Country or countries'],['related','Related initiative']]){
   const saved=format(current[key]),reviewed=format(snapshot?.[key]),changed=saved!==reviewed;
-  if(changed)changedNames.push(title);
+  if(!changed)continue;changedNames.push(title);
   const card=document.createElement('section');card.className='version-edit-card'+(changed?' version-changed':'');
   const titleElement=document.createElement('h4');titleElement.textContent=title;card.append(titleElement);
   if(changed){const diff=document.createElement('div');diff.className='field-version-diff';diff.append(diffLine('Current saved v'+historyRevision,saved,reviewed),diffLine('Selected v'+entry.revision,reviewed,saved));card.append(diff);}
@@ -194,7 +194,7 @@ function renderVersion(){
  }
  const status=document.createElement('p');status.id='review-draft-status';status.setAttribute('role','status');
  const save=document.createElement('button');save.type='button';save.className='review-save';save.textContent='Save current draft';save.disabled=busy;save.onclick=()=>{if(!form.checkValidity()){const invalid=form.querySelector(':invalid');invalid?.scrollIntoView({block:'center'});form.reportValidity();return;}form.requestSubmit();};
- container.append(status,save);syncReviewEditors();filterVersionFields();
+ save.hidden=!changedNames.length;container.append(status,save);syncReviewEditors();filterVersionFields();if(!changedNames.length)$('#version-filter-status').textContent='No fields differ from the current saved version. Choose an earlier version to review edits. The full form above remains editable.';
  restoreButton.dataset.summary=changedNames.join(', ');
  restoreButton.disabled=!historical||(!changedNames.length&&!!snapshot)||busy;
  restoreButton.textContent=snapshot?'Restore v'+entry.revision+' as a new version':'Restore deleted state as a new version';

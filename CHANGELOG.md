@@ -1,3 +1,6 @@
+## 3.5.1
+- Version review now displays changed fields only; the full form remains intact.
+
 ## 3.5.0
 - Added synchronized editable field copies beneath the version slider with saved-value comparisons.
 - Kept the full form editable and unchanged while browsing or filtering version history.
