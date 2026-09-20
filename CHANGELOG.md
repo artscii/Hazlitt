@@ -1,5 +1,5 @@
 ## 3.2.2
-- Moved version change summaries and metadata above the slider.
+- Attached short change summaries exclusively to their version labels on the timeline; retained selected-version metadata above it.
 - Consolidated review actions and tightened form spacing without changing field heights.
 
 ## 3.2.1
