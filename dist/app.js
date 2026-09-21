@@ -18,39 +18,6 @@ document.querySelector('#map-overview').before(mobileViews);
 document.body.dataset.mobileView='map';
 function setMobileView(view,scroll=false){document.body.dataset.mobileView=view;mobileViews.querySelectorAll('button').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.view===view)));if(scroll&&matchMedia('(max-width:740px)').matches)mobileViews.scrollIntoView({block:'start',behavior:'instant'});requestAnimationFrame(()=>window.dispatchEvent(new Event('atlas-view-change')));}
 mobileViews.onclick=event=>{const button=event.target.closest('[data-view]');if(button)setMobileView(button.dataset.view,true);};
-// v4.9.1: swap readable faces at the edge of a short card turn.
-const flippingCards=new WeakSet();
-function setProjectFace(card,expanded){
- card.classList.toggle('project-expanded',expanded);
- const content=card.querySelector('.project-card-content');if(content)content.scrollTop=0;
- const button=card.querySelector('.project-expand');
- button?.setAttribute('aria-expanded',String(expanded));
- if(button)button.textContent=expanded?'Back to summary':'View evidence & contacts';
- if(expanded)window.dispatchEvent(new CustomEvent('atlas-project-view',{detail:card.id}));
- updateEvidencePanels();
-}
-function expandProject(card){if(card)setProjectFace(card,true);}
-async function flipProject(card){
- if(flippingCards.has(card))return;
- const expanded=!card.classList.contains('project-expanded');
- // v4.9.2: keep the same outer dimensions and centered anchor for both faces.
- const viewport=window.visualViewport?.height||window.innerHeight;
- card.style.height=Math.min(560,Math.max(260,viewport*.56))+'px';
- card.scrollIntoView({block:'center',inline:'nearest',behavior:'instant'});
- if(matchMedia('(prefers-reduced-motion: reduce)').matches||!card.animate){setProjectFace(card,expanded);return;}
- flippingCards.add(card);card.classList.add('card-turning');
- const direction=expanded?1:-1;
- let animation;
- try{
-  animation=card.animate([{transform:'perspective(1400px) rotateY(0deg)'},{transform:`perspective(1400px) rotateY(${direction*90}deg)`}],{duration:160,easing:'ease-in',fill:'forwards'});
-  await animation.finished;
-  setProjectFace(card,expanded);animation.cancel();
-  animation=card.animate([{transform:`perspective(1400px) rotateY(${-direction*90}deg)`},{transform:'perspective(1400px) rotateY(0deg)'}],{duration:180,easing:'ease-out',fill:'forwards'});
-  await animation.finished;
- }catch{setProjectFace(card,expanded);}
- finally{animation?.cancel();card.classList.remove('card-turning');flippingCards.delete(card);updateEvidencePanels();}
-}
-document.addEventListener('click',event=>{const button=event.target.closest('.project-expand');if(button)flipProject(button.closest('.program'));});
 let sharedProjectId=null;
 const projectURL=id=>{const url=new URL(location.href);url.search='';url.searchParams.set('project',id);url.hash=id;return url.href;};
 // v2.3.0: derive source coverage from the live catalog; never imply a fresh database search.
@@ -105,16 +72,8 @@ function languagePanel(p){
  return `<div class="record-language"><button type="button" class="language-toggle" aria-expanded="false" aria-controls="${p.id}-original">Original language · ${escapeHTML(languageName(p.originalLanguage))}</button><div id="${p.id}-original" class="original-evidence" hidden><p class="language-caption">Original published title</p><p lang="${p.originalLanguage}" dir="auto"><strong>${p.originalTitle}</strong></p>${p.originalSummary||p.originalOutcome?`<p class="language-caption">Atlas editorial summary in the source language — not a quotation</p><div lang="${p.originalLanguage}" dir="auto"><p>${p.originalSummary||''}</p><p>${p.originalOutcome||''}</p></div>`:''}<a href="${p.originalSource}" target="_blank" rel="noopener">Read the original source ↗</a><p class="language-caption">English is the default Atlas summary. Other record fields remain in English.</p></div></div>`;
 }
 document.addEventListener('click',event=>{const button=event.target.closest('.language-toggle');if(!button)return;const card=button.closest('.program'),panel=document.getElementById(button.getAttribute('aria-controls')),open=panel.hidden;panel.hidden=!open;card.querySelector('.english-evidence').hidden=open;button.setAttribute('aria-expanded',String(open));const p=programs.find(p=>p.id===card.id);button.textContent=open?'Show English':'Original language · '+languageName(p.originalLanguage);updateEvidencePanels();});
-const renderProgram=p=>`<article class="program" id="${p.id}"><a class="edit-project" href="/admin?project=${encodeURIComponent(p.id)}" aria-label="Edit project: ${p.name}" title="Edit project"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5 4 4M4 20l4-1L20 7a2.8 2.8 0 0 0-4-4L4 15Z"/></svg></a><div><a class="back-to-map" href="#map-overview"><svg class="map-return-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2Z"/><path d="M9 3v16M15 5v16"/></svg>Back to map</a><span class="record-number" aria-label="Project number ${recordNumbers.get(p.id)}">Project ${String(recordNumbers.get(p.id)).padStart(2,'0')}</span>${badge(p)}<h3>${p.name}</h3><p class="geo">${p.geo}</p><p class="geo">${p.publicationYear?`Publication year: ${p.publicationYear} · `:''}${p.evidenceBasis||'Evidence basis not yet classified'}${p.sampleDetails?` · ${p.sampleDetails}`:''}<br>${p.date}</p><a class="share-project" href="${escapeHTML(projectURL(p.id))}" aria-label="Share project: ${p.name}"><svg class="share-paperclip" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m8 13 6-6a3 3 0 0 1 4 4l-8 8a5 5 0 0 1-7-7L12 3a6 6 0 0 1 8 8l-8 8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>Share project link</a><span class="share-feedback" role="status"></span><p class="mobile-project-summary">${p.short}</p><button type="button" class="project-expand" aria-expanded="false" aria-controls="${p.id}-outcomes ${p.id}-contacts">View evidence & contacts</button></div><div class="program-extra" id="${p.id}-outcomes"><p class="label">REPORTED OUTCOMES</p><div class="english-evidence" lang="en"><p>${p.outcome}</p></div>${languagePanel(p)}${p.followUp?`<aside class="project-follow-up"><p class="label">FOLLOW-UP · ${p.followUpDate||'Date not recorded'}</p><p>${p.followUp}</p></aside>`:''}${links(p)}</div><div class="program-extra" id="${p.id}-contacts"><p class="label">SPONSORS & PARTNERS</p><p>${p.partners}</p>${p.tel?`<a class="phone" href="tel:${p.tel}">${p.phone}</a>`:p.email?`<a class="phone" href="mailto:${p.email}">${p.email}</a>`:''}<p class="contact-note">${p.contact}</p>${p.contactSource?`<a href="${p.contactSource}" target="_blank" rel="noopener">Contact source ↗</a>`:''}</div></article>`;
+const renderProgram=p=>`<article class="program" id="${p.id}"><a class="edit-project" href="/admin?project=${encodeURIComponent(p.id)}" aria-label="Edit project: ${p.name}" title="Edit project"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5 4 4M4 20l4-1L20 7a2.8 2.8 0 0 0-4-4L4 15Z"/></svg></a><div><a class="back-to-map" href="#map-overview"><svg class="map-return-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2Z"/><path d="M9 3v16M15 5v16"/></svg>Back to map</a><span class="record-number" aria-label="Project number ${recordNumbers.get(p.id)}">Project ${String(recordNumbers.get(p.id)).padStart(2,'0')}</span>${badge(p)}<h3>${p.name}</h3><p class="geo">${p.geo}</p><p class="geo">${p.publicationYear?`Publication year: ${p.publicationYear} · `:''}${p.evidenceBasis||'Evidence basis not yet classified'}${p.sampleDetails?` · ${p.sampleDetails}`:''}<br>${p.date}</p><a class="share-project" href="${escapeHTML(projectURL(p.id))}" aria-label="Share project: ${p.name}"><svg class="share-paperclip" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m8 13 6-6a3 3 0 0 1 4 4l-8 8a5 5 0 0 1-7-7L12 3a6 6 0 0 1 8 8l-8 8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>Share project link</a><span class="share-feedback" role="status"></span></div><div class="program-extra" id="${p.id}-outcomes"><p class="label">REPORTED OUTCOMES</p><div class="english-evidence" lang="en"><p>${p.outcome}</p></div>${languagePanel(p)}${p.followUp?`<aside class="project-follow-up"><p class="label">FOLLOW-UP · ${p.followUpDate||'Date not recorded'}</p><p>${p.followUp}</p></aside>`:''}${links(p)}</div><div class="program-extra" id="${p.id}-contacts"><p class="label">SPONSORS & PARTNERS</p><p>${p.partners}</p>${p.tel?`<a class="phone" href="tel:${p.tel}">${p.phone}</a>`:p.email?`<a class="phone" href="mailto:${p.email}">${p.email}</a>`:''}<p class="contact-note">${p.contact}</p>${p.contactSource?`<a href="${p.contactSource}" target="_blank" rel="noopener">Contact source ↗</a>`:''}</div></article>`;
 document.querySelector('#programs').innerHTML=programs.map(renderProgram).join('');
-// v4.9.2: persistent action footer outside the scrollable front/reverse content.
-for(const card of document.querySelectorAll('article.program')){
- const content=document.createElement('div');content.className='project-card-content';content.tabIndex=0;content.setAttribute('role','region');content.setAttribute('aria-label','Project details — scroll to read more');
- const action=card.querySelector('.project-expand');
- for(const child of [...card.children])if(child.tagName==='DIV')content.append(child);
- const footer=document.createElement('div');footer.className='project-card-actions';footer.append(action);
- card.append(content,footer);
-}
 const projectCards=new Map([...document.querySelectorAll('article.program')].map(card=>[card.id,card]));
 
 // v1.3.11: filter visible profiles without rebuilding cards or moving keyboard focus.
@@ -289,7 +248,7 @@ document.addEventListener('click',e=>{
   const location=places.find(p=>p.name===tipButton?.dataset.name)||places.find(p=>p.name===activeLocationName&&p.ids.includes(id));
   if(location)showDetail({...location,ids:[id]});
  }
- const profile=document.getElementById(id);if(!profile)return;setMobileView(id==='map-overview'?'map':'list');if(id!=='map-overview')expandProject(profile);
+ const profile=document.getElementById(id);if(!profile)return;setMobileView(id==='map-overview'?'map':'list');if(id!=='map-overview')window.dispatchEvent(new CustomEvent('atlas-project-view',{detail:id}));
  if(profile.hidden&&programs.some(p=>p.id===id)){document.querySelector('#project-search').value='';filterProfiles();}
  e.preventDefault();closeTip();
  // Wait for the docked preview to collapse before measuring the destination.
@@ -580,7 +539,7 @@ function openSharedProject(){
  if(!project){syncSearchMap();sharedMessage.textContent='This shared project is no longer available. Showing all projects.';return;}
  sharedProjectId=id;document.querySelector('#project-search').value=project.name;sharedMessage.textContent='Shared project: '+project.name;
  syncSearchMap();
- requestAnimationFrame(()=>requestAnimationFrame(()=>{setMobileView('list');const card=document.getElementById(id);expandProject(card);card?.setAttribute('tabindex','-1');card?.focus({preventScroll:true});card?.scrollIntoView({block:'start',behavior:'instant'});}));
+ requestAnimationFrame(()=>requestAnimationFrame(()=>{setMobileView('list');const card=document.getElementById(id);window.dispatchEvent(new CustomEvent('atlas-project-view',{detail:id}));card?.setAttribute('tabindex','-1');card?.focus({preventScroll:true});card?.scrollIntoView({block:'start',behavior:'instant'});}));
 }
 window.addEventListener('popstate',openSharedProject);
 document.addEventListener('click',async event=>{

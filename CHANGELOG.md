@@ -1,3 +1,7 @@
+## 4.9.5
+
+- Remove card flips, expansion buttons and fixed face heights. Show project identity, outcomes and contacts together in compact responsive columns, stacked on phones.
+
 ## 4.9.4
 
 - Tighten card padding, paragraph and footer spacing, inter-card gaps and flip height while preserving readable type and 220 × 48 px action buttons.

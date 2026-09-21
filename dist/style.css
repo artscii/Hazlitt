@@ -339,36 +339,23 @@ html.screen-flipping,html.editor-flip-pending{background:var(--atlas-soft);overf
 @media(max-width:740px){#map{min-width:900px}.continent-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:0 12px}.continent-controls button{width:100%;min-height:44px}.selection-context{font-size:13px}.program:not(.project-expanded) .geo{display:block}.directory>.section-heading{align-items:flex-start}.directory>.section-heading h2{font-size:25px}.references-jump{font-size:13px}.program .evidence-meta{font-size:13px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 
-/* v4.9.2: stable two-face card with a shared lower-right action. */
-.evidence-scroll>.program{display:flex;flex-direction:column;gap:0;min-height:0}
-.project-card-content{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:20px;min-height:0;overflow:auto;overscroll-behavior:contain;flex:1 1 auto;scrollbar-gutter:stable}
-.program:not(.project-expanded) .project-card-content{grid-template-columns:minmax(0,1fr)}
-.program:not(.project-expanded) .project-card-content>.program-extra{display:none}
-.program.project-expanded .project-card-content>div:first-child{grid-column:1/-1}
-.program.project-expanded .project-card-content>div:first-child :is(.badge,.geo,.share-project,.share-feedback,.back-to-map){display:none}
-.program.project-expanded .project-card-content>div:first-child h3{margin:8px 0 12px}
-.project-card-actions{display:flex;justify-content:flex-end;flex:0 0 auto;padding-top:14px;margin-top:12px;border-top:1px solid var(--atlas-border)}
-.program .project-card-actions .project-expand{width:220px;max-width:100%;height:48px;min-height:48px;box-sizing:border-box;justify-content:center;white-space:nowrap;padding:8px 10px;font-size:14px}
-.program.card-turning{will-change:transform;backface-visibility:hidden;pointer-events:none;transform-origin:center center}
-@media(max-width:740px){.project-card-content{grid-template-columns:minmax(0,1fr);gap:14px}.program .project-card-actions .project-expand{width:220px}}
-/* v4.9.2: quiet physical-card definition in every palette. */
-.evidence-scroll{padding:8px;background:var(--atlas-soft);border-color:var(--atlas-border)}
-.evidence-scroll>.program{border:1px solid color-mix(in srgb,var(--atlas-border) 85%,var(--atlas-page));border-radius:12px;box-shadow:0 2px 5px color-mix(in srgb,var(--atlas-text) 5%,transparent);margin:0 0 12px;overflow:hidden}
-.evidence-scroll>.program:last-child{margin-bottom:0}
-.evidence-scroll>.program.selected-profile,.evidence-scroll>.program.search-first,.evidence-scroll>.program:target{box-shadow:inset 3px 0 0 var(--atlas-edge),0 2px 5px color-mix(in srgb,var(--atlas-text) 5%,transparent)}
-@media(hover:hover){.evidence-scroll>.program:hover{border-color:color-mix(in srgb,var(--atlas-edge) 50%,var(--atlas-border))}}
-
 /* v4.9.3: let the overview fit its content without a nested scrolling area. */
 #detail{height:auto;max-height:none;overflow:visible;align-self:start}
 #detail .sidebar-count{font-size:24px;font-weight:600;margin:0 0 8px}
 .sidebar-evidence-types{list-style:none;padding:0;margin:14px 0;font-size:14px}.sidebar-evidence-types li{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--atlas-border)}
 #detail .detail-block>a{display:inline-flex;align-items:center;min-height:44px;text-decoration:none;font-weight:600;font-size:14px}
-/* v4.9.4: tighter cards without shrinking text or action targets. */
-.evidence-scroll>.program{padding:20px 18px 16px;margin-bottom:8px}
-.program .project-card-content{gap:12px;padding-right:0}
-.program .project-card-content>div:first-child{padding-right:28px}
-.program h3{margin:8px 0 5px}
-.program p{margin-bottom:7px}
-.program .mobile-project-summary{margin:8px 0}
-.program .project-card-actions{padding:10px 0 0;margin-top:8px}
-@media(max-width:740px){.evidence-scroll>.program{padding:18px 16px 14px}.program .project-card-content{gap:10px}.program .project-card-content>div:first-child{padding-right:18px}}
+/* v4.9.5: one complete evidence row, no faces, fixed height or nested card scroll. */
+.evidence-scroll{padding:8px;background:var(--atlas-soft);border-color:var(--atlas-border)}
+.evidence-scroll>.program{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.65fr) minmax(0,1fr);align-items:start;gap:24px;padding:22px 20px 18px;margin:0 0 8px;height:auto;max-height:none;overflow:visible;border:1px solid var(--atlas-border);border-radius:10px;box-shadow:0 2px 5px color-mix(in srgb,var(--atlas-text) 4%,transparent)}
+.evidence-scroll>.program:last-child{margin-bottom:0}
+.evidence-scroll>.program>div{padding:0;min-width:0;overflow-wrap:anywhere}
+.evidence-scroll>.program>div:first-of-type{padding-right:0}
+.evidence-scroll>.program>div:last-child{padding-right:22px}
+.evidence-scroll>.program:not(.project-expanded)>.program-extra{display:block}
+.evidence-scroll>.program:not(.project-expanded) .geo{display:block}
+.evidence-scroll>.program h3{margin:8px 0 6px;font-size:18px;line-height:1.4}
+.evidence-scroll>.program p{margin-bottom:8px;line-height:1.6}
+.evidence-scroll>.program .label{margin:0 0 10px}
+@media(max-width:900px){.evidence-scroll>.program{grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:18px}.evidence-scroll>.program>div:last-child{grid-column:2}}
+@media(max-width:740px){.evidence-scroll>.program{grid-template-columns:minmax(0,1fr);gap:16px;padding:20px 16px 16px}.evidence-scroll>.program>div:last-child{grid-column:auto;padding-right:0}.evidence-scroll>.program>div:first-of-type{padding-right:22px}.evidence-scroll>.program>.program-extra{border-top:1px solid var(--atlas-border);padding-top:14px}}
+.evidence-scroll>.program .back-to-map{margin:10px 0 8px}

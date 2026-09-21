@@ -70,13 +70,9 @@ await search('');assert.equal(d.querySelectorAll('.marker.selected').length,0);
 input.value='Kenya';input.dispatchEvent(new w.Event('input'));input.value='China';input.dispatchEvent(new w.Event('input'));await settle();
 assert([...d.querySelectorAll('article.program:not([hidden])')].every(c=>catalog.programs.find(p=>p.id===c.id).countries.includes('China')));
 assert.equal(d.querySelector('#semantic-toggle'),null,'AI search has been removed');
-// Card turns swap faces once and ignore repeated clicks during the turn.
-const flipButton=d.querySelector('#bombo .project-expand'),flipCard=flipButton.closest('.program');
-const turns=[];w.HTMLElement.prototype.animate=function(frames,options){turns.push({frames,options});return {finished:Promise.resolve(),cancel(){}};};
-flipButton.click();flipButton.click();await settle();
-assert.equal(turns.length,2);assert(flipCard.classList.contains('project-expanded'));assert.equal(flipButton.textContent,'Back to summary');
-flipButton.click();await settle();assert(!flipCard.classList.contains('project-expanded'));assert.equal(turns.length,4);
-w.matchMedia=()=>({matches:true,addEventListener(){}});flipButton.click();assert(flipCard.classList.contains('project-expanded'));assert.equal(turns.length,4,'Reduced motion skips animation');
+assert.equal(d.querySelector('.project-expand'),null,'Evidence rows have no flip controls');
+assert.equal(d.querySelector('.project-card-content'),null,'No nested card scrolling wrapper');
+assert(d.querySelector('#bombo-outcomes'));assert(d.querySelector('#bombo-contacts'));
 assert.equal(errors.length,0,errors.join('\n'));
 console.log(`DOM integration passed: ${catalog.programs.length} cards reused; ${markers.length} markers selected twice without position changes; clear, rapid input, full-text search.`);
 dom.window.close();
