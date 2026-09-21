@@ -1,3 +1,7 @@
+## 4.8.13
+
+- Add a Go to references shortcut beside the Program Evidence heading, with a keyboard-focusable destination and mobile-friendly touch target.
+
 ## 4.8.12
 
 - Center the selected continent in the viewport on continent-button clicks, with smooth scrolling and reduced-motion support.

@@ -326,3 +326,6 @@ html.screen-flipping,html.editor-flip-pending{background:var(--atlas-soft);overf
 
 /* v4.8.10: outcome and follow-up editing share one responsive row. */
 .outcome-follow-up-fields{display:grid;gap:14px;min-width:0}.outcome-follow-up-fields>label{min-width:0}.outcome-partners-field{grid-column:1/-1}
+
+/* v4.8.13: accessible reference shortcut outside the project list scroller. */
+.directory>.section-heading{flex-wrap:wrap;gap:8px 16px}.references-jump{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px 14px;border:1px solid var(--atlas-border);border-radius:7px;color:var(--atlas-accent);background:var(--atlas-page);font-size:14px;font-weight:600;text-decoration:none}.references-jump:hover{background:var(--atlas-soft)}#references-title{scroll-margin-top:24px}
