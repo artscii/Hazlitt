@@ -1,3 +1,7 @@
+## 4.8.8
+
+- Use singular continent, country and project labels when summary counts equal one.
+
 ## 4.8.7
 
 - Default to Africa on opening; retain shared-project selection.
