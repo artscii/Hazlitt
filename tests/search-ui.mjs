@@ -35,7 +35,7 @@ assert.equal(input.value,'Africa');assert.equal(d.querySelector('#detail h2').te
 assert.deepEqual([...d.querySelectorAll('article.program:not([hidden])')].map(c=>c.id),catalog.programs.filter(p=>w.AtlasSearch.continentsOf(p).includes('Africa')).map(p=>p.id));
 const africanMarkers=[...d.querySelectorAll('.marker:not(.continent-hidden)')];assert(africanMarkers.length>0);assert(d.querySelector('.marker.continent-hidden'));
 const canada=d.querySelector('#country-base path[aria-label="Canada"]');
-if(canada){canada.dispatchEvent(new w.Event('pointerenter'));assert.equal(regionButton('North America').getAttribute('aria-pressed'),'true');assert(africanMarkers.every(m=>m.classList.contains('continent-hidden')));}
+if(canada){canada.dispatchEvent(new w.Event('pointerenter'));assert.equal(regionButton('Africa').getAttribute('aria-pressed'),'true');assert.equal(input.value,'Africa');assert(africanMarkers.every(m=>!m.classList.contains('continent-hidden')));}
 if(canada){canada.dispatchEvent(new w.Event('click'));assert.equal(input.value,'North America');assert([...d.querySelectorAll('article.program:not([hidden])')].every(c=>w.AtlasSearch.continentsOf(catalog.programs.find(p=>p.id===c.id)).includes('North America')));}
 regionButton('All').click();assert.equal(input.value,'');assert.equal(d.querySelectorAll('.continent-hidden').length,0);
 await search('nothing-matches-xyz');assert.equal(d.querySelectorAll('article.program:not([hidden])').length,0);assert(d.querySelector('#search-status').classList.contains('search-empty'));

@@ -294,10 +294,7 @@ let countryPathIndex=0;
 for(const country of catalog.countries)for(const unused of country.paths){
  const path=base.children[countryPathIndex++];
  path.addEventListener('click',()=>{const continent=continentByCountry.get(country.name);if(continent)selectContinent(continent);});
- path.addEventListener('pointerenter',event=>{
-  if(event.pointerType==='touch'||event.pointerType==='pen'||matchMedia('(hover: none)').matches)return;
-  const continent=continentByCountry.get(country.name);if(continent)revealContinent(continent);
- });
+ // v4.8.14: hover may identify a country, but only a click changes continent filtering.
 }
 document.addEventListener('keydown',e=>{touchInteraction=false;if(e.key==='Escape')closeTip(true)});
 // v1.3.11: open with Bombo selected, while preserving the shared coastal marker.
