@@ -1,3 +1,7 @@
+## 4.8.15
+
+- Selecting a location marker activates its continent filter and hides markers on other continents without moving the map.
+
 ## 4.8.14
 
 - Keep continent marker filtering persistent on hover; change continents only through explicit selection or search.

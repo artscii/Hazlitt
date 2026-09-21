@@ -47,6 +47,11 @@ for(const marker of [...markers,...markers]){
  assert.equal(d.querySelectorAll('.marker.selected').length,1,marker.dataset.name+' must be sole selected marker');
  assert(marker.classList.contains('selected'));assert(d.querySelector('#markers').classList.contains('has-selection'));
  assert(markers.every(m=>!m.hidden));
+ assert(!marker.classList.contains('continent-hidden'),'Selected marker stays visible');
+ const selectedContinent=d.querySelector('[data-map-continent][aria-pressed="true"]').dataset.mapContinent;
+ assert.notEqual(selectedContinent,'All','Marker selects its continent');
+ assert(markers.some(m=>m.classList.contains('continent-hidden')),'Other continents are suppressed');
+ assert.equal(mapScrolls.length,2,'Marker selection does not pan the map');
 }
 assert.deepEqual(markers.map(m=>[m.style.left,m.style.top]),positions);
 await search('');assert.equal(d.querySelectorAll('.marker.selected').length,0);
