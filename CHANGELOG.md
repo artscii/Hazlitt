@@ -1,3 +1,7 @@
+## 4.9.4
+
+- Tighten card padding, paragraph and footer spacing, inter-card gaps and flip height while preserving readable type and 220 × 48 px action buttons.
+
 ## 4.9.3
 
 - Summarize selected projects in the map sidebar without internal scrolling: concise individual overviews or aggregate counts, evidence types and publication years for groups.

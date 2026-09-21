@@ -363,3 +363,12 @@ html.screen-flipping,html.editor-flip-pending{background:var(--atlas-soft);overf
 #detail .sidebar-count{font-size:24px;font-weight:600;margin:0 0 8px}
 .sidebar-evidence-types{list-style:none;padding:0;margin:14px 0;font-size:14px}.sidebar-evidence-types li{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--atlas-border)}
 #detail .detail-block>a{display:inline-flex;align-items:center;min-height:44px;text-decoration:none;font-weight:600;font-size:14px}
+/* v4.9.4: tighter cards without shrinking text or action targets. */
+.evidence-scroll>.program{padding:20px 18px 16px;margin-bottom:8px}
+.program .project-card-content{gap:12px;padding-right:0}
+.program .project-card-content>div:first-child{padding-right:28px}
+.program h3{margin:8px 0 5px}
+.program p{margin-bottom:7px}
+.program .mobile-project-summary{margin:8px 0}
+.program .project-card-actions{padding:10px 0 0;margin-top:8px}
+@media(max-width:740px){.evidence-scroll>.program{padding:18px 16px 14px}.program .project-card-content{gap:10px}.program .project-card-content>div:first-child{padding-right:18px}}

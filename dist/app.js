@@ -35,7 +35,7 @@ async function flipProject(card){
  const expanded=!card.classList.contains('project-expanded');
  // v4.9.2: keep the same outer dimensions and centered anchor for both faces.
  const viewport=window.visualViewport?.height||window.innerHeight;
- card.style.height=Math.min(620,Math.max(260,viewport*.62))+'px';
+ card.style.height=Math.min(560,Math.max(260,viewport*.56))+'px';
  card.scrollIntoView({block:'center',inline:'nearest',behavior:'instant'});
  if(matchMedia('(prefers-reduced-motion: reduce)').matches||!card.animate){setProjectFace(card,expanded);return;}
  flippingCards.add(card);card.classList.add('card-turning');
@@ -162,7 +162,7 @@ function updateEvidencePanels(){
   for(const panel of document.querySelectorAll('.evidence-scroll')){
    const rows=[...panel.querySelectorAll('article.program')].filter(row=>!row.hidden);
    rows.forEach((row,index)=>row.classList.toggle('evidence-alternate',index%2===1));
-   const height=rows.slice(0,3).reduce((sum,row)=>sum+row.getBoundingClientRect().height+12,0);
+   const height=rows.slice(0,3).reduce((sum,row)=>sum+row.getBoundingClientRect().height+8,0);
    panel.style.setProperty('--three-project-height',Math.ceil(height+2)+'px');
    panel.tabIndex=panel.scrollHeight>panel.clientHeight+2?0:-1;updateScrollHint(panel);
   }
