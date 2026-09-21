@@ -1,3 +1,6 @@
+## 4.9.9
+- Move the x-of-y subset indicator beside the footer project number and remove the redundant result-count text.
+
 ## 4.9.8
 - Align project titles with evidence columns; place project numbers and live result counts in the lower-left footer and Back to map in the lower right.
 

@@ -374,3 +374,6 @@ html.screen-flipping,html.editor-flip-pending{background:var(--atlas-soft);overf
 .evidence-scroll>.program>div:first-of-type{display:flex;flex-direction:column;align-self:stretch;align-items:flex-start}
 .project-evidence-status{margin-top:auto;padding-top:14px}
 .project-evidence-status .badge{margin-bottom:0}
+
+/* v4.9.9: subset position belongs with project identification in the footer. */
+.project-row-meta .result-number{position:static;display:inline-block;margin:0;font-size:13px;line-height:1.5;padding:2px 8px;font-variant-numeric:tabular-nums}
