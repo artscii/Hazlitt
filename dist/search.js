@@ -16,25 +16,29 @@ const continentByCountry=new Map(Object.entries(continentCountries).flatMap(([co
  const flatten=value=>Array.isArray(value)?value.map(flatten).join(' '):value&&typeof value==='object'?Object.values(value).map(flatten).join(' '):typeof value==='string'?value:'';
  const textCache=new WeakMap();
  function textOf(project){if(!textCache.has(project))textCache.set(project,normalize(flatten(project)));return textCache.get(project);}
+ const unquote=value=>normalize(value).replace(/["“”]/g,'').trim();
+ const countryNames=new Map([...continentByCountry.keys()].map(name=>[normalize(name),name]));
  function parse(query){
   const years=[];
-  const rest=normalize(query).replace(/\b(?:year\s*:\s*)?((?:19|20)\d{2})(?:\s*[-–—]\s*((?:19|20)\d{2}))?\b/g,(_,first,last)=>{years.push([Number(first),Number(last||first)]);return ' ';});
+  const rest=unquote(query).replace(/\b(?:year\s*:\s*)?((?:19|20)\d{2})(?:\s*[-–—]\s*((?:19|20)\d{2}))?\b/g,(_,first,last)=>{years.push([Number(first),Number(last||first)]);return ' ';});
   const continents=[];
   const words=rest.replace(/\b(north america|south america|africa|asia|europe|oceania|antarctica)\b/g,name=>{continents.push(name);return ' ';});
-  return {years,continents,terms:words.trim().split(/\s+/).filter(Boolean)};
+  const country=countryNames.get(words.trim());
+  return {years,continents,countries:country?[country]:[],terms:words.trim().split(/\s+/).filter(Boolean)};
  }
+ const inCountries=(p,names)=>names.every(name=>(p.countries||[]).includes(name));
  const inContinents=(p,names)=>names.every(name=>continentsOf(p).some(continent=>normalize(continent)===name));
  const inYears=(p,years)=>years.every(([min,max])=>Number(p.publicationYear)>=min&&Number(p.publicationYear)<=max);
- function matches(project,query,extra=''){const {years,terms,continents}=parse(query);const text=normalize(extra)+' '+textOf(project);return inContinents(project,continents)&&inYears(project,years)&&terms.every(term=>text.includes(term));}
+ function matches(project,query,extra=''){const {years,terms,continents,countries}=parse(query);const text=normalize(extra)+' '+textOf(project);return inCountries(project,countries)&&inContinents(project,continents)&&inYears(project,years)&&terms.every(term=>text.includes(term));}
  function createIndex(projects){
   const docs=projects.map((p,i)=>({p,text:normalize('Project '+(i+1)+' '+String(i+1).padStart(2,'0'))+' '+textOf(p)})),cache=new Map();
   function search(query){
    const key=normalize(query).trim();if(cache.has(key))return cache.get(key);
-   const {years,terms,continents}=parse(query);
-   const ids=new Set(docs.filter(d=>inContinents(d.p,continents)&&inYears(d.p,years)&&terms.every(term=>d.text.includes(term))).map(d=>d.p.id));
+   const {years,terms,continents,countries}=parse(query);
+   const ids=new Set(docs.filter(d=>inCountries(d.p,countries)&&inContinents(d.p,continents)&&inYears(d.p,years)&&terms.every(term=>d.text.includes(term))).map(d=>d.p.id));
    const result={ids,terms};cache.set(key,result);if(cache.size>80)cache.delete(cache.keys().next().value);return result;
   }
   return {search};
  }
- return {parse,matches,normalize,createIndex,continentByCountry,continentsOf};
+ return {parse,matches,normalize,unquote,createIndex,continentByCountry,continentsOf};
 })();

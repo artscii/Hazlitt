@@ -1,3 +1,8 @@
+## 4.8.9
+
+- Support quoted country/continent searches and synchronize matching map markers.
+- Show the live catalog count in the search placeholder.
+
 ## 4.8.8
 
 - Use singular continent, country and project labels when summary counts equal one.

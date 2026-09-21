@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import '../dist/search.js';
-const p={name:'Kenya slide scans',publicationYear:'2024',date:'Reviewed 2026',source:'https://example.org/2023'};
+const p={countries:['Kenya'],name:'Kenya slide scans',publicationYear:'2024',date:'Reviewed 2026',source:'https://example.org/2023'};
 assert(AtlasSearch.matches(p,'2024'));
 assert(AtlasSearch.matches(p,'Kenya year:2024'));
 assert(AtlasSearch.matches(p,'2020–2025'));
@@ -37,3 +37,8 @@ assert(AtlasSearch.matches(fresh,'Africa'));
 fresh.countries=['Peru'];assert(!AtlasSearch.matches(fresh,'Africa'));assert(AtlasSearch.matches(fresh,'South America'));
 assert.deepEqual([...AtlasSearch.createIndex([...records,fresh]).search('South America').ids],['new']);
 console.log('Dynamic continent search passed, including cross-continent and edited/new records.');
+
+assert.deepEqual([...index.search('"Africa"').ids],['a','b','d']);
+assert.deepEqual([...index.search('“Asia”').ids],['c']);
+assert.deepEqual([...index.search('"Kenya" 2024').ids],['a']);
+assert(!AtlasSearch.matches({countries:['China'],outcome:'Kenya'},'"Kenya"'));

@@ -5,6 +5,8 @@ const response=await fetch('/api/catalog',{cache:'no-store'});
 if(!response.ok)throw new Error('Project records could not be loaded. Please refresh to retry.');
 const catalog=await response.json();window.atlasCatalog=catalog;
 const escapeHTML=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// v4.8.9: placeholder uses the current catalog count, never a hard-coded total.
+document.querySelector('#project-search').placeholder=`All ${catalog.programs.length} projects`;
 const searchIndex=AtlasSearch.createIndex(catalog.programs);
 let chosenMarkerName=null;
 const programs=catalog.programs.map(p=>Object.fromEntries(Object.entries(p).map(([key,value])=>[key,typeof value==='string'?escapeHTML(value):value])));
@@ -144,7 +146,8 @@ function filterProfiles(){
 function updateCountryOutlines(place){
  const direct=places.find(p=>p.name===place.name);
  const locations=direct?[direct]:places.filter(p=>p.ids.some(id=>place.ids.includes(id)));
- const names=locations.flatMap(p=>p.countries||[]);
+ const geography=AtlasSearch.parse(document.querySelector('#project-search').value);
+ const names=locations.flatMap(p=>p.countries||[]).filter(name=>chosenMarkerName||(!geography.countries.length||geography.countries.includes(name))&&(!geography.continents.length||geography.continents.includes((AtlasSearch.continentByCountry.get(name)||'').toLowerCase())));
  document.querySelectorAll('#country-outlines path').forEach(path=>path.classList.toggle('active',names.includes(path.dataset.country)));
 }
 function numberSelectedRows(){
@@ -350,17 +353,18 @@ function syncSearchMap({preserveMapPosition=true}={}){
   prioritizeProfiles({name:sharedProjectId?programs.find(p=>p.id===sharedProjectId).name:'Search results',ids:orderedIds},{filter:false});
  }else arrangeProfiles([]);
  filterProfiles();
- const locations=places.filter(p=>p.ids.some(id=>matches.has(id)));
+ const searchedCountries=AtlasSearch.parse(query).countries;
+ const locations=places.filter(p=>p.ids.some(id=>matches.has(id))&&(!searchedCountries.length||p.countries.some(c=>searchedCountries.includes(c))));
  document.querySelectorAll('.marker').forEach(marker=>{
   const place=places.find(p=>p.name===marker.dataset.name),ids=place.ids.filter(id=>matches.has(id));
-  marker.hidden=false;marker.classList.toggle('search-muted',!ids.length);
+  marker.hidden=false;marker.classList.toggle('search-muted',!ids.length||!locations.includes(place));
   const visibleIds=ids.length?ids:place.ids;
   marker.firstChild.textContent=visibleIds.length>1?String(visibleIds.length):'•';
   marker.setAttribute('aria-label',`${place.name}: ${visibleIds.map(id=>programs.find(p=>p.id===id).name).join(', ')}. Show outcomes`);
  });
  for(const [id,card]of projectCards)card.classList.toggle('search-first',filtered&&id===orderedIds[0]);
  if(filtered&&orderedIds.length){
-  const continent=[...new Set(continentByCountry.values())].find(name=>name.toLowerCase()===query.toLowerCase());
+  const continent=[...new Set(continentByCountry.values())].find(name=>name.toLowerCase()===AtlasSearch.unquote(query));
   if(continent&&!chosenMarkerName&&!sharedProjectId){showContinentSummary(orderedIds,continent);revealContinent(continent);}
   else if(orderedIds.length>5&&!chosenMarkerName&&!sharedProjectId)showContinentSummary(orderedIds);
   else showDetail({name:locations.map(p=>p.name).join(' · '),ids:orderedIds});
