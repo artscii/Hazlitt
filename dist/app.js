@@ -258,7 +258,8 @@ document.addEventListener('pointerdown',e=>{if(!tip.hidden&&!tip.contains(e.targ
 const continentControls=document.createElement('nav');continentControls.className='continent-controls';continentControls.setAttribute('aria-label','Map continents');
 const availableContinents=[...new Set([...covered].map(name=>continentByCountry.get(name)).filter(Boolean))].sort();
 continentControls.innerHTML=['All',...availableContinents].map(name=>`<button type="button" data-map-continent="${name}" aria-pressed="${name==='All'}">${name}</button>`).join('');
-document.querySelector('.map-shell').before(continentControls);
+// v4.8.10: keep continent filters directly below the visible map.
+document.querySelector('.map-shell').after(continentControls);
 let visibleContinent='All';
 function revealContinent(name){
  if(name===visibleContinent)return;visibleContinent=name;

@@ -1,3 +1,7 @@
+## 4.8.10
+
+- Move centered continent filters directly below the map.
+
 ## 4.8.9
 
 - Support quoted country/continent searches and synchronize matching map markers.
