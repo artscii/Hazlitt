@@ -310,3 +310,16 @@ html.screen-flipping,html.editor-flip-pending{background:var(--atlas-soft);overf
 
 /* v4.8.4: dated evidence follow-up stays separate from reported outcomes. */
 .project-follow-up{margin:16px 0;padding:12px 16px;border-left:3px solid var(--atlas-accent);background:var(--atlas-soft);border-radius:0 6px 6px 0}.project-follow-up p:last-child{margin-bottom:0}
+
+/* v4.8.6: consolidate reference notes without duplicate headings or oversized gaps. */
+.references{margin:24px 0 32px;border-top:1px solid var(--atlas-border);padding-top:20px}
+.references>h2{margin:0 0 12px;font-size:20px}
+.reference-list{border:1px solid var(--atlas-border);border-radius:8px;overflow:hidden;background:var(--atlas-page)}
+.reference-item+.reference-item{border-top:1px solid var(--atlas-border)}
+.reference-item>summary{cursor:pointer;min-height:48px;padding:12px 16px;font-size:15px;font-weight:600;color:var(--atlas-text);list-style-position:inside}
+.reference-item>summary:hover,.reference-item[open]>summary{background:var(--atlas-soft)}
+.reference-item>summary:focus-visible{outline-offset:-3px}
+.reference-content{padding:0 16px 16px;line-height:1.65;overflow-wrap:anywhere}
+.reference-content>p:first-child{margin-top:12px}.reference-content>:last-child{margin-bottom:0}
+.reference-content ul{padding-left:22px}.reference-content li+li{margin-top:8px}
+@media(max-width:740px){.references{margin:20px 0 24px;padding-top:16px}.reference-item>summary{padding-inline:12px}.reference-content{padding-inline:12px}}

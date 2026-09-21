@@ -1,3 +1,8 @@
+## 4.8.6
+
+- Consolidate sources, Canadian/EHDS reviews, evidence context and map notes into compact collapsed References below project results.
+- Remove repeated headings, retain keyboard access and comfortable mobile targets.
+
 ## 4.8.5
 
 - Center continent controls within the visible map column, including wrapped mobile rows.
