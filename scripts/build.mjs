@@ -1,4 +1,7 @@
 import fs from 'node:fs';
+import {build} from 'esbuild';
+await build({entryPoints:['client/semantic-worker.js'],outfile:'dist/semantic-worker.js',bundle:true,format:'esm',platform:'browser',target:'es2022',minify:true,legalComments:'eof'});
+fs.copyFileSync('node_modules/@mlc-ai/web-llm/LICENSE','dist/webllm-LICENSE.txt');
 // v3.0.0: derive secondary pages from the Atlas shell so headers/footers stay identical.
 const source=fs.readFileSync('dist/index.html','utf8');
 const head=source.match(/<head>[\s\S]*?<\/head>/)[0].replace(/<script[\s\S]*?<\/script>/g,'').replace('href="style.css"','href="/style.css"');
@@ -11,7 +14,7 @@ for(const [name,title] of [['admin','Admin']]){
 }
 fs.copyFileSync('node_modules/exceljs/dist/exceljs.min.js','dist/exceljs.min.js');
 fs.copyFileSync('node_modules/exceljs/LICENSE','dist/exceljs-LICENSE.txt');
-const assets={};for(const name of ['index.html','admin.html','app.js','search.js','external-links.js','analytics-admin.js','analytics-client.js','theme.js','admin.js','style.css','map.svg','transfers.js','spreadsheet-worker.js','spreadsheet-format.js','exceljs.min.js','exceljs-LICENSE.txt'])assets['/'+name]={body:fs.readFileSync('dist/'+name,'utf8'),type:({'html':'text/html; charset=utf-8','js':'application/javascript; charset=utf-8','css':'text/css; charset=utf-8','svg':'image/svg+xml','txt':'text/plain; charset=utf-8'})[name.split('.').pop()]};
+const assets={};for(const name of ['index.html','admin.html','app.js','search.js','semantic-search.js','semantic-worker.js','webllm-LICENSE.txt','external-links.js','analytics-admin.js','analytics-client.js','theme.js','admin.js','style.css','map.svg','transfers.js','spreadsheet-worker.js','spreadsheet-format.js','exceljs.min.js','exceljs-LICENSE.txt'])assets['/'+name]={body:fs.readFileSync('dist/'+name,'utf8'),type:({'html':'text/html; charset=utf-8','js':'application/javascript; charset=utf-8','css':'text/css; charset=utf-8','svg':'image/svg+xml','txt':'text/plain; charset=utf-8'})[name.split('.').pop()]};
 fs.mkdirSync('dist/server',{recursive:true});fs.mkdirSync('dist/.openai',{recursive:true});
 fs.writeFileSync('dist/server/index.js','const ASSETS='+JSON.stringify(assets)+';\nconst SEED='+fs.readFileSync('data/seed.json')+';\nconst COUNTRIES='+fs.readFileSync('data/countries.json')+';\n'+fs.readFileSync('server/transfers.js','utf8')+'\n'+fs.readFileSync('server/analytics.js','utf8')+'\n'+fs.readFileSync('server/worker.js','utf8'));
 fs.copyFileSync('.openai/hosting.json','dist/.openai/hosting.json');

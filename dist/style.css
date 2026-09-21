@@ -285,3 +285,15 @@ html.screen-flipping,html.editor-flip-pending{background:var(--atlas-soft);overf
 #markers .marker.selected,#markers .marker:focus-visible{opacity:1}
 @media(hover:hover){#markers .marker:hover{opacity:1}}
 @media(prefers-reduced-motion:reduce){#markers .marker{transition:none}}
+
+/* v4.8.0: compact semantic search controls, with a stable chosen map marker. */
+.semantic-controls{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;margin-top:.8rem}
+.semantic-controls button{min-height:44px;padding:.55rem .9rem;border:1px solid var(--atlas-border,#a7c4ce);border-radius:6px;background:var(--atlas-soft,#edf5f8);color:var(--atlas-ink,#173d4b);font:inherit;font-size:.875rem;cursor:pointer}
+.semantic-controls button:disabled{opacity:.6;cursor:default}
+.semantic-controls button:focus-visible{outline:2px solid var(--atlas-accent,#00777e);outline-offset:3px}
+#semantic-status{font-size:.875rem;color:var(--atlas-muted,#536b77);overflow-wrap:anywhere}
+.program.semantic-result .record-number::after{content:' · Concept match';font-weight:400}
+#markers.has-selection .marker:not(.selected){opacity:.45}
+#markers.has-selection .marker.selected{opacity:1}
+@media(max-width:740px){.semantic-controls{align-items:flex-start;flex-direction:column}#semantic-help{line-height:1.5}}
+.semantic-help{margin-top:.6rem;font-size:.875rem;color:var(--atlas-muted,#536b77)}.semantic-help summary{cursor:pointer}.semantic-help p{margin:.5rem 0 0}

@@ -1,0 +1,18 @@
+import fs from 'node:fs';import assert from 'node:assert/strict';import {JSDOM} from 'jsdom';
+const dom=new JSDOM('<button id="semantic-toggle"></button><p id="semantic-status"></p><input id="project-search">',{runScripts:'outside-only'}),w=dom.window;
+Object.defineProperty(w.navigator,'gpu',{value:{}});
+const jobs=[],timers=new Map();let next=0;
+w.setTimeout=fn=>{timers.set(++next,fn);return next;};w.clearTimeout=id=>timers.delete(id);
+w.Worker=class{constructor(){jobs.push(this);}postMessage(data){this.sent=data;}terminate(){this.terminated=true;}};
+w.eval(fs.readFileSync('dist/search.js','utf8'));w.eval(fs.readFileSync('dist/semantic-search.js','utf8'));
+const received=[],controller=new w.AtlasSemantic({onResult:r=>received.push(r)});
+controller.enable();const worker=jobs.at(-1);assert.equal(worker.sent.type,'init');
+worker.onmessage({data:{type:'ready'}});
+controller.schedule('old query');const oldId=controller.generation;
+controller.schedule('new query');const newId=controller.generation;
+worker.onmessage({data:{type:'result',id:oldId,query:'old query',expansions:[]}});assert.equal(received.length,0);
+worker.onmessage({data:{type:'result',id:newId,query:'new query',expansions:[{term:'new',synonyms:['recent']}]}});assert.equal(received.length,1);
+controller.schedule('new query');assert.equal(received.length,2,'Cached result returns without another model request');
+controller.disable();assert(worker.terminated);assert.equal(received.at(-1),null);
+controller.enable();jobs.at(-1).onmessage({data:{type:'error'}});assert.equal(controller.state,'error');assert(w.document.querySelector('#semantic-status').textContent.includes('still active'));
+dom.window.close();console.log('Semantic controller passed: stale results, cancellation, cache, disabling and unavailable-model fallback.');

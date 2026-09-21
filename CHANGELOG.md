@@ -1,3 +1,10 @@
+## 4.8.0 — Fast indexed and local semantic search
+
+- Cache normalized catalog text and query results; coalesce input events and reuse project cards.
+- Add concept matches and optional WebLLM query expansion in a worker, with loading progress, cancellation, stale-result protection, timeouts, and a no-WebGPU fallback.
+- Retain source records, exact matches, publication-year constraints, country constraints and ascending project numbers.
+- Keep the chosen location distinct from other countries covered by the same project.
+
 # 4.7.1 — Consistent marker selection contrast
 
 - Dim unselected markers whenever a map selection exists; retain position, click targets, and full contrast on hover or keyboard focus.
