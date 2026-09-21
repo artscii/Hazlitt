@@ -176,16 +176,7 @@ const map=document.querySelector('#map'),tip=document.querySelector('#tooltip');
 let activeLocationName=null,activeLocationKey=null;
 // v4.8.2: compact broad search subsets by continent, counting each project once per group.
 // Geographic grouping convention: Russia in Europe; Turkey/Caucasus/Cyprus in Asia.
-const continentCountries={
- Africa:'Algeria|Angola|Benin|Bir Tawil|Botswana|Burkina Faso|Burundi|Cabo Verde|Cameroon|Central African Republic|Chad|Comoros|Democratic Republic of the Congo|Djibouti|Egypt|Equatorial Guinea|Eritrea|Eswatini|Ethiopia|Gabon|Gambia|Ghana|Guinea|Guinea-Bissau|Ivory Coast|Kenya|Lesotho|Liberia|Libya|Madagascar|Malawi|Mali|Mauritania|Mauritius|Morocco|Mozambique|Namibia|Niger|Nigeria|Republic of the Congo|Rwanda|Saint Helena|São Tomé and Principe|Senegal|Seychelles|Sierra Leone|Somalia|Somaliland|South Africa|South Sudan|Sudan|Tanzania|Togo|Tunisia|Uganda|Western Sahara|Zambia|Zimbabwe',
- Asia:'Afghanistan|Akrotiri Sovereign Base Area|Armenia|Azerbaijan|Bahrain|Bangladesh|Baykonur Cosmodrome|Bhutan|British Indian Ocean Territory|Brunei|Cambodia|China|Cyprus|Cyprus No Mans Area|Dhekelia Sovereign Base Area|East Timor|Georgia|Hong Kong S.A.R.|India|Indonesia|Iran|Iraq|Israel|Japan|Jordan|Kazakhstan|Kuwait|Kyrgyzstan|Laos|Lebanon|Macao S.A.R|Malaysia|Maldives|Mongolia|Myanmar|Nepal|North Korea|Northern Cyprus|Oman|Pakistan|Palestine|Philippines|Qatar|Saudi Arabia|Scarborough Reef|Siachen Glacier|Singapore|South Korea|Spratly Islands|Sri Lanka|Syria|Taiwan|Tajikistan|Thailand|Turkey|Turkmenistan|United Arab Emirates|Uzbekistan|Vietnam|Yemen',
- Europe:'Aland|Albania|Andorra|Austria|Belarus|Belgium|Bosnia and Herzegovina|Bulgaria|Croatia|Czechia|Denmark|Estonia|Faroe Islands|Finland|France|Germany|Gibraltar|Greece|Guernsey|Hungary|Iceland|Ireland|Isle of Man|Italy|Jersey|Kosovo|Latvia|Liechtenstein|Lithuania|Luxembourg|Malta|Moldova|Monaco|Montenegro|Netherlands|North Macedonia|Norway|Poland|Portugal|Republic of Serbia|Romania|Russia|San Marino|Slovakia|Slovenia|Spain|Sweden|Switzerland|Ukraine|United Kingdom|Vatican',
- 'North America':'Anguilla|Antigua and Barbuda|Aruba|Bajo Nuevo Bank (Petrel Is.)|Barbados|Belize|Bermuda|British Virgin Islands|Canada|Cayman Islands|Clipperton Island|Costa Rica|Cuba|Curaçao|Dominica|Dominican Republic|El Salvador|Greenland|Grenada|Guatemala|Haiti|Honduras|Jamaica|Mexico|Montserrat|Nicaragua|Panama|Puerto Rico|Saint Barthelemy|Saint Kitts and Nevis|Saint Lucia|Saint Martin|Saint Pierre and Miquelon|Saint Vincent and the Grenadines|Serranilla Bank|Sint Maarten|The Bahamas|Trinidad and Tobago|Turks and Caicos Islands|US Naval Base Guantanamo Bay|United States Virgin Islands|United States of America',
- 'South America':'Argentina|Bolivia|Brazil|Brazilian Island|Chile|Colombia|Ecuador|Falkland Islands|Guyana|Paraguay|Peru|Southern Patagonian Ice Field|Suriname|Uruguay|Venezuela',
- Oceania:'American Samoa|Ashmore and Cartier Islands|Australia|Cook Islands|Coral Sea Islands|Federated States of Micronesia|Fiji|French Polynesia|Guam|Indian Ocean Territories|Kiribati|Marshall Islands|Nauru|New Caledonia|New Zealand|Niue|Norfolk Island|Northern Mariana Islands|Palau|Papua New Guinea|Pitcairn Islands|Samoa|Solomon Islands|Tonga|Tuvalu|United States Minor Outlying Islands|Vanuatu|Wallis and Futuna',
- Antarctica:'Antarctica|French Southern and Antarctic Lands|Heard Island and McDonald Islands|South Georgia and the Islands'
-};
-const continentByCountry=new Map(Object.entries(continentCountries).flatMap(([continent,names])=>names.split('|').map(name=>[name,continent])));
+const continentByCountry=AtlasSearch.continentByCountry;
 function showContinentSummary(ids){
  const selected=new Set(ids),groups=new Map(),countries=new Set();
  for(const project of catalog.programs){
@@ -274,11 +265,18 @@ function revealContinent(name){
  for(const button of continentControls.children)button.setAttribute('aria-pressed',String(button.dataset.mapContinent===name));
  if(tipButton?.classList.contains('continent-hidden'))closeTip(true);
 }
-continentControls.addEventListener('click',event=>{const button=event.target.closest('button');if(button)revealContinent(button.dataset.mapContinent);});
+// v4.8.3: continent selection uses the same geographic filter as typed searches.
+function selectContinent(name){
+ clearSharedProject();closeTip(true);
+ document.querySelector('#project-search').value=name==='All'?'':name;
+ revealContinent(name);syncSearchMap({preserveMapPosition:true});
+}
+continentControls.addEventListener('click',event=>{const button=event.target.closest('button');if(button)selectContinent(button.dataset.mapContinent);});
 // The base has every country, including countries without projects.
 let countryPathIndex=0;
 for(const country of catalog.countries)for(const unused of country.paths){
  const path=base.children[countryPathIndex++];
+ path.addEventListener('click',()=>{const continent=continentByCountry.get(country.name);if(continent)selectContinent(continent);});
  path.addEventListener('pointerenter',event=>{
   if(event.pointerType==='touch'||event.pointerType==='pen'||matchMedia('(hover: none)').matches)return;
   const continent=continentByCountry.get(country.name);if(continent)revealContinent(continent);
@@ -464,7 +462,7 @@ const sharedMessage=document.createElement('span');
 const showAll=document.createElement('button');showAll.type='button';showAll.textContent='Show all projects';
 sharedNotice.append(sharedMessage,showAll);document.querySelector('.project-search').append(sharedNotice);
 function clearSharedProject(){
- markerProjectIds=null;chosenMarkerName=null;cancelAnimationFrame(searchFrame);
+ markerProjectIds=null;chosenMarkerName=null;cancelAnimationFrame(searchFrame);revealContinent('All');
  sharedProjectId=null;sharedNotice.hidden=true;
  const url=new URL(location.href);url.searchParams.delete('project');url.hash='';history.replaceState(null,'',url);
 }

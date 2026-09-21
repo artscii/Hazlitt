@@ -27,3 +27,13 @@ const first=index.search('Kenya');assert.strictEqual(index.search('Kenya'),first
 const large=AtlasSearch.createIndex(Array.from({length:1000},(_,i)=>({...records[i%4],id:'p'+i})));
 const began=performance.now();for(let i=0;i<1000;i++)large.search(i%2?'Kenya sensitivity 2024':'cytology');
 console.log('Cached full-text benchmark, 1,000 queries / 1,000 records:',Math.round(performance.now()-began)+'ms');
+// New records and changed country assignments derive geography without stored continent fields.
+assert.deepEqual([...index.search('Africa').ids],['a','b','d']);
+assert.deepEqual([...index.search('Asia 2024').ids],['c']);
+assert(!AtlasSearch.matches({countries:['China'],outcome:'Compared with Africa'},'Africa'));
+const fresh={id:'new',countries:['Canada','Kenya'],publicationYear:'2025'};
+assert(AtlasSearch.matches(fresh,'North America 2025'));
+assert(AtlasSearch.matches(fresh,'Africa'));
+fresh.countries=['Peru'];assert(!AtlasSearch.matches(fresh,'Africa'));assert(AtlasSearch.matches(fresh,'South America'));
+assert.deepEqual([...AtlasSearch.createIndex([...records,fresh]).search('South America').ids],['new']);
+console.log('Dynamic continent search passed, including cross-continent and edited/new records.');

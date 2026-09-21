@@ -1,3 +1,8 @@
+## 4.8.3
+
+- Derive continent search filters from project countries in public and Admin search, including new and imported records.
+- Clicking a continent fills search and filters projects without moving the map.
+
 ## 4.8.2 — Continent summaries and map exploration
 
 - Summarize search subsets larger than five projects by continent with unique project and country counts.
