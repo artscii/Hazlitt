@@ -1,3 +1,8 @@
+## 4.8.7
+
+- Default to Africa on opening; retain shared-project selection.
+- Continent choices populate search and show a compact geographic summary regardless of result count.
+
 ## 4.8.6
 
 - Consolidate sources, Canadian/EHDS reviews, evidence context and map notes into compact collapsed References below project results.

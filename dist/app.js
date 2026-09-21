@@ -177,11 +177,12 @@ let activeLocationName=null,activeLocationKey=null;
 // v4.8.2: compact broad search subsets by continent, counting each project once per group.
 // Geographic grouping convention: Russia in Europe; Turkey/Caucasus/Cyprus in Asia.
 const continentByCountry=AtlasSearch.continentByCountry;
-function showContinentSummary(ids){
+function showContinentSummary(ids,scope=null){
  const selected=new Set(ids),groups=new Map(),countries=new Set();
  for(const project of catalog.programs){
   if(!selected.has(project.id))continue;
   for(const country of project.countries){
+   if(scope&&continentByCountry.get(country)!==scope)continue;
    countries.add(country);const continent=continentByCountry.get(country)||'Other / unclassified';
    if(!groups.has(continent))groups.set(continent,{ids:new Set(),countries:new Set()});
    groups.get(continent).ids.add(project.id);groups.get(continent).countries.add(country);
@@ -190,7 +191,7 @@ function showContinentSummary(ids){
  activeLocationKey=null;activeLocationName=null;
  updateCountryOutlines({name:'',ids});
  const detail=document.querySelector('#detail');detail.classList.remove('multiple-projects');
- detail.innerHTML=`<p class="eyebrow">SELECTED LOCATIONS</p><h2>Results by continent</h2><p class="continent-total">${selected.size} projects · ${countries.size} countries · ${groups.size} continents</p><div class="continent-summary">`+[...groups].sort(([a],[b])=>a.localeCompare(b)).map(([name,group])=>`<section class="continent-summary-row" data-continent="${escapeHTML(name)}"><div><h3>${escapeHTML(name)}</h3><span>${group.ids.size} ${group.ids.size===1?'project':'projects'}</span></div><p>${group.countries.size} ${group.countries.size===1?'country':'countries'} · ${[...group.countries].sort().map(escapeHTML).join(', ')}</p></section>`).join('')+'</div><p class="contact-note">Projects spanning continents appear in each relevant group. Explore individual projects in the results list below.</p>';
+ detail.innerHTML=`<p class="eyebrow">SELECTED LOCATIONS</p><h2>${scope?escapeHTML(scope):'Results by continent'}</h2><p class="continent-total">${selected.size} projects · ${countries.size} countries · ${groups.size} continents</p><div class="continent-summary">`+[...groups].sort(([a],[b])=>a.localeCompare(b)).map(([name,group])=>`<section class="continent-summary-row" data-continent="${escapeHTML(name)}"><div><h3>${escapeHTML(name)}</h3><span>${group.ids.size} ${group.ids.size===1?'project':'projects'}</span></div><p>${group.countries.size} ${group.countries.size===1?'country':'countries'} · ${[...group.countries].sort().map(escapeHTML).join(', ')}</p></section>`).join('')+'</div><p class="contact-note">Projects spanning continents appear in each relevant group. Explore individual projects in the results list below.</p>';
  detail.scrollTop=0;
 }
 function showDetail(place){place=searchPlace(place);if(!place.ids.length)return;updateCountryOutlines(place);setMarkerSelection([place.name]);const key=place.name+'|'+place.ids.join(',');if(activeLocationKey===key)return;activeLocationKey=key;activeLocationName=place.name;document.querySelector('#detail').classList.toggle('multiple-projects',place.ids.length>1);document.querySelector('#detail').innerHTML=`<p class="eyebrow">${place.ids.length>1?"SELECTED LOCATIONS":"SELECTED LOCATION"}</p><h2>${place.name}</h2>`+place.ids.map(id=>{const p=programs.find(p=>p.id===id);return `<div class="detail-block">${badge(p)}<h3>${p.name}</h3><p class="metric">${p.metric}</p><p class="metric-label">${p.metricLabel}</p>${p.metric.includes("AUC")?aucExplanation:""}<p>${p.short}</p><p class="contact-note">${p.publicationYear?`Publication year: ${p.publicationYear} · `:''}${p.evidenceBasis||'Evidence basis not yet classified'}${p.sampleDetails?` · ${p.sampleDetails}`:''}<br>${p.date}${place.ids.includes('ave')&&id==='ave'?' · Five-country aggregate':''}</p><a href="#${p.id}">Outcomes, sponsors & contact ↓</a></div>`}).join('');document.querySelector('#detail').scrollTop=0;}
@@ -270,6 +271,7 @@ function selectContinent(name){
  clearSharedProject();closeTip(true);
  document.querySelector('#project-search').value=name==='All'?'':name;
  revealContinent(name);syncSearchMap({preserveMapPosition:true});
+ if(name==='All')showContinentSummary(programs.map(p=>p.id));
 }
 continentControls.addEventListener('click',event=>{const button=event.target.closest('button');if(button)selectContinent(button.dataset.mapContinent);});
 // The base has every country, including countries without projects.
@@ -358,7 +360,9 @@ function syncSearchMap({preserveMapPosition=true}={}){
  });
  for(const [id,card]of projectCards)card.classList.toggle('search-first',filtered&&id===orderedIds[0]);
  if(filtered&&orderedIds.length){
-  if(orderedIds.length>5&&!chosenMarkerName&&!sharedProjectId)showContinentSummary(orderedIds);
+  const continent=[...new Set(continentByCountry.values())].find(name=>name.toLowerCase()===query.toLowerCase());
+  if(continent&&!chosenMarkerName&&!sharedProjectId){showContinentSummary(orderedIds,continent);revealContinent(continent);}
+  else if(orderedIds.length>5&&!chosenMarkerName&&!sharedProjectId)showContinentSummary(orderedIds);
   else showDetail({name:locations.map(p=>p.name).join(' · '),ids:orderedIds});
   setMarkerSelection(locations.map(p=>p.name));
   const place=locations[0];if(place&&!preserveMapPosition){mapScroller.scrollLeft=Math.max(0,projectX(place.lon)/100*mapScroller.scrollWidth-mapScroller.clientWidth/2);updateMapScrollCue();}
@@ -489,7 +493,8 @@ document.addEventListener('click',async event=>{
  try{await navigator.clipboard.writeText(link.href);feedback.textContent='Link copied';}
  catch{feedback.replaceChildren();const input=document.createElement('input');input.readOnly=true;input.value=link.href;input.setAttribute('aria-label','Project share URL — copy this link');feedback.append(input);input.focus();input.select();}
 });
-if(new URL(location.href).searchParams.has('project'))openSharedProject();else syncSearchMap();
+// v4.8.7: start with Africa; explicit shared-project links take precedence.
+if(new URL(location.href).searchParams.has('project'))openSharedProject();else selectContinent('Africa');
 window.dispatchEvent(new Event('atlas-ready'));
 })().catch(error=>{const message=document.createElement('p');message.className='load-error';message.textContent=error.message;document.querySelector('#map-overview').before(message);console.error(error);});
 

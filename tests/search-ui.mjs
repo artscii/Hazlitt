@@ -12,6 +12,7 @@ await new Promise(resolve=>w.addEventListener('atlas-ready',resolve,{once:true})
 const input=d.querySelector('#project-search'),cards=new Map([...d.querySelectorAll('article.program')].map(c=>[c.id,c]));
 const settle=()=>new Promise(resolve=>setTimeout(resolve,45));
 async function search(query){input.value=query;input.dispatchEvent(new w.Event('input',{bubbles:true}));await settle();}
+assert.equal(input.value,'Africa');assert.equal(d.querySelector('#detail h2').textContent,'Africa');assert(d.querySelector('.continent-summary'));
 await search('cytology');assert(d.querySelectorAll('article.program:not([hidden])').length>0);
 const cytologyMatches=[...d.querySelectorAll('article.program:not([hidden])')];
 if(cytologyMatches.length>5){
@@ -23,7 +24,7 @@ if(cytologyMatches.length>5){
 await search('bombo');assert(d.querySelector('#detail .detail-block'));assert(!d.querySelector('.continent-summary'));
 const regionButton=name=>d.querySelector(`[data-map-continent="${name}"]`);
 regionButton('Africa').click();
-assert.equal(input.value,'Africa');
+assert.equal(input.value,'Africa');assert.equal(d.querySelector('#detail h2').textContent,'Africa');assert.equal(d.querySelectorAll('#detail .detail-block').length,0);
 assert.deepEqual([...d.querySelectorAll('article.program:not([hidden])')].map(c=>c.id),catalog.programs.filter(p=>w.AtlasSearch.continentsOf(p).includes('Africa')).map(p=>p.id));
 const africanMarkers=[...d.querySelectorAll('.marker:not(.continent-hidden)')];assert(africanMarkers.length>0);assert(d.querySelector('.marker.continent-hidden'));
 const canada=d.querySelector('#country-base path[aria-label="Canada"]');
