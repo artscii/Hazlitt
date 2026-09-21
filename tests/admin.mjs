@@ -7,6 +7,10 @@ const configuredHash=env.ADMIN_PASSWORD_HASH;delete env.ADMIN_PASSWORD_HASH;
 assert.equal((await call('/api/login','POST',{password:'Bombo'})).status,503);
 env.ADMIN_PASSWORD_HASH=configuredHash;
 assert.equal((await call('/api/records','POST',{})).status,401);assert.equal((await call('/api/audit')).status,401);assert.equal((await call('/api/records/bombo/history')).status,401);assert.equal((await call('/api/login','POST',{password:'wrong'})).status,401);assert.equal((await call('/api/login','POST',{password:'Bombo'})).status,200);
+delete env.ADMIN_PASSWORD_HASH;
+assert.equal((await call('/api/login','POST',{password:'Bombo'})).status,200);
+assert.equal((await call('/api/login','POST',{password:'wrong'})).status,401);
+assert.equal((await call('/api/session')).data.authenticated,true);
 // Configuration is public to read, Admin-only to change, validated, and persistent.
 assert.deepEqual((await call('/api/config')).data,{editFlipEnabled:true,editFlipDuration:400,palette:'coastal'});
 assert.equal((await call('/api/config','PUT',{editFlipEnabled:true,editFlipDuration:50})).status,400);

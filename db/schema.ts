@@ -14,3 +14,6 @@ export const analyticsPeriods=sqliteTable('analytics_periods',{id:text('id').pri
 export const analyticsVisits=sqliteTable('analytics_visits',{id:text('id').primaryKey(),period:text('period').notNull(),at:integer('at').notNull(),last:integer('last').notNull(),country:text('country').notNull(),device:text('device').notNull()});
 export const analyticsViews=sqliteTable('analytics_views',{id:text('id').primaryKey(),visit:text('visit').notNull(),period:text('period').notNull(),at:integer('at').notNull(),project:text('project').notNull()});
 export const analyticsDaily=sqliteTable('analytics_daily',{id:text('id').primaryKey(),period:text('period').notNull(),day:text('day').notNull(),country:text('country').notNull(),device:text('device').notNull(),project:text('project').notNull(),visits:integer('visits').notNull().default(0),views:integer('views').notNull().default(0)});
+
+// v4.9.7: server-only persistent administrator credential.
+export const adminCredentials = sqliteTable('admin_credentials', {id:text('id').primaryKey(),passwordHash:text('password_hash').notNull(),createdAt:integer('created_at').notNull()});

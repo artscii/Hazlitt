@@ -1,3 +1,6 @@
+## 4.9.7
+- Fix admin form initialization that prevented Edit atlas from responding. Persist the salted administrator password hash in the database, initialized once from the protected setting.
+
 ## 4.9.6
 - Load saved admin password settings in local previews. Distinguish missing server configuration from an incorrect password without consuming login attempts.
 

@@ -31,6 +31,16 @@ async function records(env){
  return [...all.values()];
 }
 async function session(request,env){const token=request.headers.get('Cookie')?.match(/(?:^|;\s*)atlas_session=([a-f0-9]{64})(?:;|$)/)?.[1];if(!token)return null;const key=await hash(token);const row=await database(env).prepare('SELECT token FROM sessions WHERE token = ? AND expires > ?').bind(key,Date.now()).first();return row?key:null;}
+// v4.9.7: bootstrap once from the protected setting, then use the durable hash.
+async function adminPasswordHash(env){
+ const db=database(env);
+ let row=await db.prepare('SELECT password_hash FROM admin_credentials WHERE id = ?').bind('admin').first();
+ if(!row&&env.ADMIN_PASSWORD_HASH){
+  await db.prepare('INSERT OR IGNORE INTO admin_credentials (id,password_hash,created_at) VALUES (?,?,?)').bind('admin',env.ADMIN_PASSWORD_HASH,Date.now()).run();
+  row=await db.prepare('SELECT password_hash FROM admin_credentials WHERE id = ?').bind('admin').first();
+ }
+ return row?.password_hash;
+}
 async function body(request,limit=65536){if(Number(request.headers.get('content-length'))>limit)throw new Error('Request too large');const text=await request.text();if(text.length>limit)throw new Error('Request too large');return JSON.parse(text);}
 // v4.7.0: explicit publication year and evaluation unit, preserved in record snapshots.
 // v4.8.4: optional public follow-up notes and ISO reference date travel with every version.
@@ -65,11 +75,12 @@ export default {async fetch(request,env){
    if(!['GET','HEAD'].includes(request.method)&&request.headers.get('Origin')!==url.origin)return json({error:'Invalid request origin'},403);
    if(path==='/api/login'&&request.method==='POST'){
     // A missing deployment setting is not a bad password and must not consume attempts.
-    if(!env.ADMIN_PASSWORD_HASH)return json({error:'Admin sign-in is not configured on this server. Please contact the site administrator.'},503);
+    const savedPasswordHash=await adminPasswordHash(env);
+    if(!savedPasswordHash)return json({error:'Admin sign-in is not configured on this server. Please contact the site administrator.'},503);
     const db=database(env),now=Date.now(),key=await hash(request.headers.get('CF-Connecting-IP')||'local');
     await db.prepare('INSERT INTO attempts (key,count,until) VALUES (?,1,?) ON CONFLICT(key) DO UPDATE SET count = CASE WHEN until < ? THEN 1 ELSE count+1 END, until = CASE WHEN until < ? THEN excluded.until ELSE until END').bind(key,now+900000,now,now).run();
     const attempts=await db.prepare('SELECT count FROM attempts WHERE key = ?').bind(key).first();if(attempts.count>10)return json({error:'Too many attempts. Please try again in 15 minutes.'},429);
-    const input=await body(request);if(!await passwordMatches(input.password,env.ADMIN_PASSWORD_HASH))return json({error:'Incorrect password'},401);
+    const input=await body(request);if(!await passwordMatches(input.password,savedPasswordHash))return json({error:'Incorrect password'},401);
     const token=hex(crypto.getRandomValues(new Uint8Array(32)));await db.batch([db.prepare('DELETE FROM sessions WHERE expires < ?').bind(now),db.prepare('INSERT INTO sessions (token,expires) VALUES (?,?)').bind(await hash(token),now+28800000),db.prepare('DELETE FROM attempts WHERE key = ?').bind(key)]);
     return json({ok:true},200,{'Set-Cookie':`atlas_session=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=28800${url.protocol==='https:'?'; Secure':''}`});
    }
