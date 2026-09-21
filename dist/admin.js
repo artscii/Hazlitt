@@ -10,11 +10,10 @@ for(const [name,title,required] of fields){const label=document.createElement('l
 // v3.3.0: group related fields in reading order without changing control heights.
 const editorGroups=[
  ['Project overview',['name','status','kind','geo','short']],
- ['Outcomes & sponsors',['metric','metricLabel','outcome','partners']],
+ ['Outcomes & sponsors',['metric','metricLabel','outcome','followUp','followUpDate','partners']],
  ['Evidence & sources',['publicationYear','evidenceBasis','sampleDetails','source','sourceLabel','source2','source2Label','date']],
  ['Contact details',['phone','tel','email','contactSource','contact']],
  ['Original-language material',['originalLanguage', 'originalTitle', 'originalSummary', 'originalOutcome', 'originalSource']],
- ['Follow-up',['followUp','followUpDate']],
  ['Editor observations',['editNotes']]
 ];
 for(const [title,keys] of editorGroups){
@@ -22,6 +21,8 @@ for(const [title,keys] of editorGroups){
  const heading=document.createElement('h3');heading.textContent=title;
  const grid=document.createElement('div');grid.className='field-group-grid';
  for(const key of keys)grid.append(form.elements[key].closest('label'));
+ // v4.8.10: place dated follow-up beside outcomes; preserve the existing control heights.
+ if(title==='Outcomes & sponsors'){const follow=document.createElement('div');follow.className='outcome-follow-up-fields';const notes=form.elements.followUp.closest('label');notes.before(follow);follow.append(notes,form.elements.followUpDate.closest('label'));form.elements.partners.closest('label').classList.add('outcome-partners-field');}
  if(title==='Original-language material'){const note=document.createElement('p');note.textContent='Optional. Keep the main fields in English. Preserve the published title and link here; summaries in the source language are editorial paraphrases, not quotations. These fields are versioned and included in Excel transfers.';group.append(note);}
  if(title==='Evidence & sources'){const note=document.createElement('p');note.textContent='Publication year refers to the primary report, not the date it was reviewed. Evidence basis describes what was evaluated: patient examinations, slides, individual images, or records. Slides can come from real patients; a slide count is not automatically a patient count. Use the sample field to state each denominator and the reference test. Leave the year blank if unverified.';group.append(note);}group.append(heading,grid);$('#admin-fields').append(group);
 }

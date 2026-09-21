@@ -1,6 +1,7 @@
 ## 4.8.10
 
 - Move centered continent filters directly below the map.
+- Place follow-up notes and date beside reported outcomes in Admin, stacked on mobile.
 
 ## 4.8.9
 
