@@ -275,3 +275,6 @@ html.screen-flipping,html.editor-flip-pending{background:var(--atlas-soft);overf
 /* v4.5.0: compact responsive history; keep 44px targets and readable labels. */
 .version-timeline{margin:0 24px;padding-bottom:44px}.admin-section .version-node{min-width:44px;min-height:44px;padding:10px 4px 4px;font-size:14px;font-variant-numeric:tabular-nums;max-width:none}#selected-version-summary{padding:8px 12px;margin:4px 0 12px;line-height:1.45}.version-navigation{gap:8px}.version-navigation label{flex:1 1 220px}.version-navigation input{margin-bottom:4px}
 @media(max-width:740px){.version-timeline{margin:0 22px}.version-navigation{gap:6px}.version-navigation button{flex:1 1 auto;padding-left:10px;padding-right:10px}}
+
+/* v4.6.0 — accessible record-level source language switching. */
+.record-language{margin:.75rem 0}.language-toggle{font:inherit;font-size:.875rem;min-height:44px;padding:.45rem .8rem;border:1px solid var(--atlas-border,#cbdde5);border-radius:8px;background:var(--atlas-soft,#edf5f9);color:var(--atlas-ink,#17313e);cursor:pointer;text-align:left}.language-toggle:focus-visible{outline:2px solid #4282a4;outline-offset:3px}.original-evidence{margin-top:.65rem;overflow-wrap:anywhere}.language-caption{font-size:.8rem;color:#526975}.original-evidence[hidden],.english-evidence[hidden]{display:none!important}

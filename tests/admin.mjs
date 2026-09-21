@@ -42,6 +42,16 @@ assert.equal((await call('/api/rollback/'+firstNote.id,'POST',{side:'after',revi
 assert.equal((await call('/api/catalog')).data.programs.find(p=>p.id===id).editNotes,'First observation');
 noteHistory=(await call('/api/records/'+id+'/history')).data.entries;
 assert.equal(noteHistory.at(-1).before.editNotes,'Revised observation');assert.equal(noteHistory.at(-1).after.editNotes,'First observation');
+// v4.6.0: language provenance survives edits and rollback; unsafe links are rejected.
+let bilingual=(await call('/api/catalog')).data.programs.find(p=>p.id===id);
+assert.equal((await call('/api/records/'+id,'PUT',{...bilingual,originalLanguage:'es',originalTitle:'Título',originalSource:'javascript:alert(1)'})).status,400);
+assert.equal((await call('/api/records/'+id,'PUT',{...bilingual,originalLanguage:'es',originalTitle:'Título',originalSummary:'Resumen',originalSource:'https://example.org/es'})).status,200);
+bilingual=(await call('/api/catalog')).data.programs.find(p=>p.id===id);assert.equal(bilingual.originalSummary,'Resumen');
+assert.equal((await call('/api/records/'+id,'PUT',{...bilingual,originalSummary:'Revisión'})).status,200);
+const bilingualHistory=(await call('/api/records/'+id+'/history')).data.entries;const lastLanguage=bilingualHistory.at(-1);
+assert.equal(lastLanguage.before.originalSummary,'Resumen');assert.equal(lastLanguage.after.originalSummary,'Revisión');
+assert.equal((await call('/api/rollback/'+lastLanguage.id,'POST',{side:'before',revision:bilingual.revision+1})).status,200);
+assert.equal((await call('/api/catalog')).data.programs.find(p=>p.id===id).originalSummary,'Resumen');
 assert.equal((await call('/api/logout','POST',{})).status,200);assert.equal((await call('/api/audit')).status,401);
 assert.equal((await call('/api/config','PUT',{editFlipEnabled:true,editFlipDuration:400})).status,401);
 console.log('PASS: configuration persistence, validation and authorization; authentication, protected audit access, CRUD, duplicate names, CSRF, URL validation, stale revisions, edit IPs, rollback, deletion restoration and logout.');

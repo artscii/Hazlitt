@@ -10,7 +10,7 @@ globalThis.AtlasWorkbook=(()=>{
   ['contact','Contact notes',false,65],['source','Primary evidence URL',true,60],['sourceLabel','Primary evidence link label',false,35],
   ['source2','Additional evidence URL',false,60],['source2Label','Additional evidence link label',false,35],
   ['contactSource','Contact source URL',false,60],['date','Evidence date / review note',true,40],
-  ['editNotes','Edit notes',false,65],['related','Related initiative',false,20]
+  ['originalLanguage', 'Original language code (e.g. es, ja, sw)', false, 60],['originalTitle', 'Original source title', false, 60],['originalSummary', 'Source-language summary (editorial)', false, 60],['originalOutcome', 'Source-language outcomes (editorial)', false, 60],['originalSource', 'Original-language source URL', false, 60],['editNotes','Edit notes',false,65],['related','Related initiative',false,20]
  ];
  const normalize=value=>String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
  function makeWorkbook(ExcelJS,programs,countries=[]){

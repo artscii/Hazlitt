@@ -32,15 +32,17 @@ async function records(env){
 }
 async function session(request,env){const token=request.headers.get('Cookie')?.match(/(?:^|;\s*)atlas_session=([a-f0-9]{64})(?:;|$)/)?.[1];if(!token)return null;const key=await hash(token);const row=await database(env).prepare('SELECT token FROM sessions WHERE token = ? AND expires > ?').bind(key,Date.now()).first();return row?key:null;}
 async function body(request,limit=65536){if(Number(request.headers.get('content-length'))>limit)throw new Error('Request too large');const text=await request.text();if(text.length>limit)throw new Error('Request too large');return JSON.parse(text);}
-const fields=['name','status','kind','geo','metric','metricLabel','short','outcome','partners','phone','tel','email','contact','source','sourceLabel','source2','source2Label','contactSource','date','editNotes'];
+const fields=['name','status','kind','geo','metric','metricLabel','short','outcome','partners','phone','tel','email','contact','source','sourceLabel','source2','source2Label','contactSource','date','editNotes','originalLanguage','originalTitle','originalSummary','originalOutcome','originalSource'];
 function validate(input){
  const out={};for(const field of fields){const value=input[field]??'';if(typeof value!=='string'||value.length>12000)throw new Error('Invalid '+field);out[field]=value.trim();}
  for(const required of ['name','status','geo','metric','metricLabel','short','outcome','partners','source','date'])if(!out[required])throw new Error('Please complete '+required);
  if(!['','deployed','pilot','historical','related'].includes(out.kind))throw new Error('Choose an evidence category');
- for(const key of ['source','source2','contactSource'])if(out[key]){const url=new URL(out[key]);if(!['http:','https:'].includes(url.protocol))throw new Error('Source links must use https or http');}
+ for(const key of ['source','source2','contactSource','originalSource'])if(out[key]){const url=new URL(out[key]);if(!['http:','https:'].includes(url.protocol))throw new Error('Source links must use https or http');}
  if(out.email&&!/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(out.email))throw new Error('Invalid email');
  if(out.tel&&!/^\+?[0-9 ()-]{3,40}$/.test(out.tel))throw new Error('Invalid telephone link');
  if(!Array.isArray(input.countries)||!input.countries.length||input.countries.length>30||input.countries.some(c=>!COUNTRIES.some(country=>country.name===c)))throw new Error('Choose at least one country');
+ if(out.originalLanguage&&!/^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/.test(out.originalLanguage))throw new Error('Use a language code such as es, ja or sw');
+ if((out.originalTitle||out.originalSummary||out.originalOutcome||out.originalSource)&&(!out.originalLanguage||!out.originalSource||!out.originalTitle))throw new Error('Original-language material needs a language code, original title and source URL');
  out.countries=[...new Set(input.countries)];out.related=!!input.related;return out;
 }
 function auditStatement(env,request,action,record,before,deleted=false){return database(env).prepare('INSERT INTO audit_log (id,at,action,record_id,name,ip,before,after,revision) SELECT ?,?,?,?,?,?,?,?,(SELECT revision FROM records WHERE id=?) WHERE changes() > 0').bind(crypto.randomUUID(),Date.now(),action,record.id,record.name,request.headers.get('CF-Connecting-IP')||'Unavailable',before?JSON.stringify(before):null,action==='delete'||deleted?null:JSON.stringify(record),record.id);}

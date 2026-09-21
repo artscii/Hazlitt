@@ -4,15 +4,16 @@ const section=document.createElement('section');section.id='admin';section.class
 document.querySelector('#admin-page').append(section);
 const $=selector=>section.querySelector(selector),form=$('#record-form'),message=$('#admin-message');
 let catalog=null,current=null,busy=false,numberedIds=[],loadedDraft=null;
-const fields=[['name','Project name',true],['status','Evidence status',true],['kind','Category',true],['geo','Location description',true],['metric','Headline outcome',true],['metricLabel','Headline outcome explanation',true],['short','Short description',true],['outcome','Reported outcomes',true],['partners','Sponsors and partners',true],['phone','Contact phone'],['tel','Telephone link number'],['email','Contact email'],['contact','Contact notes'],['source','Primary evidence URL',true],['sourceLabel','Primary evidence link label'],['source2','Additional evidence URL'],['source2Label','Additional evidence link label'],['contactSource','Contact source URL'],['date','Evidence date / review note',true],['editNotes','Edit notes']];
-const long=new Set(['short','outcome','partners','contact','editNotes']);
-for(const [name,title,required] of fields){const label=document.createElement('label');label.textContent=title+(required?' *':'');let input;if(name==='kind'){input=document.createElement('select');for(const [value,text] of [['','Implementation / published study'],['deployed','Implementation'],['related','Related initiative'],['pilot','Pilot / preliminary study'],['historical','Historical / related initiative']]){const option=document.createElement('option');option.value=value;option.textContent=text;input.append(option);}}else{input=document.createElement(long.has(name)?'textarea':'input');if(input.tagName==='TEXTAREA')input.rows=4;else input.type=['source','source2','contactSource'].includes(name)?'url':name==='email'?'email':'text';input.maxLength=12000;}input.name=name;input.required=!!required;label.append(input);$('#admin-fields').append(label);}
+const fields=[['name','Project name',true],['status','Evidence status',true],['kind','Category',true],['geo','Location description',true],['metric','Headline outcome',true],['metricLabel','Headline outcome explanation',true],['short','Short description',true],['outcome','Reported outcomes',true],['partners','Sponsors and partners',true],['phone','Contact phone'],['tel','Telephone link number'],['email','Contact email'],['contact','Contact notes'],['source','Primary evidence URL',true],['sourceLabel','Primary evidence link label'],['source2','Additional evidence URL'],['source2Label','Additional evidence link label'],['contactSource','Contact source URL'],['date','Evidence date / review note',true],['editNotes','Edit notes'],['originalLanguage', 'Original language code (e.g. es, ja, sw)'],['originalTitle', 'Original source title'],['originalSummary', 'Source-language summary (editorial)'],['originalOutcome', 'Source-language outcomes (editorial)'],['originalSource', 'Original-language source URL']];
+const long=new Set(['short','outcome','partners','contact','editNotes','originalSummary','originalOutcome']);
+for(const [name,title,required] of fields){const label=document.createElement('label');label.textContent=title+(required?' *':'');let input;if(name==='kind'){input=document.createElement('select');for(const [value,text] of [['','Implementation / published study'],['deployed','Implementation'],['related','Related initiative'],['pilot','Pilot / preliminary study'],['historical','Historical / related initiative']]){const option=document.createElement('option');option.value=value;option.textContent=text;input.append(option);}}else{input=document.createElement(long.has(name)?'textarea':'input');if(input.tagName==='TEXTAREA')input.rows=4;else input.type=['source','source2','contactSource','originalSource'].includes(name)?'url':name==='email'?'email':'text';input.maxLength=12000;}input.name=name;input.required=!!required;label.append(input);$('#admin-fields').append(label);}
 // v3.3.0: group related fields in reading order without changing control heights.
 const editorGroups=[
  ['Project overview',['name','status','kind','geo','short']],
  ['Outcomes & sponsors',['metric','metricLabel','outcome','partners']],
  ['Evidence & sources',['source','sourceLabel','source2','source2Label','date']],
  ['Contact details',['phone','tel','email','contactSource','contact']],
+ ['Original-language material',['originalLanguage', 'originalTitle', 'originalSummary', 'originalOutcome', 'originalSource']],
  ['Editor observations',['editNotes']]
 ];
 for(const [title,keys] of editorGroups){
@@ -20,6 +21,7 @@ for(const [title,keys] of editorGroups){
  const heading=document.createElement('h3');heading.textContent=title;
  const grid=document.createElement('div');grid.className='field-group-grid';
  for(const key of keys)grid.append(form.elements[key].closest('label'));
+ if(title==='Original-language material'){const note=document.createElement('p');note.textContent='Optional. Keep the main fields in English. Preserve the published title and link here; summaries in the source language are editorial paraphrases, not quotations. These fields are versioned and included in Excel transfers.';group.append(note);}
  group.append(heading,grid);$('#admin-fields').append(group);
 }
 const actionMessage=document.createElement('p');actionMessage.id='edit-action-message';$('.admin-actions').prepend(actionMessage);

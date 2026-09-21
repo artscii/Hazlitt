@@ -1,3 +1,9 @@
+## 4.6.0 — English and original-language evidence
+
+- Optional per-record language toggle; preserves source titles and labels editorial paraphrases.
+- Language fields included in validation, version history, rollback and Excel transfers.
+- Six reviewed international project additions published through the audited bulk importer.
+
 ## 4.5.0
 
 - Add private Admin analytics with visit/project counts, daily chart, country/device filters, recent anonymous visits and archived reset periods.
