@@ -339,10 +339,21 @@ html.screen-flipping,html.editor-flip-pending{background:var(--atlas-soft);overf
 @media(max-width:740px){#map{min-width:900px}.continent-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:0 12px}.continent-controls button{width:100%;min-height:44px}.selection-context{font-size:13px}.program:not(.project-expanded) .geo{display:block}.directory>.section-heading{align-items:flex-start}.directory>.section-heading h2{font-size:25px}.references-jump{font-size:13px}.program .evidence-meta{font-size:13px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 
-/* v4.9.1: the reverse face keeps identity and return control above the evidence. */
+/* v4.9.2: stable two-face card with a shared lower-right action. */
+.evidence-scroll>.program{display:flex;flex-direction:column;gap:0;min-height:0}
+.project-card-content{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:20px;min-height:0;overflow:auto;overscroll-behavior:contain;flex:1 1 auto;scrollbar-gutter:stable}
+.program:not(.project-expanded) .project-card-content{grid-template-columns:minmax(0,1fr)}
+.program:not(.project-expanded) .project-card-content>.program-extra{display:none}
+.program.project-expanded .project-card-content>div:first-child{grid-column:1/-1}
+.program.project-expanded .project-card-content>div:first-child :is(.badge,.geo,.share-project,.share-feedback,.back-to-map){display:none}
+.program.project-expanded .project-card-content>div:first-child h3{margin:8px 0 12px}
+.project-card-actions{display:flex;justify-content:flex-end;flex:0 0 auto;padding-top:14px;margin-top:12px;border-top:1px solid var(--atlas-border)}
+.program .project-card-actions .project-expand{width:220px;max-width:100%;height:48px;min-height:48px;box-sizing:border-box;justify-content:center;white-space:nowrap;padding:8px 10px;font-size:14px}
 .program.card-turning{will-change:transform;backface-visibility:hidden;pointer-events:none;transform-origin:center center}
-.program.project-expanded{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)}
-.program.project-expanded>div:first-of-type{grid-column:1/-1}
-.program.project-expanded>div:first-of-type :is(.badge,.geo,.evidence-meta,.share-project,.share-feedback,.back-to-map){display:none}
-.program.project-expanded>div:first-of-type h3{margin:8px 0 12px}
-@media(max-width:740px){.program.project-expanded{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:740px){.project-card-content{grid-template-columns:minmax(0,1fr);gap:14px}.program .project-card-actions .project-expand{width:220px}}
+/* v4.9.2: quiet physical-card definition in every palette. */
+.evidence-scroll{padding:8px;background:var(--atlas-soft);border-color:var(--atlas-border)}
+.evidence-scroll>.program{border:1px solid color-mix(in srgb,var(--atlas-border) 85%,var(--atlas-page));border-radius:12px;box-shadow:0 2px 5px color-mix(in srgb,var(--atlas-text) 5%,transparent);margin:0 0 12px;overflow:hidden}
+.evidence-scroll>.program:last-child{margin-bottom:0}
+.evidence-scroll>.program.selected-profile,.evidence-scroll>.program.search-first,.evidence-scroll>.program:target{box-shadow:inset 3px 0 0 var(--atlas-edge),0 2px 5px color-mix(in srgb,var(--atlas-text) 5%,transparent)}
+@media(hover:hover){.evidence-scroll>.program:hover{border-color:color-mix(in srgb,var(--atlas-edge) 50%,var(--atlas-border))}}

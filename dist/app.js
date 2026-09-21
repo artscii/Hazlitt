@@ -22,6 +22,7 @@ mobileViews.onclick=event=>{const button=event.target.closest('[data-view]');if(
 const flippingCards=new WeakSet();
 function setProjectFace(card,expanded){
  card.classList.toggle('project-expanded',expanded);
+ const content=card.querySelector('.project-card-content');if(content)content.scrollTop=0;
  const button=card.querySelector('.project-expand');
  button?.setAttribute('aria-expanded',String(expanded));
  if(button)button.textContent=expanded?'Back to summary':'View evidence & contacts';
@@ -32,6 +33,10 @@ function expandProject(card){if(card)setProjectFace(card,true);}
 async function flipProject(card){
  if(flippingCards.has(card))return;
  const expanded=!card.classList.contains('project-expanded');
+ // v4.9.2: keep the same outer dimensions and centered anchor for both faces.
+ const viewport=window.visualViewport?.height||window.innerHeight;
+ card.style.height=Math.min(620,Math.max(260,viewport*.62))+'px';
+ card.scrollIntoView({block:'center',inline:'nearest',behavior:'instant'});
  if(matchMedia('(prefers-reduced-motion: reduce)').matches||!card.animate){setProjectFace(card,expanded);return;}
  flippingCards.add(card);card.classList.add('card-turning');
  const direction=expanded?1:-1;
@@ -102,6 +107,14 @@ function languagePanel(p){
 document.addEventListener('click',event=>{const button=event.target.closest('.language-toggle');if(!button)return;const card=button.closest('.program'),panel=document.getElementById(button.getAttribute('aria-controls')),open=panel.hidden;panel.hidden=!open;card.querySelector('.english-evidence').hidden=open;button.setAttribute('aria-expanded',String(open));const p=programs.find(p=>p.id===card.id);button.textContent=open?'Show English':'Original language · '+languageName(p.originalLanguage);updateEvidencePanels();});
 const renderProgram=p=>`<article class="program" id="${p.id}"><a class="edit-project" href="/admin?project=${encodeURIComponent(p.id)}" aria-label="Edit project: ${p.name}" title="Edit project"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5 4 4M4 20l4-1L20 7a2.8 2.8 0 0 0-4-4L4 15Z"/></svg></a><div><a class="back-to-map" href="#map-overview"><svg class="map-return-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2Z"/><path d="M9 3v16M15 5v16"/></svg>Back to map</a><span class="record-number" aria-label="Project number ${recordNumbers.get(p.id)}">Project ${String(recordNumbers.get(p.id)).padStart(2,'0')}</span>${badge(p)}<h3>${p.name}</h3><p class="geo">${p.geo}</p><p class="geo">${p.publicationYear?`Publication year: ${p.publicationYear} · `:''}${p.evidenceBasis||'Evidence basis not yet classified'}${p.sampleDetails?` · ${p.sampleDetails}`:''}<br>${p.date}</p><a class="share-project" href="${escapeHTML(projectURL(p.id))}" aria-label="Share project: ${p.name}"><svg class="share-paperclip" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m8 13 6-6a3 3 0 0 1 4 4l-8 8a5 5 0 0 1-7-7L12 3a6 6 0 0 1 8 8l-8 8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>Share project link</a><span class="share-feedback" role="status"></span><p class="mobile-project-summary">${p.short}</p><button type="button" class="project-expand" aria-expanded="false" aria-controls="${p.id}-outcomes ${p.id}-contacts">View evidence & contacts</button></div><div class="program-extra" id="${p.id}-outcomes"><p class="label">REPORTED OUTCOMES</p><div class="english-evidence" lang="en"><p>${p.outcome}</p></div>${languagePanel(p)}${p.followUp?`<aside class="project-follow-up"><p class="label">FOLLOW-UP · ${p.followUpDate||'Date not recorded'}</p><p>${p.followUp}</p></aside>`:''}${links(p)}</div><div class="program-extra" id="${p.id}-contacts"><p class="label">SPONSORS & PARTNERS</p><p>${p.partners}</p>${p.tel?`<a class="phone" href="tel:${p.tel}">${p.phone}</a>`:p.email?`<a class="phone" href="mailto:${p.email}">${p.email}</a>`:''}<p class="contact-note">${p.contact}</p>${p.contactSource?`<a href="${p.contactSource}" target="_blank" rel="noopener">Contact source ↗</a>`:''}</div></article>`;
 document.querySelector('#programs').innerHTML=programs.map(renderProgram).join('');
+// v4.9.2: persistent action footer outside the scrollable front/reverse content.
+for(const card of document.querySelectorAll('article.program')){
+ const content=document.createElement('div');content.className='project-card-content';content.tabIndex=0;content.setAttribute('role','region');content.setAttribute('aria-label','Project details — scroll to read more');
+ const action=card.querySelector('.project-expand');
+ for(const child of [...card.children])if(child.tagName==='DIV')content.append(child);
+ const footer=document.createElement('div');footer.className='project-card-actions';footer.append(action);
+ card.append(content,footer);
+}
 const projectCards=new Map([...document.querySelectorAll('article.program')].map(card=>[card.id,card]));
 
 // v1.3.11: filter visible profiles without rebuilding cards or moving keyboard focus.
@@ -149,7 +162,7 @@ function updateEvidencePanels(){
   for(const panel of document.querySelectorAll('.evidence-scroll')){
    const rows=[...panel.querySelectorAll('article.program')].filter(row=>!row.hidden);
    rows.forEach((row,index)=>row.classList.toggle('evidence-alternate',index%2===1));
-   const height=rows.slice(0,3).reduce((sum,row)=>sum+row.getBoundingClientRect().height,0);
+   const height=rows.slice(0,3).reduce((sum,row)=>sum+row.getBoundingClientRect().height+12,0);
    panel.style.setProperty('--three-project-height',Math.ceil(height+2)+'px');
    panel.tabIndex=panel.scrollHeight>panel.clientHeight+2?0:-1;updateScrollHint(panel);
   }

@@ -1,3 +1,9 @@
+## 4.9.2
+
+- Give records softly rounded edges, a fine border, subtle shadow and breathing room between cards.
+
+- Anchor identical-sized flip buttons in a shared lower-right footer; center cards before turning and retain their outer height while long face content scrolls independently.
+
 ## 4.9.1
 
 - Turn project cards to a readable evidence/contact reverse face and back to summary, with reduced-motion fallback and repeated-click protection.
