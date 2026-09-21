@@ -1,3 +1,8 @@
+# 4.7.1 — Consistent marker selection contrast
+
+- Dim unselected markers whenever a map selection exists; retain position, click targets, and full contrast on hover or keyboard focus.
+- Clearing the selection restores normal marker contrast; respect reduced-motion preferences.
+
 # 4.7.0 — Evidence basis and publication-year search
 
 - Add versioned publication year, evidence basis and participant/slide/image denominator fields to Admin and Excel transfers.

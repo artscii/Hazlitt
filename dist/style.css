@@ -278,3 +278,10 @@ html.screen-flipping,html.editor-flip-pending{background:var(--atlas-soft);overf
 
 /* v4.6.0 — accessible record-level source language switching. */
 .record-language{margin:.75rem 0}.language-toggle{font:inherit;font-size:.875rem;min-height:44px;padding:.45rem .8rem;border:1px solid var(--atlas-border,#cbdde5);border-radius:8px;background:var(--atlas-soft,#edf5f9);color:var(--atlas-ink,#17313e);cursor:pointer;text-align:left}.language-toggle:focus-visible{outline:2px solid #4282a4;outline-offset:3px}.original-evidence{margin-top:.65rem;overflow-wrap:anywhere}.language-caption{font-size:.8rem;color:#526975}.original-evidence[hidden],.english-evidence[hidden]{display:none!important}
+
+/* v4.7.1: selection consistently quiets other fixed-position markers. */
+#markers .marker{transition:opacity .18s ease}
+#markers:has(.marker.selected) .marker:not(.selected){opacity:.45}
+#markers .marker.selected,#markers .marker:focus-visible{opacity:1}
+@media(hover:hover){#markers .marker:hover{opacity:1}}
+@media(prefers-reduced-motion:reduce){#markers .marker{transition:none}}
