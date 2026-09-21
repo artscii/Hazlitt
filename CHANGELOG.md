@@ -1,3 +1,7 @@
+## 4.8.16
+
+- Remove the All button from continent navigation.
+
 ## 4.8.15
 
 - Selecting a location marker activates its continent filter and hides markers on other continents without moving the map.

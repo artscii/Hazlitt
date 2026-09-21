@@ -37,7 +37,8 @@ const africanMarkers=[...d.querySelectorAll('.marker:not(.continent-hidden)')];a
 const canada=d.querySelector('#country-base path[aria-label="Canada"]');
 if(canada){canada.dispatchEvent(new w.Event('pointerenter'));assert.equal(regionButton('Africa').getAttribute('aria-pressed'),'true');assert.equal(input.value,'Africa');assert(africanMarkers.every(m=>!m.classList.contains('continent-hidden')));}
 if(canada){canada.dispatchEvent(new w.Event('click'));assert.equal(input.value,'North America');assert([...d.querySelectorAll('article.program:not([hidden])')].every(c=>w.AtlasSearch.continentsOf(catalog.programs.find(p=>p.id===c.id)).includes('North America')));}
-regionButton('All').click();assert.equal(input.value,'');assert.equal(d.querySelectorAll('.continent-hidden').length,0);
+assert.equal(regionButton('All'),null,'No All continents button');
+await search('');assert.equal(input.value,'');
 await search('nothing-matches-xyz');assert.equal(d.querySelectorAll('article.program:not([hidden])').length,0);assert(d.querySelector('#search-status').classList.contains('search-empty'));
 await search('');assert.equal(d.querySelectorAll('article.program:not([hidden])').length,catalog.programs.length);assert(!d.querySelector('#search-status').classList.contains('search-empty'));
 for(const [id,card]of cards)assert.strictEqual(d.getElementById(id),card,'Card identity retained');
@@ -51,7 +52,7 @@ for(const marker of [...markers,...markers]){
  const selectedContinent=d.querySelector('[data-map-continent][aria-pressed="true"]').dataset.mapContinent;
  assert.notEqual(selectedContinent,'All','Marker selects its continent');
  assert(markers.some(m=>m.classList.contains('continent-hidden')),'Other continents are suppressed');
- assert.equal(mapScrolls.length,2,'Marker selection does not pan the map');
+ assert.equal(mapScrolls.length,1,'Marker selection does not pan the map');
 }
 assert.deepEqual(markers.map(m=>[m.style.left,m.style.top]),positions);
 await search('');assert.equal(d.querySelectorAll('.marker.selected').length,0);
