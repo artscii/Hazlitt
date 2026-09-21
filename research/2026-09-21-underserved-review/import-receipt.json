@@ -1,0 +1,69 @@
+{
+  "at": "2026-09-21T21:08:25.119Z",
+  "operation": "2b4fe28d-c60d-414d-8b92-2cbeccacbf25",
+  "result": {
+    "ok": true,
+    "id": "2b4fe28d-c60d-414d-8b92-2cbeccacbf25",
+    "added": 6,
+    "updated": 3,
+    "skipped": 0
+  },
+  "before": 47,
+  "after": 53,
+  "records": [
+    {
+      "id": "project-fe8d7bed-e430-4caf-bad8-698fc578ce55",
+      "name": "Baoding · rural AI-assisted cervical cytology",
+      "revision": 1,
+      "followUpDate": "2026-09-21"
+    },
+    {
+      "id": "project-5ccb41df-7c8a-4389-9ee7-48c2cd794a41",
+      "name": "Xuzhou · rural AI cytology and HPV triage",
+      "revision": 1,
+      "followUpDate": "2026-09-21"
+    },
+    {
+      "id": "project-53a4fe5a-7276-41c7-a405-ed49feb9e27e",
+      "name": "Duke Pocket Colposcopy · multicontrast referral algorithm",
+      "revision": 1,
+      "followUpDate": "2026-09-21"
+    },
+    {
+      "id": "project-94600727-543a-4d73-879e-cabefea43132",
+      "name": "Kigali · deep-learning cervical histopathology",
+      "revision": 1,
+      "followUpDate": "2026-09-21"
+    },
+    {
+      "id": "project-68014931-000b-47ec-bc16-37704ed3b355",
+      "name": "Khayelitsha · AI cervical-imaging implementation preparation",
+      "revision": 1,
+      "followUpDate": "2026-09-21"
+    },
+    {
+      "id": "project-ecd95c90-4817-477c-b8cc-1a04c2e1c7a9",
+      "name": "TeleOTIVA · mobile AI cervical screening research",
+      "revision": 1,
+      "followUpDate": "2026-09-21"
+    },
+    {
+      "id": "project-80f6c83f-1c17-45a3-9863-b51e7514d1be",
+      "name": "Cerviray AI · Korean reader trial and Indonesian field report",
+      "revision": 3,
+      "followUpDate": "2026-09-21"
+    },
+    {
+      "id": "prescriptec",
+      "name": "PRESCRIP-TEC / SAKHI AI decision support",
+      "revision": 2,
+      "followUpDate": "2026-09-21"
+    },
+    {
+      "id": "ave",
+      "name": "African AVE Collaborative",
+      "revision": 2,
+      "followUpDate": "2026-09-21"
+    }
+  ]
+}
