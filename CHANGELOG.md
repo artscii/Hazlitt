@@ -1,3 +1,8 @@
+## 4.4.1
+
+- Move project search below geography and limit evidence panels to three rows or 72% of the viewport, whichever is smaller.
+- Keep expansion guidance mobile-only and add subtle theme-aware hover/focus outlines.
+
 ## 4.4.0
 
 - Add compact expandable phone cards and a state-preserving Map/List switch.

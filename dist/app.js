@@ -104,7 +104,7 @@ function updateEvidencePanels(){
    rows.forEach((row,index)=>row.classList.toggle('evidence-alternate',index%2===1));
    const height=rows.slice(0,3).reduce((sum,row)=>sum+row.getBoundingClientRect().height,0);
    panel.style.setProperty('--three-project-height',Math.ceil(height+2)+'px');
-   panel.tabIndex=rows.length>3?0:-1;
+   panel.tabIndex=panel.scrollHeight>panel.clientHeight+2?0:-1;
   }
  });
 }
