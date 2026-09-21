@@ -357,3 +357,9 @@ html.screen-flipping,html.editor-flip-pending{background:var(--atlas-soft);overf
 .evidence-scroll>.program:last-child{margin-bottom:0}
 .evidence-scroll>.program.selected-profile,.evidence-scroll>.program.search-first,.evidence-scroll>.program:target{box-shadow:inset 3px 0 0 var(--atlas-edge),0 2px 5px color-mix(in srgb,var(--atlas-text) 5%,transparent)}
 @media(hover:hover){.evidence-scroll>.program:hover{border-color:color-mix(in srgb,var(--atlas-edge) 50%,var(--atlas-border))}}
+
+/* v4.9.3: let the overview fit its content without a nested scrolling area. */
+#detail{height:auto;max-height:none;overflow:visible;align-self:start}
+#detail .sidebar-count{font-size:24px;font-weight:600;margin:0 0 8px}
+.sidebar-evidence-types{list-style:none;padding:0;margin:14px 0;font-size:14px}.sidebar-evidence-types li{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--atlas-border)}
+#detail .detail-block>a{display:inline-flex;align-items:center;min-height:44px;text-decoration:none;font-weight:600;font-size:14px}

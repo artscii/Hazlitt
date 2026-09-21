@@ -249,7 +249,24 @@ function showContinentSummary(ids,scope=null){
  detail.innerHTML=`<p class="eyebrow">SELECTED LOCATIONS</p><h2>${scope?escapeHTML(scope):'Results by continent'}</h2><p class="continent-total">${selected.size} ${selected.size===1?'project':'projects'} · ${countries.size} ${countries.size===1?'country':'countries'} · ${groups.size} ${groups.size===1?'continent':'continents'}</p><div class="continent-summary">`+[...groups].sort(([a],[b])=>a.localeCompare(b)).map(([name,group])=>`<section class="continent-summary-row" data-continent="${escapeHTML(name)}">${scope?'':`<div><h3>${escapeHTML(name)}</h3><span>${group.ids.size} ${group.ids.size===1?'project':'projects'}</span></div>`}<p>${scope?'':`${group.countries.size} countries · `}${[...group.countries].sort().map(escapeHTML).join(', ')}</p></section>`).join('')+'</div><p class="contact-note">Projects spanning continents appear in each relevant group. Explore individual projects in the results list below.</p>';
  detail.scrollTop=0;
 }
-function showDetail(place){place=searchPlace(place);if(!place.ids.length)return;updateCountryOutlines(place);setMarkerSelection([place.name]);const key=place.name+'|'+place.ids.join(',');if(activeLocationKey===key)return;activeLocationKey=key;activeLocationName=place.name;document.querySelector('#detail').classList.toggle('multiple-projects',place.ids.length>1);document.querySelector('#detail').innerHTML=`<p class="eyebrow">${place.ids.length>1?"SELECTED LOCATIONS":"SELECTED LOCATION"}</p><h2>${place.name}</h2>`+place.ids.map(id=>{const p=programsById.get(id);return `<div class="detail-block">${badge(p)}<h3>${p.name}</h3><p class="metric">${p.metric}</p><p class="metric-label">${p.metricLabel}</p>${p.metric.includes("AUC")?aucExplanation:""}<p>${p.short}</p><p class="contact-note">${p.publicationYear?`Publication year: ${p.publicationYear} · `:''}${p.evidenceBasis||'Evidence basis not yet classified'}${p.sampleDetails?` · ${p.sampleDetails}`:''}<br>${p.date}${place.ids.includes('ave')&&id==='ave'?' · Five-country aggregate':''}</p><a href="#${p.id}">Outcomes, sponsors & contact ↓</a></div>`}).join('');document.querySelector('#detail').scrollTop=0;}
+// v4.9.3: overview only; detailed evidence belongs in project cards, not a scrolling sidebar.
+function showDetail(place){
+ place=searchPlace(place);if(!place.ids.length)return;
+ updateCountryOutlines(place);setMarkerSelection([place.name]);
+ const key=place.name+'|'+place.ids.join(',');if(activeLocationKey===key)return;
+ activeLocationKey=key;activeLocationName=place.name;
+ const records=place.ids.map(id=>programsById.get(id)),detail=document.querySelector('#detail');
+ detail.classList.remove('multiple-projects');
+ let summary;
+ if(records.length===1){const p=records[0];summary=`<div class="detail-block">${badge(p)}<h3>${p.name}</h3><p>${p.short}</p><p class="contact-note">${p.publicationYear?`Published ${p.publicationYear} · `:''}${p.evidenceBasis||'Evidence basis not yet classified'}</p><a href="#${p.id}">View project evidence ↓</a></div>`;}
+ else{
+  const related=records.filter(p=>p.related).length,years=records.map(p=>Number(p.publicationYear)).filter(Number.isFinite).filter(y=>y>1900);
+  const kinds=new Map();for(const p of records){const kind=p.evidenceBasis||'Evidence basis not yet classified';kinds.set(kind,(kinds.get(kind)||0)+1);}
+  summary=`<div class="detail-block"><p class="sidebar-count">${records.length} projects</p><p>${records.length-related} AI programs or studies${related?` · ${related} related ${related===1?'initiative':'initiatives'}`:''}${years.length?`<br>Publication years: ${Math.min(...years)}${Math.max(...years)!==Math.min(...years)?`–${Math.max(...years)}`:''}`:''}</p><ul class="sidebar-evidence-types">${[...kinds].map(([kind,count])=>`<li>${kind} <strong>${count}</strong></li>`).join('')}</ul><p class="contact-note">Evidence and outcomes vary by project. Review the individual cards for findings, limitations and contacts.</p><a class="sidebar-results" href="#selected-projects-section">View ${records.length} project summaries ↓</a></div>`;
+ }
+ detail.innerHTML=`<p class="eyebrow">SELECTED LOCATION SUMMARY</p><h2>${place.name}</h2>`+summary;
+}
+document.addEventListener('click',event=>{const link=event.target.closest('.sidebar-results');if(!link)return;event.preventDefault();setMobileView('list');const panel=document.querySelector('#selected-projects-section');panel.tabIndex=-1;panel.focus({preventScroll:true});panel.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});});
 let pinnedTipButton=null;
 let tipButton=null, tipTimer=null, overTip=false, overMarker=false, touchTipButton=null, touchInteraction=false;
 function cancelTipClose(){clearTimeout(tipTimer);tipTimer=null;}

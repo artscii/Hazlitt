@@ -1,3 +1,7 @@
+## 4.9.3
+
+- Summarize selected projects in the map sidebar without internal scrolling: concise individual overviews or aggregate counts, evidence types and publication years for groups.
+
 ## 4.9.2
 
 - Give records softly rounded edges, a fine border, subtle shadow and breathing room between cards.
