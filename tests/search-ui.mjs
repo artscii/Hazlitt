@@ -3,7 +3,8 @@ import fs from 'node:fs';
 import {JSDOM} from 'jsdom';
 const catalog=process.env.ATLAS_TEST_CATALOG?JSON.parse(fs.readFileSync(process.env.ATLAS_TEST_CATALOG)):{programs:JSON.parse(fs.readFileSync('data/seed.json')),countries:JSON.parse(fs.readFileSync('data/countries.json'))};
 const dom=new JSDOM(fs.readFileSync('dist/index.html','utf8'),{url:'http://localhost/',runScripts:'outside-only',pretendToBeVisual:true});
-const w=dom.window,d=w.document;const errors=[];
+const w=dom.window,d=w.document;const errors=[],mapScrolls=[];
+w.HTMLElement.prototype.scrollTo=function(options){mapScrolls.push(options);this.scrollLeft=options.left;};
 w.addEventListener('error',e=>errors.push(e.message));
 w.fetch=async()=>({ok:true,json:async()=>catalog});w.matchMedia=()=>({matches:false,addEventListener(){}});
 w.ResizeObserver=class{observe(){} disconnect(){}};d.fonts={ready:Promise.resolve()};w.scrollTo=()=>{};w.HTMLElement.prototype.scrollIntoView=()=>{};w.performance.measure=()=>{};
@@ -25,7 +26,11 @@ if(cytologyMatches.length>5){
 }
 await search('bombo');assert(d.querySelector('#detail .detail-block'));assert(!d.querySelector('.continent-summary'));
 const regionButton=name=>d.querySelector(`[data-map-continent="${name}"]`);
+assert.equal(mapScrolls.length,0,'Initial load and searches do not pan the map');
+const scroller=d.querySelector('.map-scroll');
+Object.defineProperties(scroller,{scrollWidth:{value:1200},clientWidth:{value:390}});
 regionButton('Africa').click();
+assert.equal(mapScrolls.length,1);assert.equal(mapScrolls[0].behavior,'smooth');assert(mapScrolls[0].left>0&&mapScrolls[0].left<=810);
 assert.equal(input.value,'Africa');assert.equal(d.querySelector('#detail h2').textContent,'Africa');assert.equal(d.querySelectorAll('#detail .detail-block').length,0);
 assert.deepEqual([...d.querySelectorAll('article.program:not([hidden])')].map(c=>c.id),catalog.programs.filter(p=>w.AtlasSearch.continentsOf(p).includes('Africa')).map(p=>p.id));
 const africanMarkers=[...d.querySelectorAll('.marker:not(.continent-hidden)')];assert(africanMarkers.length>0);assert(d.querySelector('.marker.continent-hidden'));

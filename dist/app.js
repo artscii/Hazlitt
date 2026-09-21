@@ -277,7 +277,18 @@ function selectContinent(name){
  revealContinent(name);syncSearchMap({preserveMapPosition:true});
  if(name==='All')showContinentSummary(programs.map(p=>p.id));
 }
-continentControls.addEventListener('click',event=>{const button=event.target.closest('button');if(button)selectContinent(button.dataset.mapContinent);});
+// v4.8.12: explicit continent navigation centers the geography without moving markers.
+function centerContinent(name){
+ const centers={'Africa':[20,0],'Asia':[90,35],'Europe':[20,52],'North America':[-100,40],'South America':[-60,-15],'Oceania':[145,-25],'Antarctica':[0,-80],'All':[0,0]};
+ const [lon,lat]=centers[name]||centers.All;
+ const behavior=matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth';
+ const left=Math.max(0,Math.min(mapScroller.scrollWidth-mapScroller.clientWidth,projectX(lon)/100*mapScroller.scrollWidth-mapScroller.clientWidth/2));
+ mapScroller.scrollTo({left,behavior});
+ const rect=map.getBoundingClientRect(),viewport=window.visualViewport;
+ const top=window.scrollY+rect.top+projectY(lat)/100*rect.height-(viewport?.height||window.innerHeight)/2-(viewport?.offsetTop||0);
+ window.scrollTo({top:Math.max(0,top),behavior});
+}
+continentControls.addEventListener('click',event=>{const button=event.target.closest('button');if(button){selectContinent(button.dataset.mapContinent);centerContinent(button.dataset.mapContinent);}});
 // The base has every country, including countries without projects.
 let countryPathIndex=0;
 for(const country of catalog.countries)for(const unused of country.paths){

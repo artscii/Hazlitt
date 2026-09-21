@@ -1,3 +1,7 @@
+## 4.8.12
+
+- Center the selected continent in the viewport on continent-button clicks, with smooth scrolling and reduced-motion support.
+
 ## 4.8.11
 
 - Replace the Share project link arrow with a monochrome paperclip matching the existing link icons.
