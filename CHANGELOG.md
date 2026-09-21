@@ -1,3 +1,9 @@
+## 4.8.2 — Continent summaries and map exploration
+
+- Summarize search subsets larger than five projects by continent with unique project and country counts.
+- Reveal only a hovered continent’s markers, retaining their fixed positions across ocean gaps; add touch and keyboard continent controls plus All.
+- Keep smaller results and explicit marker selections detailed.
+
 ## 4.8.1 — Import provenance, clearer search feedback and AI removal
 
 - Remove WebLLM, model downloads and concept expansion; retain fast cached full-text search.

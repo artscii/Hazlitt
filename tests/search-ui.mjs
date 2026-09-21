@@ -13,6 +13,20 @@ const input=d.querySelector('#project-search'),cards=new Map([...d.querySelector
 const settle=()=>new Promise(resolve=>setTimeout(resolve,45));
 async function search(query){input.value=query;input.dispatchEvent(new w.Event('input',{bubbles:true}));await settle();}
 await search('cytology');assert(d.querySelectorAll('article.program:not([hidden])').length>0);
+const cytologyMatches=[...d.querySelectorAll('article.program:not([hidden])')];
+if(cytologyMatches.length>5){
+ assert.equal(d.querySelector('#detail h2').textContent,'Results by continent');
+ assert.equal(d.querySelectorAll('#detail .detail-block').length,0);
+ const africaIds=catalog.programs.filter(p=>cytologyMatches.some(c=>c.id===p.id)&&p.countries.some(c=>['Kenya','Tanzania','Cameroon','Uganda','Rwanda','Zambia','Zimbabwe','Malawi','Senegal','Ethiopia'].includes(c))).map(p=>p.id);
+ if(africaIds.length)assert.equal(d.querySelector('[data-continent="Africa"] span').textContent,`${africaIds.length} ${africaIds.length===1?'project':'projects'}`);
+}
+await search('bombo');assert(d.querySelector('#detail .detail-block'));assert(!d.querySelector('.continent-summary'));
+const regionButton=name=>d.querySelector(`[data-map-continent="${name}"]`);
+regionButton('Africa').click();
+const africanMarkers=[...d.querySelectorAll('.marker:not(.continent-hidden)')];assert(africanMarkers.length>0);assert(d.querySelector('.marker.continent-hidden'));
+const canada=d.querySelector('#country-base path[aria-label="Canada"]');
+if(canada){canada.dispatchEvent(new w.Event('pointerenter'));assert.equal(regionButton('North America').getAttribute('aria-pressed'),'true');assert(africanMarkers.every(m=>m.classList.contains('continent-hidden')));}
+regionButton('All').click();assert.equal(d.querySelectorAll('.continent-hidden').length,0);
 await search('nothing-matches-xyz');assert.equal(d.querySelectorAll('article.program:not([hidden])').length,0);assert(d.querySelector('#search-status').classList.contains('search-empty'));
 await search('');assert.equal(d.querySelectorAll('article.program:not([hidden])').length,catalog.programs.length);assert(!d.querySelector('#search-status').classList.contains('search-empty'));
 for(const [id,card]of cards)assert.strictEqual(d.getElementById(id),card,'Card identity retained');

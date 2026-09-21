@@ -174,6 +174,34 @@ function setMarkerSelection(names){
 }
 const map=document.querySelector('#map'),tip=document.querySelector('#tooltip');
 let activeLocationName=null,activeLocationKey=null;
+// v4.8.2: compact broad search subsets by continent, counting each project once per group.
+// Geographic grouping convention: Russia in Europe; Turkey/Caucasus/Cyprus in Asia.
+const continentCountries={
+ Africa:'Algeria|Angola|Benin|Bir Tawil|Botswana|Burkina Faso|Burundi|Cabo Verde|Cameroon|Central African Republic|Chad|Comoros|Democratic Republic of the Congo|Djibouti|Egypt|Equatorial Guinea|Eritrea|Eswatini|Ethiopia|Gabon|Gambia|Ghana|Guinea|Guinea-Bissau|Ivory Coast|Kenya|Lesotho|Liberia|Libya|Madagascar|Malawi|Mali|Mauritania|Mauritius|Morocco|Mozambique|Namibia|Niger|Nigeria|Republic of the Congo|Rwanda|Saint Helena|São Tomé and Principe|Senegal|Seychelles|Sierra Leone|Somalia|Somaliland|South Africa|South Sudan|Sudan|Tanzania|Togo|Tunisia|Uganda|Western Sahara|Zambia|Zimbabwe',
+ Asia:'Afghanistan|Akrotiri Sovereign Base Area|Armenia|Azerbaijan|Bahrain|Bangladesh|Baykonur Cosmodrome|Bhutan|British Indian Ocean Territory|Brunei|Cambodia|China|Cyprus|Cyprus No Mans Area|Dhekelia Sovereign Base Area|East Timor|Georgia|Hong Kong S.A.R.|India|Indonesia|Iran|Iraq|Israel|Japan|Jordan|Kazakhstan|Kuwait|Kyrgyzstan|Laos|Lebanon|Macao S.A.R|Malaysia|Maldives|Mongolia|Myanmar|Nepal|North Korea|Northern Cyprus|Oman|Pakistan|Palestine|Philippines|Qatar|Saudi Arabia|Scarborough Reef|Siachen Glacier|Singapore|South Korea|Spratly Islands|Sri Lanka|Syria|Taiwan|Tajikistan|Thailand|Turkey|Turkmenistan|United Arab Emirates|Uzbekistan|Vietnam|Yemen',
+ Europe:'Aland|Albania|Andorra|Austria|Belarus|Belgium|Bosnia and Herzegovina|Bulgaria|Croatia|Czechia|Denmark|Estonia|Faroe Islands|Finland|France|Germany|Gibraltar|Greece|Guernsey|Hungary|Iceland|Ireland|Isle of Man|Italy|Jersey|Kosovo|Latvia|Liechtenstein|Lithuania|Luxembourg|Malta|Moldova|Monaco|Montenegro|Netherlands|North Macedonia|Norway|Poland|Portugal|Republic of Serbia|Romania|Russia|San Marino|Slovakia|Slovenia|Spain|Sweden|Switzerland|Ukraine|United Kingdom|Vatican',
+ 'North America':'Anguilla|Antigua and Barbuda|Aruba|Bajo Nuevo Bank (Petrel Is.)|Barbados|Belize|Bermuda|British Virgin Islands|Canada|Cayman Islands|Clipperton Island|Costa Rica|Cuba|Curaçao|Dominica|Dominican Republic|El Salvador|Greenland|Grenada|Guatemala|Haiti|Honduras|Jamaica|Mexico|Montserrat|Nicaragua|Panama|Puerto Rico|Saint Barthelemy|Saint Kitts and Nevis|Saint Lucia|Saint Martin|Saint Pierre and Miquelon|Saint Vincent and the Grenadines|Serranilla Bank|Sint Maarten|The Bahamas|Trinidad and Tobago|Turks and Caicos Islands|US Naval Base Guantanamo Bay|United States Virgin Islands|United States of America',
+ 'South America':'Argentina|Bolivia|Brazil|Brazilian Island|Chile|Colombia|Ecuador|Falkland Islands|Guyana|Paraguay|Peru|Southern Patagonian Ice Field|Suriname|Uruguay|Venezuela',
+ Oceania:'American Samoa|Ashmore and Cartier Islands|Australia|Cook Islands|Coral Sea Islands|Federated States of Micronesia|Fiji|French Polynesia|Guam|Indian Ocean Territories|Kiribati|Marshall Islands|Nauru|New Caledonia|New Zealand|Niue|Norfolk Island|Northern Mariana Islands|Palau|Papua New Guinea|Pitcairn Islands|Samoa|Solomon Islands|Tonga|Tuvalu|United States Minor Outlying Islands|Vanuatu|Wallis and Futuna',
+ Antarctica:'Antarctica|French Southern and Antarctic Lands|Heard Island and McDonald Islands|South Georgia and the Islands'
+};
+const continentByCountry=new Map(Object.entries(continentCountries).flatMap(([continent,names])=>names.split('|').map(name=>[name,continent])));
+function showContinentSummary(ids){
+ const selected=new Set(ids),groups=new Map(),countries=new Set();
+ for(const project of catalog.programs){
+  if(!selected.has(project.id))continue;
+  for(const country of project.countries){
+   countries.add(country);const continent=continentByCountry.get(country)||'Other / unclassified';
+   if(!groups.has(continent))groups.set(continent,{ids:new Set(),countries:new Set()});
+   groups.get(continent).ids.add(project.id);groups.get(continent).countries.add(country);
+  }
+ }
+ activeLocationKey=null;activeLocationName=null;
+ updateCountryOutlines({name:'',ids});
+ const detail=document.querySelector('#detail');detail.classList.remove('multiple-projects');
+ detail.innerHTML=`<p class="eyebrow">SELECTED LOCATIONS</p><h2>Results by continent</h2><p class="continent-total">${selected.size} projects · ${countries.size} countries · ${groups.size} continents</p><div class="continent-summary">`+[...groups].sort(([a],[b])=>a.localeCompare(b)).map(([name,group])=>`<section class="continent-summary-row" data-continent="${escapeHTML(name)}"><div><h3>${escapeHTML(name)}</h3><span>${group.ids.size} ${group.ids.size===1?'project':'projects'}</span></div><p>${group.countries.size} ${group.countries.size===1?'country':'countries'} · ${[...group.countries].sort().map(escapeHTML).join(', ')}</p></section>`).join('')+'</div><p class="contact-note">Projects spanning continents appear in each relevant group. Explore individual projects in the results list below.</p>';
+ detail.scrollTop=0;
+}
 function showDetail(place){place=searchPlace(place);if(!place.ids.length)return;updateCountryOutlines(place);setMarkerSelection([place.name]);const key=place.name+'|'+place.ids.join(',');if(activeLocationKey===key)return;activeLocationKey=key;activeLocationName=place.name;document.querySelector('#detail').classList.toggle('multiple-projects',place.ids.length>1);document.querySelector('#detail').innerHTML=`<p class="eyebrow">${place.ids.length>1?"SELECTED LOCATIONS":"SELECTED LOCATION"}</p><h2>${place.name}</h2>`+place.ids.map(id=>{const p=programs.find(p=>p.id===id);return `<div class="detail-block">${badge(p)}<h3>${p.name}</h3><p class="metric">${p.metric}</p><p class="metric-label">${p.metricLabel}</p>${p.metric.includes("AUC")?aucExplanation:""}<p>${p.short}</p><p class="contact-note">${p.publicationYear?`Publication year: ${p.publicationYear} · `:''}${p.evidenceBasis||'Evidence basis not yet classified'}${p.sampleDetails?` · ${p.sampleDetails}`:''}<br>${p.date}${place.ids.includes('ave')&&id==='ave'?' · Five-country aggregate':''}</p><a href="#${p.id}">Outcomes, sponsors & contact ↓</a></div>`}).join('');document.querySelector('#detail').scrollTop=0;}
 let pinnedTipButton=null;
 let tipButton=null, tipTimer=null, overTip=false, overMarker=false, touchTipButton=null, touchInteraction=false;
@@ -231,6 +259,31 @@ function showTip(place,button){if(pinnedTipButton&&pinnedTipButton!==button)retu
 
 for(const place of places){const b=document.createElement('button');b.className='marker '+(place.left?'left ':'')+programs.find(p=>p.id===place.ids[0]).kind;b.style.left=projectX(place.lon)+'%';b.style.top=projectY(place.lat)+'%';b.dataset.name=place.name;b.setAttribute('aria-label',`${place.name}: ${place.ids.map(id=>programs.find(p=>p.id===id).name).join(', ')}. Show outcomes`);b.innerHTML=`${place.ids.length>1?place.ids.length:'•'}<span class="marker-label">${place.name}</span>`;b.addEventListener('pointerdown',e=>{touchInteraction=e.pointerType==='touch'||e.pointerType==='pen'});b.addEventListener('mouseenter',()=>{if(touchInteraction||window.matchMedia('(hover: none)').matches)return;overMarker=true;showTip(place,b)});b.addEventListener('focus',()=>{if(touchInteraction)return;overMarker=b.matches(':hover');showTip(place,b)});b.addEventListener('mouseleave',()=>{if(tipButton===b){overMarker=false;scheduleTipClose()}});b.addEventListener('blur',()=>{if(tipButton===b)scheduleTipClose()});b.addEventListener('click',()=>{clearSharedProject();chosenMarkerName=place.name;markerProjectIds=new Set(place.ids);document.querySelector('#project-search').value=place.countries.join(', ');syncSearchMap({preserveMapPosition:true});closeTip(true);showTip(place,b);pinnedTipButton=b;touchTipButton=b;showDetail(place);prioritizeProfiles(place)});document.querySelector('#markers').append(b)}
 document.addEventListener('pointerdown',e=>{if(!tip.hidden&&!tip.contains(e.target)&&!tipButton?.contains(e.target))closeTip();});
+// Keep a region visible across ocean gaps so offset markers remain easy to reach.
+const continentControls=document.createElement('nav');continentControls.className='continent-controls';continentControls.setAttribute('aria-label','Map continents');
+const availableContinents=[...new Set([...covered].map(name=>continentByCountry.get(name)).filter(Boolean))].sort();
+continentControls.innerHTML=['All',...availableContinents].map(name=>`<button type="button" data-map-continent="${name}" aria-pressed="${name==='All'}">${name}</button>`).join('');
+document.querySelector('.map-shell').before(continentControls);
+let visibleContinent='All';
+function revealContinent(name){
+ if(name===visibleContinent)return;visibleContinent=name;
+ for(const marker of document.querySelectorAll('.marker')){
+  const place=places.find(p=>p.name===marker.dataset.name);
+  marker.classList.toggle('continent-hidden',name!=='All'&&!place.countries.some(country=>continentByCountry.get(country)===name));
+ }
+ for(const button of continentControls.children)button.setAttribute('aria-pressed',String(button.dataset.mapContinent===name));
+ if(tipButton?.classList.contains('continent-hidden'))closeTip(true);
+}
+continentControls.addEventListener('click',event=>{const button=event.target.closest('button');if(button)revealContinent(button.dataset.mapContinent);});
+// The base has every country, including countries without projects.
+let countryPathIndex=0;
+for(const country of catalog.countries)for(const unused of country.paths){
+ const path=base.children[countryPathIndex++];
+ path.addEventListener('pointerenter',event=>{
+  if(event.pointerType==='touch'||event.pointerType==='pen'||matchMedia('(hover: none)').matches)return;
+  const continent=continentByCountry.get(country.name);if(continent)revealContinent(continent);
+ });
+}
 document.addEventListener('keydown',e=>{touchInteraction=false;if(e.key==='Escape')closeTip(true)});
 // v1.3.11: open with Bombo selected, while preserving the shared coastal marker.
 const defaultId=programs.some(p=>p.id==='bombo')?'bombo':programs[0]?.id;
@@ -307,7 +360,8 @@ function syncSearchMap({preserveMapPosition=true}={}){
  });
  for(const [id,card]of projectCards)card.classList.toggle('search-first',filtered&&id===orderedIds[0]);
  if(filtered&&orderedIds.length){
-  showDetail({name:locations.map(p=>p.name).join(' · '),ids:orderedIds});
+  if(orderedIds.length>5&&!chosenMarkerName&&!sharedProjectId)showContinentSummary(orderedIds);
+  else showDetail({name:locations.map(p=>p.name).join(' · '),ids:orderedIds});
   setMarkerSelection(locations.map(p=>p.name));
   const place=locations[0];if(place&&!preserveMapPosition){mapScroller.scrollLeft=Math.max(0,projectX(place.lon)/100*mapScroller.scrollWidth-mapScroller.clientWidth/2);updateMapScrollCue();}
  }else{
