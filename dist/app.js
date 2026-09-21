@@ -6,7 +6,7 @@ if(!response.ok)throw new Error('Project records could not be loaded. Please ref
 const catalog=await response.json();window.atlasCatalog=catalog;
 const escapeHTML=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const searchIndex=AtlasSearch.createIndex(catalog.programs);
-let semantic=null,semanticResult=null,chosenMarkerName=null;
+let chosenMarkerName=null;
 const programs=catalog.programs.map(p=>Object.fromEntries(Object.entries(p).map(([key,value])=>[key,typeof value==='string'?escapeHTML(value):value])));
 // v4.4.0: mobile view changes preserve the existing search, marker and project state.
 const mobileViews=document.createElement('nav');mobileViews.className='mobile-view-switch';mobileViews.setAttribute('aria-label','Atlas view');mobileViews.innerHTML='<button type="button" data-view="map" aria-pressed="true">Map</button><button type="button" data-view="list" aria-pressed="false">Project list</button>';
@@ -78,7 +78,7 @@ function normalizeSearch(value){return value.normalize('NFD').replace(/[\u0300-\
 // v2.7.4: plain text search; words are literal, without Boolean operators.
 let markerProjectIds=null;
 function searchGroups(query){const terms=normalizeSearch(query).trim().split(/\s+/).filter(Boolean);return terms.length?[terms]:[];}
-function searchResult(query){return searchIndex.search(query,semanticResult?.query===query.trim()?semanticResult.expansions:[]);}
+function searchResult(query){return searchIndex.search(query);}
 function matchingProjectIds(query){
  if(sharedProjectId)return new Set([sharedProjectId]);
  if(markerProjectIds)return markerProjectIds;
@@ -133,12 +133,13 @@ function filterProfiles(){
  const input=document.querySelector('#project-search');
  const query=input.value.trim();
  const matches=matchingProjectIds(query);
- document.querySelectorAll('article.program').forEach(card=>{const hidden=!matches.has(card.id);if(card.hidden!==hidden)card.hidden=hidden;card.classList.toggle('semantic-result',!sharedProjectId&&!markerProjectIds&&searchResult(query).semantic.has(card.id));});
+ document.querySelectorAll('article.program').forEach(card=>{const hidden=!matches.has(card.id);if(card.hidden!==hidden)card.hidden=hidden;});
  document.querySelectorAll('.directory').forEach(section=>{section.hidden=![...section.querySelectorAll('article.program')].some(card=>!card.hidden)});
  numberSelectedRows();
  highlightProfileMatches(query);
  document.querySelector('#clear-search').hidden=!input.value;document.querySelector('#view-search-results').hidden=!matches.size;
- document.querySelector('#search-status').textContent=matches.size?`${matches.size} of ${programs.length} projects shown${!markerProjectIds&&!sharedProjectId&&searchResult(query).semantic.size?' · '+searchResult(query).semantic.size+' concept matches':''}`:'No matching projects. Try another term or clear your search.';
+ document.querySelector('#search-status').classList.toggle('search-empty',!matches.size);
+ document.querySelector('#search-status').textContent=matches.size?`${matches.size} of ${programs.length} projects shown`:'No matching projects. Try another term or clear your search.';
 }
 function updateCountryOutlines(place){
  const direct=places.find(p=>p.name===place.name);
@@ -322,7 +323,7 @@ let searchFrame=0,composing=false;
 function scheduleSearch(event){
  if(composing||event?.isComposing)return;
  cancelAnimationFrame(searchFrame);
- searchFrame=requestAnimationFrame(()=>{syncSearchMap();semantic?.schedule(document.querySelector('#project-search').value);});
+ searchFrame=requestAnimationFrame(()=>{syncSearchMap();});
 }
 for(const event of ['input','search','change'])document.querySelector('#project-search').addEventListener(event,scheduleSearch);
 document.querySelector('#project-search').addEventListener('compositionstart',()=>{composing=true;});
@@ -409,7 +410,7 @@ const sharedMessage=document.createElement('span');
 const showAll=document.createElement('button');showAll.type='button';showAll.textContent='Show all projects';
 sharedNotice.append(sharedMessage,showAll);document.querySelector('.project-search').append(sharedNotice);
 function clearSharedProject(){
- markerProjectIds=null;chosenMarkerName=null;semanticResult=null;semantic?.cancel();cancelAnimationFrame(searchFrame);
+ markerProjectIds=null;chosenMarkerName=null;cancelAnimationFrame(searchFrame);
  sharedProjectId=null;sharedNotice.hidden=true;
  const url=new URL(location.href);url.searchParams.delete('project');url.hash='';history.replaceState(null,'',url);
 }
@@ -418,7 +419,7 @@ showAll.addEventListener('click',()=>{clearSharedProject();document.querySelecto
 for(const event of ['input','search','change'])document.querySelector('#project-search').addEventListener(event,clearSharedProject,{capture:true});
 function openSharedProject(){
  const id=new URL(location.href).searchParams.get('project');
- markerProjectIds=null;chosenMarkerName=null;semanticResult=null;semantic?.cancel();sharedProjectId=null;sharedNotice.hidden=!id;
+ markerProjectIds=null;chosenMarkerName=null;sharedProjectId=null;sharedNotice.hidden=!id;
  if(!id){syncSearchMap();return;}
  document.querySelector('#project-search').value='';
  const project=catalog.programs.find(p=>p.id===id);
@@ -436,11 +437,6 @@ document.addEventListener('click',async event=>{
  try{await navigator.clipboard.writeText(link.href);feedback.textContent='Link copied';}
  catch{feedback.replaceChildren();const input=document.createElement('input');input.readOnly=true;input.value=link.href;input.setAttribute('aria-label','Project share URL — copy this link');feedback.append(input);input.focus();input.select();}
 });
-semantic=new AtlasSemantic({onResult:result=>{
- if(result&&(result.query!==document.querySelector('#project-search').value.trim()||markerProjectIds||sharedProjectId))return;
- semanticResult=result;syncSearchMap();
- if(result){const found=searchResult(result.query);semantic.say(found.expansions.length?'AI search terms: '+found.expansions.join(' · '):'AI checked this search · fast results retained');}
-}});
 if(new URL(location.href).searchParams.has('project'))openSharedProject();else syncSearchMap();
 window.dispatchEvent(new Event('atlas-ready'));
 })().catch(error=>{const message=document.createElement('p');message.className='load-error';message.textContent=error.message;document.querySelector('#map-overview').before(message);console.error(error);});

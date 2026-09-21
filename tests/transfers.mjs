@@ -110,3 +110,29 @@ const metadataBook=AtlasWorkbook.makeWorkbook(ExcelJS,[{...base,publicationYear:
 const metadataCopy=new ExcelJS.Workbook();await metadataCopy.xlsx.load(await metadataBook.xlsx.writeBuffer());
 const metadataRows=AtlasWorkbook.readWorkbook(metadataCopy,catalog.countries);
 assert.equal(metadataRows[0].publicationYear,'2025');assert.equal(metadataRows[0].evidenceBasis,'Slide scans');assert.equal(metadataRows[0].sampleDetails,'500 slides; 400 patients');
+
+// v4.8.1: previewed batch provenance survives creation, history, workbook review and undo.
+assert.equal((await call('/api/login','POST',{password:'Bombo'})).status,200);
+const batchComment='September review — new studies <reviewed>';
+const commentPreview=await call('/api/imports/preview','POST',{filename:'Literature.xlsx',comment:batchComment,rows:[newRow('Commented batch record')]});
+assert.equal(commentPreview.status,200);assert.equal(commentPreview.data.comment,batchComment);
+assert.match(commentPreview.data.rows[0].values.editNotes,/^Imported notes\n\nBatch import/);
+assert(commentPreview.data.rows[0].values.editNotes.endsWith(batchComment));
+assert.equal((await projects()).some(p=>p.name==='Commented batch record'),false,'Preview must not create records');
+const commentDiff=(await call('/api/exports','POST',{kind:'diff',previewId:commentPreview.data.id,selectedRows:[0],filename:'Diff.xlsx'})).data;
+const commentBook=AtlasWorkbook.makeDiffWorkbook(ExcelJS,commentDiff.preview);
+assert(commentBook.getWorksheet('Review summary').getSheetValues().some(row=>row?.[1]==='Batch comment'&&row[2]===batchComment));
+await commit(commentPreview.data.id,[0]);await commit(commentPreview.data.id,[0]);
+const commented=(await projects()).find(p=>p.name==='Commented batch record');
+assert.equal(commented.editNotes,commentPreview.data.rows[0].values.editNotes);assert.equal(commented.revision,1);
+const commentedHistory=(await call('/api/records/'+commented.id+'/history')).data;
+assert.equal(commentedHistory.entries.at(-1).after.editNotes,commented.editNotes);
+let batchHistory=(await call('/api/global-history')).data.entries.filter(e=>e.operation_id===commentPreview.data.id);
+assert.equal(batchHistory.length,1);assert.equal(batchHistory[0].details.comment,batchComment);
+await undo(commentPreview.data.id);
+batchHistory=(await call('/api/global-history')).data.entries.filter(e=>e.operation_id===commentPreview.data.id);
+assert.equal(batchHistory[0].action,'undo_import');assert.equal(batchHistory[0].details.comment,batchComment);
+const defaultComment=await preview([newRow('Default comment record')]);assert(defaultComment.data.comment.includes('Test.xlsx'));
+assert.equal((await call('/api/imports/preview','POST',{filename:'test.xlsx',comment:'x'.repeat(501),rows:[newRow('Invalid comment')]})).status,400);
+const oversizedNotes=await preview([newRow('Oversized notes',{editNotes:'x'.repeat(12000)})]);assert.equal(oversizedNotes.data.invalid,1);
+console.log('PASS: batch comments in preview, new-record notes, version one, diff spreadsheet, import/undo history, default text, limits and idempotence.');

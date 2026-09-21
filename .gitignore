@@ -9,6 +9,3 @@ dist/.openai/
 
 dist/exceljs.min.js
 dist/exceljs-LICENSE.txt
-
-dist/semantic-worker.js
-dist/webllm-LICENSE.txt

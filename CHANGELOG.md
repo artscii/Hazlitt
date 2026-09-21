@@ -1,3 +1,9 @@
+## 4.8.1 — Import provenance, clearer search feedback and AI removal
+
+- Remove WebLLM, model downloads and concept expansion; retain fast cached full-text search.
+- Batch imports carry an editable comment, with a filename-based default, into new records’ Edit notes, preview spreadsheets and global import/undo history.
+- No-result searches appear in a prominent, palette-aware box. Matched words always use a fixed light-blue highlight and dark-blue text.
+
 ## 4.8.0 — Fast indexed and local semantic search
 
 - Cache normalized catalog text and query results; coalesce input events and reuse project cards.

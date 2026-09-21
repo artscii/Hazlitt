@@ -3,7 +3,13 @@ const TRANSFER_MAX_ROWS=500;
 const transferIp=request=>request.headers.get('CF-Connecting-IP')||'Unavailable';
 const transferRow=async(env,id)=>database(env).prepare('SELECT * FROM file_operations WHERE id=?').bind(id).first();
 function transferFilename(value){return String(value||'Atlas.xlsx').replace(/[\u0000-\u001f]/g,'').slice(0,200);}
+// v4.8.1: one reviewed batch comment follows new records into notes and import/undo history.
+function importComment(value,filename){
+ if(value!==undefined&&(typeof value!=='string'||value.length>500))throw new Error('Batch comment must be text of 500 characters or fewer.');
+ return value?.trim()||'New records imported from '+filename+'.';
+}
 async function previewImport(env,input){
+ const filename=transferFilename(input.filename),comment=importComment(input.comment,filename);
  if(!Array.isArray(input.rows)||!input.rows.length||input.rows.length>TRANSFER_MAX_ROWS)throw new Error('Choose a spreadsheet containing 1–500 project rows.');
  const existing=await records(env),stored=(await database(env).prepare('SELECT id FROM records').all()).results;
  const ids=new Map(existing.map(p=>[p.id,p])),knownIds=new Set(stored.map(p=>p.id)),names=new Map(existing.map(p=>[nameKey(p.name),p]));
@@ -30,6 +36,7 @@ async function previewImport(env,input){
     const changes=match?[...fields,'countries','related'].filter(key=>JSON.stringify(comparable(key,match[key]))!==JSON.stringify(comparable(key,record[key]))).map(key=>({field:key,before:match[key]??'',after:record[key]??''})):[];
     if(match&&!changes.length){row.status='duplicate';row.message='Matches the saved project; no changes.';skipped++;}
     else{
+     if(!match){record.editNotes=[record.editNotes,'Batch import — '+filename+': '+comment].filter(Boolean).join('\n\n');if(record.editNotes.length>12000)throw new Error('Edit notes plus the batch comment exceed 12,000 characters. Shorten the notes before importing.');}
      candidates.push({key:index,record,before:match||null,baseRevision:match?.revision??0,importRevision:(match?.revision??0)+1,nameKey:nameKey(record.name),beforeNameKey:match?nameKey(match.name):null,auditId:crypto.randomUUID(),undoAuditId:crypto.randomUUID()});
      row.status=match?'update':'new';row.message=match?'Review changes and choose Update to include this row.':'Ready to add.';row.changes=changes;row.values=record;
      if(match){updates++;row.projectNumber=existing.findIndex(p=>p.id===match.id)+1;row.currentRevision=match.revision;row.matchMethod=byId?'Project ID':'Project name';row.stale=source.revision!==undefined&&source.revision!==''&&Number(source.revision)!==match.revision;}else added++;
@@ -38,7 +45,7 @@ async function previewImport(env,input){
   }catch(error){row.status='invalid';row.message=error.message;invalid++;}
   rows.push(row);
  }
- const summary={total:rows.length,added,updates,skipped,invalid,testOnly:input.testOnly===true};
+ const summary={comment,total:rows.length,added,updates,skipped,invalid,testOnly:input.testOnly===true};
  const payload=JSON.stringify({records:candidates,rows,...summary});
  if(new TextEncoder().encode(payload).length>1500000)throw new Error('This preview contains too much text for one batch. Split the spreadsheet into smaller imports.');
  const id=crypto.randomUUID();
@@ -67,7 +74,7 @@ async function applyImport(env,request,id){
    db.prepare("UPDATE file_operations SET status='applying',payload=? WHERE id=? AND status='preview' AND NOT EXISTS(SELECT 1 FROM json_each(?,'$.records') j LEFT JOIN records r ON r.id=json_extract(j.value,'$.record.id') WHERE (r.id IS NOT NULL AND (r.deleted<>0 OR r.revision<>json_extract(j.value,'$.baseRevision'))) OR (r.id IS NULL AND json_extract(j.value,'$.baseRevision')>0))").bind(serialized,id,serialized),
    db.prepare("INSERT INTO records (id,payload,name_key,deleted,revision) SELECT json_extract(j.value,'$.record.id'),json_extract(j.value,'$.record'),json_extract(j.value,'$.nameKey'),0,json_extract(j.value,'$.importRevision') FROM file_operations f,json_each(f.payload,'$.records') j WHERE f.id=? AND f.status='applying' ON CONFLICT(id) DO UPDATE SET payload=excluded.payload,name_key=excluded.name_key,deleted=0,revision=excluded.revision").bind(id),
    db.prepare("INSERT INTO audit_log (id,at,action,record_id,name,ip,before,after,revision) SELECT json_extract(j.value,'$.auditId'),?,CASE WHEN json_extract(j.value,'$.before') IS NULL THEN 'import' ELSE 'import_update' END,json_extract(j.value,'$.record.id'),json_extract(j.value,'$.record.name'),?,json_extract(j.value,'$.before'),json_extract(j.value,'$.record'),json_extract(j.value,'$.importRevision') FROM file_operations f,json_each(f.payload,'$.records') j WHERE f.id=? AND f.status='applying'").bind(at,transferIp(request),id),
-   db.prepare("INSERT INTO global_history (at,action,operation_id,summary,details,ip) SELECT ?,'import',id,?, ?,? FROM file_operations WHERE id=? AND status='applying'").bind(at,`Imported ${payload.added} new projects; updated ${payload.updated}; skipped ${payload.skipped} rows.`,JSON.stringify({filename:operation.filename,added:payload.added,updated:payload.updated,skipped:payload.skipped}),transferIp(request),id),
+   db.prepare("INSERT INTO global_history (at,action,operation_id,summary,details,ip) SELECT ?,'import',id,?, ?,? FROM file_operations WHERE id=? AND status='applying'").bind(at,`Imported ${payload.added} new projects; updated ${payload.updated}; skipped ${payload.skipped} rows.`,JSON.stringify({filename:operation.filename,comment:payload.comment||'Imported from '+operation.filename+'.',added:payload.added,updated:payload.updated,skipped:payload.skipped}),transferIp(request),id),
    db.prepare("UPDATE file_operations SET status='applied',completed=? WHERE id=? AND status='applying'").bind(at,id)
   ]);
   if(!result[0].meta.changes){const fresh=await transferRow(env,id);if(fresh.status!=='applied')return json({error:'Import state changed. Refresh and preview again.'},409);}
@@ -87,7 +94,7 @@ async function undoImport(env,request,id){
   db.prepare("UPDATE file_operations SET status='undoing' WHERE id=? AND status='applied' AND NOT EXISTS (SELECT 1 FROM json_each(file_operations.payload,'$.records') j LEFT JOIN records r ON r.id=json_extract(j.value,'$.record.id') WHERE r.id IS NULL OR r.deleted<>0 OR r.revision<>json_extract(j.value,'$.importRevision'))").bind(id),
   db.prepare("UPDATE records SET payload=COALESCE(json_extract(j.value,'$.before'),records.payload),deleted=CASE WHEN json_extract(j.value,'$.before') IS NULL THEN 1 ELSE 0 END,name_key=CASE WHEN json_extract(j.value,'$.before') IS NULL THEN NULL ELSE json_extract(j.value,'$.beforeNameKey') END,revision=records.revision+1 FROM file_operations f,json_each(f.payload,'$.records') j WHERE f.id=? AND f.status='undoing' AND records.id=json_extract(j.value,'$.record.id')").bind(id),
   db.prepare("INSERT INTO audit_log (id,at,action,record_id,name,ip,before,after,revision) SELECT json_extract(j.value,'$.undoAuditId'),?,'import_undo',json_extract(j.value,'$.record.id'),json_extract(j.value,'$.record.name'),?,json_extract(j.value,'$.record'),json_extract(j.value,'$.before'),json_extract(j.value,'$.importRevision')+1 FROM file_operations f,json_each(f.payload,'$.records') j WHERE f.id=? AND f.status='undoing'").bind(at,transferIp(request),id),
-  db.prepare("INSERT INTO global_history (at,action,operation_id,summary,details,ip) SELECT ?,'undo_import',id,?,?,? FROM file_operations WHERE id=? AND status='undoing'").bind(at,`Undid import: removed ${payload.added} added projects and restored ${payload.updated} updated projects.`,JSON.stringify({filename:operation.filename,removed:payload.added,restored:payload.updated}),transferIp(request),id),
+  db.prepare("INSERT INTO global_history (at,action,operation_id,summary,details,ip) SELECT ?,'undo_import',id,?,?,? FROM file_operations WHERE id=? AND status='undoing'").bind(at,`Undid import: removed ${payload.added} added projects and restored ${payload.updated} updated projects.`,JSON.stringify({filename:operation.filename,comment:payload.comment||'Imported from '+operation.filename+'.',removed:payload.added,restored:payload.updated}),transferIp(request),id),
   db.prepare("UPDATE file_operations SET status='undone',undone=? WHERE id=? AND status='undoing'").bind(at,id)
  ]);}catch{return json({error:'Undo could not complete because restored project names conflict with current records. No records were changed.'},409);}
  if(!results[0].meta.changes){const fresh=await transferRow(env,id);if(fresh.status==='undone')return json({ok:true,alreadyUndone:true});return json({error:'This import cannot be undone because one or more imported projects were edited, deleted or restored afterward. No records were changed.'},409);}
