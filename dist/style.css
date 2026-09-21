@@ -297,7 +297,8 @@ html.screen-flipping,html.editor-flip-pending{background:var(--atlas-soft);overf
 #detail .continent-summary-row h3{margin:0;font-size:16px}
 .continent-summary-row span{flex-shrink:0;font-size:14px;color:var(--atlas-accent);font-weight:600}
 #detail .continent-summary-row p{font-size:14px;line-height:1.6;margin:6px 0 0}
-.continent-controls{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}
+/* v4.8.5: center every wrapped row within the visible map column. */
+.continent-controls{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:12px 0;padding-inline:12px}
 .continent-controls button{font:inherit;font-size:14px;min-height:44px;padding:8px 12px;border:1px solid var(--atlas-border);border-radius:6px;color:var(--atlas-text);background:var(--atlas-page);cursor:pointer}
 .continent-controls button[aria-pressed="true"]{background:var(--atlas-highlight);border-color:var(--atlas-accent)}
 .continent-controls button:focus-visible{outline:2px solid var(--atlas-accent);outline-offset:2px}

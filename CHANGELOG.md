@@ -1,3 +1,7 @@
+## 4.8.5
+
+- Center continent controls within the visible map column, including wrapped mobile rows.
+
 ## 4.8.4
 
 - Add dated public follow-up notes to records, Admin editing, version history and spreadsheet import/export.
