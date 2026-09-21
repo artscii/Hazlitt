@@ -18,8 +18,34 @@ document.querySelector('#map-overview').before(mobileViews);
 document.body.dataset.mobileView='map';
 function setMobileView(view,scroll=false){document.body.dataset.mobileView=view;mobileViews.querySelectorAll('button').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.view===view)));if(scroll&&matchMedia('(max-width:740px)').matches)mobileViews.scrollIntoView({block:'start',behavior:'instant'});requestAnimationFrame(()=>window.dispatchEvent(new Event('atlas-view-change')));}
 mobileViews.onclick=event=>{const button=event.target.closest('[data-view]');if(button)setMobileView(button.dataset.view,true);};
-function expandProject(card){if(!card)return;window.dispatchEvent(new CustomEvent('atlas-project-view',{detail:card.id}));card.classList.add('project-expanded');const button=card.querySelector('.project-expand');if(button){button.setAttribute('aria-expanded','true');button.textContent='Hide details';}updateEvidencePanels();}
-document.addEventListener('click',event=>{const button=event.target.closest('.project-expand');if(!button)return;const card=button.closest('.program'),expanded=card.classList.toggle('project-expanded');if(expanded)window.dispatchEvent(new CustomEvent('atlas-project-view',{detail:card.id}));button.setAttribute('aria-expanded',String(expanded));button.textContent=expanded?'Hide details':'View evidence & contacts';updateEvidencePanels();});
+// v4.9.1: swap readable faces at the edge of a short card turn.
+const flippingCards=new WeakSet();
+function setProjectFace(card,expanded){
+ card.classList.toggle('project-expanded',expanded);
+ const button=card.querySelector('.project-expand');
+ button?.setAttribute('aria-expanded',String(expanded));
+ if(button)button.textContent=expanded?'Back to summary':'View evidence & contacts';
+ if(expanded)window.dispatchEvent(new CustomEvent('atlas-project-view',{detail:card.id}));
+ updateEvidencePanels();
+}
+function expandProject(card){if(card)setProjectFace(card,true);}
+async function flipProject(card){
+ if(flippingCards.has(card))return;
+ const expanded=!card.classList.contains('project-expanded');
+ if(matchMedia('(prefers-reduced-motion: reduce)').matches||!card.animate){setProjectFace(card,expanded);return;}
+ flippingCards.add(card);card.classList.add('card-turning');
+ const direction=expanded?1:-1;
+ let animation;
+ try{
+  animation=card.animate([{transform:'perspective(1400px) rotateY(0deg)'},{transform:`perspective(1400px) rotateY(${direction*90}deg)`}],{duration:160,easing:'ease-in',fill:'forwards'});
+  await animation.finished;
+  setProjectFace(card,expanded);animation.cancel();
+  animation=card.animate([{transform:`perspective(1400px) rotateY(${-direction*90}deg)`},{transform:'perspective(1400px) rotateY(0deg)'}],{duration:180,easing:'ease-out',fill:'forwards'});
+  await animation.finished;
+ }catch{setProjectFace(card,expanded);}
+ finally{animation?.cancel();card.classList.remove('card-turning');flippingCards.delete(card);updateEvidencePanels();}
+}
+document.addEventListener('click',event=>{const button=event.target.closest('.project-expand');if(button)flipProject(button.closest('.program'));});
 let sharedProjectId=null;
 const projectURL=id=>{const url=new URL(location.href);url.search='';url.searchParams.set('project',id);url.hash=id;return url.href;};
 // v2.3.0: derive source coverage from the live catalog; never imply a fresh database search.

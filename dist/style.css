@@ -338,3 +338,11 @@ html.screen-flipping,html.editor-flip-pending{background:var(--atlas-soft);overf
 #references-title{scroll-margin-top:84px}.tooltip-close{display:block;margin:0 0 8px auto;min-width:44px;min-height:44px;border:1px solid currentColor;border-radius:6px;background:transparent;color:inherit;font:inherit;cursor:pointer}
 @media(max-width:740px){#map{min-width:900px}.continent-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:0 12px}.continent-controls button{width:100%;min-height:44px}.selection-context{font-size:13px}.program:not(.project-expanded) .geo{display:block}.directory>.section-heading{align-items:flex-start}.directory>.section-heading h2{font-size:25px}.references-jump{font-size:13px}.program .evidence-meta{font-size:13px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+/* v4.9.1: the reverse face keeps identity and return control above the evidence. */
+.program.card-turning{will-change:transform;backface-visibility:hidden;pointer-events:none;transform-origin:center center}
+.program.project-expanded{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)}
+.program.project-expanded>div:first-of-type{grid-column:1/-1}
+.program.project-expanded>div:first-of-type :is(.badge,.geo,.evidence-meta,.share-project,.share-feedback,.back-to-map){display:none}
+.program.project-expanded>div:first-of-type h3{margin:8px 0 12px}
+@media(max-width:740px){.program.project-expanded{grid-template-columns:minmax(0,1fr)}}

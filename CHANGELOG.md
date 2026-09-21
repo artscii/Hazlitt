@@ -1,3 +1,7 @@
+## 4.9.1
+
+- Turn project cards to a readable evidence/contact reverse face and back to summary, with reduced-motion fallback and repeated-click protection.
+
 ## 4.9.0
 
 - Keep References navigation visible for selected results; shorten search guidance with expandable tips.
