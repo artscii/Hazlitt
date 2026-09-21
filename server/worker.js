@@ -64,8 +64,10 @@ export default {async fetch(request,env){
     return json({ok:true},200,{'Set-Cookie':`atlas_session=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=28800${url.protocol==='https:'?'; Secure':''}`});
    }
    const auth=await session(request,env);
+   if(path==='/api/analytics/event'&&request.method==='POST')return collectAnalytics(request,env,auth);
    if(path==='/api/session'&&request.method==='GET')return json({authenticated:!!auth});
    if(!auth)return json({error:'Sign in to edit records'},401);
+   const analytics=await analyticsRoute(request,env,path,url);if(analytics)return analytics;
    const transfer=await transferRoute(request,env,path,url);if(transfer)return transfer;
    if(path==='/api/config'&&request.method==='PUT'){
     const input=await body(request);

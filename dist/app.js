@@ -12,8 +12,8 @@ document.querySelector('#map-overview').before(mobileViews);
 document.body.dataset.mobileView='map';
 function setMobileView(view,scroll=false){document.body.dataset.mobileView=view;mobileViews.querySelectorAll('button').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.view===view)));if(scroll&&matchMedia('(max-width:740px)').matches)mobileViews.scrollIntoView({block:'start',behavior:'instant'});requestAnimationFrame(()=>window.dispatchEvent(new Event('atlas-view-change')));}
 mobileViews.onclick=event=>{const button=event.target.closest('[data-view]');if(button)setMobileView(button.dataset.view,true);};
-function expandProject(card){if(!card)return;card.classList.add('project-expanded');const button=card.querySelector('.project-expand');if(button){button.setAttribute('aria-expanded','true');button.textContent='Collapse details';}updateEvidencePanels();}
-document.addEventListener('click',event=>{const button=event.target.closest('.project-expand');if(!button)return;const card=button.closest('.program'),expanded=card.classList.toggle('project-expanded');button.setAttribute('aria-expanded',String(expanded));button.textContent=expanded?'Collapse details':'Expand details';updateEvidencePanels();});
+function expandProject(card){if(!card)return;window.dispatchEvent(new CustomEvent('atlas-project-view',{detail:card.id}));card.classList.add('project-expanded');const button=card.querySelector('.project-expand');if(button){button.setAttribute('aria-expanded','true');button.textContent='Collapse details';}updateEvidencePanels();}
+document.addEventListener('click',event=>{const button=event.target.closest('.project-expand');if(!button)return;const card=button.closest('.program'),expanded=card.classList.toggle('project-expanded');if(expanded)window.dispatchEvent(new CustomEvent('atlas-project-view',{detail:card.id}));button.setAttribute('aria-expanded',String(expanded));button.textContent=expanded?'Collapse details':'Expand details';updateEvidencePanels();});
 let sharedProjectId=null;
 const projectURL=id=>{const url=new URL(location.href);url.search='';url.searchParams.set('project',id);url.hash=id;return url.href;};
 // v2.3.0: derive source coverage from the live catalog; never imply a fresh database search.
@@ -227,7 +227,7 @@ function updateMapScrollCue(){
 }
 // v3.4.0: explicit map panning and direct access to the filtered results.
 for(const [id,direction] of [['map-pan-left',-1],['map-pan-right',1]])document.getElementById(id).onclick=()=>mapScroller.scrollBy({left:direction*mapScroller.clientWidth*.7,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
-function jumpToResults(event){setMobileView('list');const card=[...document.querySelectorAll('article.program')].find(card=>!card.hidden);if(!card)return;event.preventDefault();card.setAttribute('tabindex','-1');card.focus({preventScroll:true});card.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});}
+function jumpToResults(event){setMobileView('list');const card=[...document.querySelectorAll('article.program')].find(card=>!card.hidden);if(!card)return;window.dispatchEvent(new CustomEvent('atlas-project-view',{detail:card.id}));event.preventDefault();card.setAttribute('tabindex','-1');card.focus({preventScroll:true});card.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});}
 document.querySelector('#view-search-results').addEventListener('click',jumpToResults);
 document.querySelector('#project-search').addEventListener('keydown',event=>{if(event.key==='Enter')jumpToResults(event);});
 mapScroller.addEventListener('scroll',()=>{closeTip();updateMapScrollCue()},{passive:true});

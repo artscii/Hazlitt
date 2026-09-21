@@ -1,3 +1,10 @@
+## 4.5.0
+
+- Add private Admin analytics with visit/project counts, daily chart, country/device filters, recent anonymous visits and archived reset periods.
+- Fit version slider nodes to available width with readable labels and touch-sized targets.
+- Exclude signed-in admins, recognised bots and privacy signals; retain recent visit details for 365 days and aggregates across resets.
+- Replace external-link arrows with accessible monochrome paperclip icons.
+
 ## 4.4.1
 
 - Move project search below geography and limit evidence panels to three rows or 72% of the viewport, whichever is smaller.

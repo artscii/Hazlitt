@@ -8,3 +8,9 @@ export const siteSettings = sqliteTable('site_settings', {key:text('key').primar
 
 export const fileOperations = sqliteTable('file_operations', {id:text('id').primaryKey(),kind:text('kind').notNull(),filename:text('filename').notNull(),at:integer('at').notNull(),status:text('status').notNull(),payload:text('payload').notNull(),ip:text('ip').notNull(),completed:integer('completed'),undone:integer('undone')});
 export const globalHistory = sqliteTable('global_history', {version:integer('version').primaryKey({autoIncrement:true}),at:integer('at').notNull(),action:text('action').notNull(),operationId:text('operation_id').notNull(),summary:text('summary').notNull(),details:text('details').notNull(),ip:text('ip').notNull()});
+
+// v4.5.0: anonymous analytics, archived reporting periods and durable aggregates.
+export const analyticsPeriods=sqliteTable('analytics_periods',{id:text('id').primaryKey(),at:integer('at').notNull()});
+export const analyticsVisits=sqliteTable('analytics_visits',{id:text('id').primaryKey(),period:text('period').notNull(),at:integer('at').notNull(),last:integer('last').notNull(),country:text('country').notNull(),device:text('device').notNull()});
+export const analyticsViews=sqliteTable('analytics_views',{id:text('id').primaryKey(),visit:text('visit').notNull(),period:text('period').notNull(),at:integer('at').notNull(),project:text('project').notNull()});
+export const analyticsDaily=sqliteTable('analytics_daily',{id:text('id').primaryKey(),period:text('period').notNull(),day:text('day').notNull(),country:text('country').notNull(),device:text('device').notNull(),project:text('project').notNull(),visits:integer('visits').notNull().default(0),views:integer('views').notNull().default(0)});
