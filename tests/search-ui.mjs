@@ -44,8 +44,14 @@ await search('nothing-matches-xyz');assert.equal(d.querySelectorAll('article.pro
 await search('');assert.equal(d.querySelectorAll('article.program:not([hidden])').length,catalog.programs.length);assert(!d.querySelector('#search-status').classList.contains('search-empty'));
 for(const [id,card]of cards)assert.strictEqual(d.getElementById(id),card,'Card identity retained');
 const markers=[...d.querySelectorAll('.marker')],positions=markers.map(m=>[m.style.left,m.style.top]);
+const selectionObserver=new w.MutationObserver(()=>{});
+selectionObserver.observe(d.querySelector('#detail'),{childList:true});
+selectionObserver.observe(d.querySelector('#search-status'),{childList:true});
 for(const marker of [...markers,...markers]){
  marker.click();
+ const updates=selectionObserver.takeRecords();
+ assert.equal(updates.filter(r=>r.target.id==='search-status').length,1,'One project-list filtering pass per selection');
+ assert(updates.filter(r=>r.target.id==='detail').length<=1,'No intermediate location-panel renders');
  assert.equal(d.querySelectorAll('.marker.selected').length,1,marker.dataset.name+' must be sole selected marker');
  assert(marker.classList.contains('selected'));assert(d.querySelector('#markers').classList.contains('has-selection'));
  assert(markers.every(m=>!m.hidden));

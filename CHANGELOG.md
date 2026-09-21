@@ -1,3 +1,7 @@
+## 4.8.18
+
+- Consolidate marker selection into one project-list and location-panel update, use indexed project/location lookups, and avoid moving the preview panel between containers.
+
 ## 4.8.17
 
 - Place dynamic project previews below persistent continent filter buttons so preview updates do not shift the controls.

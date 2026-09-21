@@ -10,6 +10,8 @@ document.querySelector('#project-search').placeholder=`All ${catalog.programs.le
 const searchIndex=AtlasSearch.createIndex(catalog.programs);
 let chosenMarkerName=null;
 const programs=catalog.programs.map(p=>Object.fromEntries(Object.entries(p).map(([key,value])=>[key,typeof value==='string'?escapeHTML(value):value])));
+// v4.8.18: constant-time lookups shared by marker and search rendering.
+const programsById=new Map(programs.map(p=>[p.id,p]));
 // v4.4.0: mobile view changes preserve the existing search, marker and project state.
 const mobileViews=document.createElement('nav');mobileViews.className='mobile-view-switch';mobileViews.setAttribute('aria-label','Atlas view');mobileViews.innerHTML='<button type="button" data-view="map" aria-pressed="true">Map</button><button type="button" data-view="list" aria-pressed="false">Project list</button>';
 document.querySelector('#map-overview').before(mobileViews);
@@ -48,6 +50,7 @@ for(const country of catalog.countries.filter(c=>covered.has(c.name))){
  const names=country.name==='Kenya'&&covered.has('Tanzania')?['Kenya','Tanzania']:[country.name];
  places.push({name:names.length>1?'Kinondo, Kenya / Tanga, Tanzania':existing?.name||country.name,lon:existing?.lon??country.lon,lat:existing?.lat??country.lat,countries:names,ids:programs.filter(p=>p.countries.some(c=>names.includes(c))).map(p=>p.id)});
 }
+const placesByName=new Map(places.map(place=>[place.name,place]));
 const wide=catalog.countries.some(c=>covered.has(c.name)&&(c.lon< -105||c.lon>135||c.lat< -41||c.lat>52));
 const bounds=wide?{west:-180,north:85,width:360,height:170}:{west:-110,north:57,width:250,height:103};
 const projectX=lon=>(lon-bounds.west)/bounds.width*100,projectY=lat=>(bounds.north-lat)/bounds.height*100;
@@ -144,7 +147,7 @@ function filterProfiles(){
  document.querySelector('#search-status').textContent=matches.size?`${matches.size} of ${programs.length} projects shown`:'No matching projects. Try another term or clear your search.';
 }
 function updateCountryOutlines(place){
- const direct=places.find(p=>p.name===place.name);
+ const direct=placesByName.get(place.name);
  const locations=direct?[direct]:places.filter(p=>p.ids.some(id=>place.ids.includes(id)));
  const geography=AtlasSearch.parse(document.querySelector('#project-search').value);
  const names=locations.flatMap(p=>p.countries||[]).filter(name=>chosenMarkerName||(!geography.countries.length||geography.countries.includes(name))&&(!geography.continents.length||geography.continents.includes((AtlasSearch.continentByCountry.get(name)||'').toLowerCase())));
@@ -197,7 +200,7 @@ function showContinentSummary(ids,scope=null){
  detail.innerHTML=`<p class="eyebrow">SELECTED LOCATIONS</p><h2>${scope?escapeHTML(scope):'Results by continent'}</h2><p class="continent-total">${selected.size} ${selected.size===1?'project':'projects'} · ${countries.size} ${countries.size===1?'country':'countries'} · ${groups.size} ${groups.size===1?'continent':'continents'}</p><div class="continent-summary">`+[...groups].sort(([a],[b])=>a.localeCompare(b)).map(([name,group])=>`<section class="continent-summary-row" data-continent="${escapeHTML(name)}"><div><h3>${escapeHTML(name)}</h3><span>${group.ids.size} ${group.ids.size===1?'project':'projects'}</span></div><p>${group.countries.size} ${group.countries.size===1?'country':'countries'} · ${[...group.countries].sort().map(escapeHTML).join(', ')}</p></section>`).join('')+'</div><p class="contact-note">Projects spanning continents appear in each relevant group. Explore individual projects in the results list below.</p>';
  detail.scrollTop=0;
 }
-function showDetail(place){place=searchPlace(place);if(!place.ids.length)return;updateCountryOutlines(place);setMarkerSelection([place.name]);const key=place.name+'|'+place.ids.join(',');if(activeLocationKey===key)return;activeLocationKey=key;activeLocationName=place.name;document.querySelector('#detail').classList.toggle('multiple-projects',place.ids.length>1);document.querySelector('#detail').innerHTML=`<p class="eyebrow">${place.ids.length>1?"SELECTED LOCATIONS":"SELECTED LOCATION"}</p><h2>${place.name}</h2>`+place.ids.map(id=>{const p=programs.find(p=>p.id===id);return `<div class="detail-block">${badge(p)}<h3>${p.name}</h3><p class="metric">${p.metric}</p><p class="metric-label">${p.metricLabel}</p>${p.metric.includes("AUC")?aucExplanation:""}<p>${p.short}</p><p class="contact-note">${p.publicationYear?`Publication year: ${p.publicationYear} · `:''}${p.evidenceBasis||'Evidence basis not yet classified'}${p.sampleDetails?` · ${p.sampleDetails}`:''}<br>${p.date}${place.ids.includes('ave')&&id==='ave'?' · Five-country aggregate':''}</p><a href="#${p.id}">Outcomes, sponsors & contact ↓</a></div>`}).join('');document.querySelector('#detail').scrollTop=0;}
+function showDetail(place){place=searchPlace(place);if(!place.ids.length)return;updateCountryOutlines(place);setMarkerSelection([place.name]);const key=place.name+'|'+place.ids.join(',');if(activeLocationKey===key)return;activeLocationKey=key;activeLocationName=place.name;document.querySelector('#detail').classList.toggle('multiple-projects',place.ids.length>1);document.querySelector('#detail').innerHTML=`<p class="eyebrow">${place.ids.length>1?"SELECTED LOCATIONS":"SELECTED LOCATION"}</p><h2>${place.name}</h2>`+place.ids.map(id=>{const p=programsById.get(id);return `<div class="detail-block">${badge(p)}<h3>${p.name}</h3><p class="metric">${p.metric}</p><p class="metric-label">${p.metricLabel}</p>${p.metric.includes("AUC")?aucExplanation:""}<p>${p.short}</p><p class="contact-note">${p.publicationYear?`Publication year: ${p.publicationYear} · `:''}${p.evidenceBasis||'Evidence basis not yet classified'}${p.sampleDetails?` · ${p.sampleDetails}`:''}<br>${p.date}${place.ids.includes('ave')&&id==='ave'?' · Five-country aggregate':''}</p><a href="#${p.id}">Outcomes, sponsors & contact ↓</a></div>`}).join('');document.querySelector('#detail').scrollTop=0;}
 let pinnedTipButton=null;
 let tipButton=null, tipTimer=null, overTip=false, overMarker=false, touchTipButton=null, touchInteraction=false;
 function cancelTipClose(){clearTimeout(tipTimer);tipTimer=null;}
@@ -214,7 +217,7 @@ document.addEventListener('click',e=>{
  const id=link.getAttribute('href').slice(1);
  if(id!=='map-overview'&&!programs.some(p=>p.id===id))return;
  if(link.getAttribute('data-profile')===id){
-  const chosen=programs.find(p=>p.id===id);
+  const chosen=programsById.get(id);
   prioritizeProfiles({name:chosen.name,ids:[id]});
   const location=places.find(p=>p.name===tipButton?.dataset.name)||places.find(p=>p.name===activeLocationName&&p.ids.includes(id));
   if(location)showDetail({...location,ids:[id]});
@@ -246,14 +249,14 @@ function chooseTipPosition(bounds,size,anchor,obstacles){
  }
  return best;
 }
-function showTip(place,button){if(pinnedTipButton&&pinnedTipButton!==button)return;place=searchPlace(place);if(!place.ids.length)return;showDetail(place);cancelTipClose();if(tipButton!==button){tipButton?.removeAttribute('aria-describedby');overTip=false;}tipButton=button;tip.classList.toggle('multi-project',place.ids.length>1);tip.innerHTML=`<strong>${place.name}</strong><div class="tooltip-entries">`+place.ids.map(id=>{let p=programs.find(p=>p.id===id);return `<div class="tooltip-entry"><span class="tooltip-entry-title">${p.name}</span><small>${p.short}</small><a class="tooltip-profile" data-profile="${p.id}" href="#${p.id}" aria-label="View project profile: ${p.name}">View project profile →</a></div>`}).join('')+'</div>';tipDock.hidden=true;map.append(tip);tip.classList.remove('docked');tip.style.maxHeight='';tip.hidden=false;
- tipDock.hidden=false;tipDock.append(tip);tip.classList.add('docked');tip.style.left='';tip.style.top='';tip.style.maxHeight=Math.max(80,(window.visualViewport?.height||window.innerHeight)-56)+'px';
+function showTip(place,button){if(pinnedTipButton&&pinnedTipButton!==button)return;place=searchPlace(place);if(!place.ids.length)return;showDetail(place);cancelTipClose();if(tipButton!==button){tipButton?.removeAttribute('aria-describedby');overTip=false;}tipButton=button;tip.classList.toggle('multi-project',place.ids.length>1);tip.innerHTML=`<strong>${place.name}</strong><div class="tooltip-entries">`+place.ids.map(id=>{let p=programsById.get(id);return `<div class="tooltip-entry"><span class="tooltip-entry-title">${p.name}</span><small>${p.short}</small><a class="tooltip-profile" data-profile="${p.id}" href="#${p.id}" aria-label="View project profile: ${p.name}">View project profile →</a></div>`}).join('')+'</div>';tip.hidden=false;
+ tipDock.hidden=false;if(tip.parentElement!==tipDock)tipDock.append(tip);tip.classList.add('docked');tip.style.left='';tip.style.top='';tip.style.maxHeight=Math.max(80,(window.visualViewport?.height||window.innerHeight)-56)+'px';
  button.setAttribute('aria-describedby','tooltip');
  // v3.1.1: revealing a marker preview must not move the map or page.
  }
 
 // v4.8.15: selecting a location locks marker visibility to its geographic continent.
-for(const place of places){const b=document.createElement('button');b.className='marker '+(place.left?'left ':'')+programs.find(p=>p.id===place.ids[0]).kind;b.style.left=projectX(place.lon)+'%';b.style.top=projectY(place.lat)+'%';b.dataset.name=place.name;b.setAttribute('aria-label',`${place.name}: ${place.ids.map(id=>programs.find(p=>p.id===id).name).join(', ')}. Show outcomes`);b.innerHTML=`${place.ids.length>1?place.ids.length:'•'}<span class="marker-label">${place.name}</span>`;b.addEventListener('pointerdown',e=>{touchInteraction=e.pointerType==='touch'||e.pointerType==='pen'});b.addEventListener('mouseenter',()=>{if(touchInteraction||window.matchMedia('(hover: none)').matches)return;overMarker=true;showTip(place,b)});b.addEventListener('focus',()=>{if(touchInteraction)return;overMarker=b.matches(':hover');showTip(place,b)});b.addEventListener('mouseleave',()=>{if(tipButton===b){overMarker=false;scheduleTipClose()}});b.addEventListener('blur',()=>{if(tipButton===b)scheduleTipClose()});b.addEventListener('click',()=>{clearSharedProject();revealContinent(continentByCountry.get(place.countries[0])||'All');chosenMarkerName=place.name;markerProjectIds=new Set(place.ids);document.querySelector('#project-search').value=place.countries.join(', ');syncSearchMap({preserveMapPosition:true});closeTip(true);showTip(place,b);pinnedTipButton=b;touchTipButton=b;showDetail(place);prioritizeProfiles(place)});document.querySelector('#markers').append(b)}
+for(const place of places){const b=document.createElement('button');b.className='marker '+(place.left?'left ':'')+programs.find(p=>p.id===place.ids[0]).kind;b.style.left=projectX(place.lon)+'%';b.style.top=projectY(place.lat)+'%';b.dataset.name=place.name;b.setAttribute('aria-label',`${place.name}: ${place.ids.map(id=>programsById.get(id).name).join(', ')}. Show outcomes`);b.innerHTML=`${place.ids.length>1?place.ids.length:'•'}<span class="marker-label">${place.name}</span>`;b.addEventListener('pointerdown',e=>{touchInteraction=e.pointerType==='touch'||e.pointerType==='pen'});b.addEventListener('mouseenter',()=>{if(touchInteraction||window.matchMedia('(hover: none)').matches)return;overMarker=true;showTip(place,b)});b.addEventListener('focus',()=>{if(touchInteraction)return;overMarker=b.matches(':hover');showTip(place,b)});b.addEventListener('mouseleave',()=>{if(tipButton===b){overMarker=false;scheduleTipClose()}});b.addEventListener('blur',()=>{if(tipButton===b)scheduleTipClose()});b.addEventListener('click',()=>{clearSharedProject();revealContinent(continentByCountry.get(place.countries[0])||'All');chosenMarkerName=place.name;markerProjectIds=new Set(place.ids);document.querySelector('#project-search').value=place.countries.join(', ');syncSearchMap({preserveMapPosition:true,selectedPlace:place});showTip(place,b);pinnedTipButton=b;touchTipButton=b});document.querySelector('#markers').append(b)}
 document.addEventListener('pointerdown',e=>{if(!tip.hidden&&!tip.contains(e.target)&&!tipButton?.contains(e.target))closeTip();});
 // Keep a region visible across ocean gaps so offset markers remain easy to reach.
 const continentControls=document.createElement('nav');continentControls.className='continent-controls';continentControls.setAttribute('aria-label','Map continents');
@@ -268,7 +271,7 @@ let visibleContinent='All';
 function revealContinent(name){
  if(name===visibleContinent)return;visibleContinent=name;
  for(const marker of document.querySelectorAll('.marker')){
-  const place=places.find(p=>p.name===marker.dataset.name);
+  const place=placesByName.get(marker.dataset.name);
   marker.classList.toggle('continent-hidden',name!=='All'&&!place.countries.some(country=>continentByCountry.get(country)===name));
  }
  for(const button of continentControls.children)button.setAttribute('aria-pressed',String(button.dataset.mapContinent===name));
@@ -358,25 +361,27 @@ function searchPlace(place){
  const ids=matchingProjectIds(query);
  return {...place,ids:orderProjectIds(place.ids.filter(id=>ids.has(id)))};
 }
-function syncSearchMap({preserveMapPosition=true}={}){
+function syncSearchMap({preserveMapPosition=true,selectedPlace=null}={}){
  const started=performance.now();closeTip(true);
  const query=document.querySelector('#project-search').value.trim(),matches=matchingProjectIds(query);
  const filtered=!!(query||sharedProjectId),orderedIds=orderProjectIds([...matches]);
  if(filtered&&orderedIds.length){
-  prioritizeProfiles({name:sharedProjectId?programs.find(p=>p.id===sharedProjectId).name:'Search results',ids:orderedIds},{filter:false});
+  prioritizeProfiles({name:selectedPlace?.name||(sharedProjectId?programsById.get(sharedProjectId).name:'Search results'),ids:orderedIds},{filter:false});
  }else arrangeProfiles([]);
  filterProfiles();
  const searchedCountries=AtlasSearch.parse(query).countries;
  const locations=places.filter(p=>p.ids.some(id=>matches.has(id))&&(!searchedCountries.length||p.countries.some(c=>searchedCountries.includes(c))));
  document.querySelectorAll('.marker').forEach(marker=>{
-  const place=places.find(p=>p.name===marker.dataset.name),ids=place.ids.filter(id=>matches.has(id));
+  const place=placesByName.get(marker.dataset.name),ids=place.ids.filter(id=>matches.has(id));
   marker.hidden=false;marker.classList.toggle('search-muted',!ids.length||!locations.includes(place));
   const visibleIds=ids.length?ids:place.ids;
   marker.firstChild.textContent=visibleIds.length>1?String(visibleIds.length):'•';
-  marker.setAttribute('aria-label',`${place.name}: ${visibleIds.map(id=>programs.find(p=>p.id===id).name).join(', ')}. Show outcomes`);
+  marker.setAttribute('aria-label',`${place.name}: ${visibleIds.map(id=>programsById.get(id).name).join(', ')}. Show outcomes`);
  });
  for(const [id,card]of projectCards)card.classList.toggle('search-first',filtered&&id===orderedIds[0]);
- if(filtered&&orderedIds.length){
+ if(selectedPlace){
+  // The caller renders the selected location once through showTip.
+ }else if(filtered&&orderedIds.length){
   const continent=[...new Set(continentByCountry.values())].find(name=>name.toLowerCase()===AtlasSearch.unquote(query));
   if(continent&&!chosenMarkerName&&!sharedProjectId){showContinentSummary(orderedIds,continent);revealContinent(continent);}
   else if(orderedIds.length>5&&!chosenMarkerName&&!sharedProjectId)showContinentSummary(orderedIds);
@@ -418,7 +423,7 @@ function placeMarkersOffshore(){
  const landIn=(x,y,r)=>{const l=Math.floor(x-r),t=Math.floor(y-r),right=Math.ceil(x+r),bottom=Math.ceil(y+r);return sums[bottom*stride+right]-sums[t*stride+right]-sums[bottom*stride+l]+sums[t*stride+l];};
  const occupied=[];
  for(const marker of document.querySelectorAll('.marker')){
-  const place=places.find(p=>p.name===marker.dataset.name);
+  const place=placesByName.get(marker.dataset.name);
   const origin={x:projectX(place.lon)*width/100,y:projectY(place.lat)*height/100};
   const radius=Math.max(22,marker.offsetWidth/2+10);let best=null;
   for(let y=radius;y<height-radius;y+=6)for(let x=radius;x<width-radius;x+=6){
@@ -445,7 +450,7 @@ const hoverLinks=document.createElementNS('http://www.w3.org/2000/svg','svg');
 hoverLinks.id='country-hover-links';hoverLinks.setAttribute('viewBox','0 0 1500 620');hoverLinks.setAttribute('aria-hidden','true');map.append(hoverLinks);
 function drawCountryLinks(marker){
  hoverLinks.replaceChildren();
- const location=places.find(p=>p.name===marker.dataset.name);const targets=(location?.countries||[]).map(name=>catalog.countries.find(c=>c.name===name)).filter(Boolean).map(c=>[c.lon,c.lat]);
+ const location=placesByName.get(marker.dataset.name);const targets=(location?.countries||[]).map(name=>catalog.countries.find(c=>c.name===name)).filter(Boolean).map(c=>[c.lon,c.lat]);
  for(const [lon,lat] of targets){
   const line=document.createElementNS('http://www.w3.org/2000/svg','line');
   line.setAttribute('x1',parseFloat(marker.style.left)*15);line.setAttribute('y1',parseFloat(marker.style.top)*6.2);
@@ -464,7 +469,7 @@ document.querySelector('#project-search').addEventListener('input',()=>hoverLink
 function pulseCountries(marker){
  const paths=[...document.querySelectorAll('#country-outlines path')];paths.forEach(path=>path.classList.remove('country-chosen'));
  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
- const location=places.find(p=>p.name===marker.dataset.name);if(!location)return;
+ const location=placesByName.get(marker.dataset.name);if(!location)return;
  void outlines.getBoundingClientRect();
  paths.filter(path=>location.countries.includes(path.dataset.country)).forEach(path=>path.classList.add('country-chosen'));
 }
@@ -472,7 +477,7 @@ for(const marker of document.querySelectorAll('.marker'))for(const event of ['mo
 outlines.addEventListener('animationend',event=>event.target.classList.remove('country-chosen'));
 // v2.2.0: hover/focus highlight survives the introductory pulse.
 function refreshHoverCountries(){
- const names=new Set([...document.querySelectorAll('.marker')].filter(marker=>marker.matches(':hover,:focus-visible')).flatMap(marker=>places.find(p=>p.name===marker.dataset.name)?.countries||[]));
+ const names=new Set([...document.querySelectorAll('.marker')].filter(marker=>marker.matches(':hover,:focus-visible')).flatMap(marker=>placesByName.get(marker.dataset.name)?.countries||[]));
  outlines.querySelectorAll('path').forEach(path=>path.classList.toggle('country-hovered',names.has(path.dataset.country)));
 }
 for(const marker of document.querySelectorAll('.marker'))for(const event of ['mouseenter','mouseleave','focus','blur'])marker.addEventListener(event,refreshHoverCountries);
@@ -495,7 +500,7 @@ function openSharedProject(){
  markerProjectIds=null;chosenMarkerName=null;sharedProjectId=null;sharedNotice.hidden=!id;
  if(!id){syncSearchMap();return;}
  document.querySelector('#project-search').value='';
- const project=catalog.programs.find(p=>p.id===id);
+ const project=catalog.programsById.get(id);
  if(!project){syncSearchMap();sharedMessage.textContent='This shared project is no longer available. Showing all projects.';return;}
  sharedProjectId=id;document.querySelector('#project-search').value=project.name;sharedMessage.textContent='Shared project: '+project.name;
  syncSearchMap();
