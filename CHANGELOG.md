@@ -1,3 +1,6 @@
+## 4.9.6
+- Load saved admin password settings in local previews. Distinguish missing server configuration from an incorrect password without consuming login attempts.
+
 ## 4.9.5
 
 - Remove card flips, expansion buttons and fixed face heights. Show project identity, outcomes and contacts together in compact responsive columns, stacked on phones.

@@ -64,6 +64,8 @@ export default {async fetch(request,env){
   if(path.startsWith('/api/')){
    if(!['GET','HEAD'].includes(request.method)&&request.headers.get('Origin')!==url.origin)return json({error:'Invalid request origin'},403);
    if(path==='/api/login'&&request.method==='POST'){
+    // A missing deployment setting is not a bad password and must not consume attempts.
+    if(!env.ADMIN_PASSWORD_HASH)return json({error:'Admin sign-in is not configured on this server. Please contact the site administrator.'},503);
     const db=database(env),now=Date.now(),key=await hash(request.headers.get('CF-Connecting-IP')||'local');
     await db.prepare('INSERT INTO attempts (key,count,until) VALUES (?,1,?) ON CONFLICT(key) DO UPDATE SET count = CASE WHEN until < ? THEN 1 ELSE count+1 END, until = CASE WHEN until < ? THEN excluded.until ELSE until END').bind(key,now+900000,now,now).run();
     const attempts=await db.prepare('SELECT count FROM attempts WHERE key = ?').bind(key).first();if(attempts.count>10)return json({error:'Too many attempts. Please try again in 15 minutes.'},429);

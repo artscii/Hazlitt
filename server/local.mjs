@@ -1,4 +1,7 @@
 import http from 'node:http';
+import {loadEnvFile} from 'node:process';
+// v4.9.6: local previews use the saved password hash, just like Docker.
+try{loadEnvFile(new URL('../.env',import.meta.url));}catch(error){if(error.code!=='ENOENT')throw error;}
 import fs from 'node:fs';
 import {DatabaseSync} from 'node:sqlite';
 import worker from '../dist/server/index.js';

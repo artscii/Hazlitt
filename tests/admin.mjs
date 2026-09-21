@@ -3,6 +3,9 @@ const sqlite=new DatabaseSync(':memory:');for(const name of fs.readdirSync('driz
 function statement(sql,args=[]){return{bind(...next){return statement(sql,next)},async all(){return{results:sqlite.prepare(sql).all(...args)}},async first(){return sqlite.prepare(sql).get(...args)||null},async run(){const r=sqlite.prepare(sql).run(...args);return{meta:{changes:Number(r.changes)}}}}}
 const env={DB:{prepare:statement,async batch(statements){sqlite.exec('BEGIN');try{const out=[];for(const s of statements)out.push(await s.run());sqlite.exec('COMMIT');return out;}catch(e){sqlite.exec('ROLLBACK');throw e;}}},ADMIN_PASSWORD_HASH:fs.readFileSync('.env','utf8').trim().split('=')[1]};let cookie='';
 async function call(path,method='GET',body,origin='https://atlas.test'){const r=await worker.fetch(new Request('https://atlas.test'+path,{method,headers:{Origin:origin,'Content-Type':'application/json',Cookie:cookie,'CF-Connecting-IP':'203.0.113.8'},body:body===undefined?undefined:JSON.stringify(body)}),env);const data=await r.json();if(r.headers.get('set-cookie'))cookie=r.headers.get('set-cookie').split(';')[0];return{status:r.status,data};}
+const configuredHash=env.ADMIN_PASSWORD_HASH;delete env.ADMIN_PASSWORD_HASH;
+assert.equal((await call('/api/login','POST',{password:'Bombo'})).status,503);
+env.ADMIN_PASSWORD_HASH=configuredHash;
 assert.equal((await call('/api/records','POST',{})).status,401);assert.equal((await call('/api/audit')).status,401);assert.equal((await call('/api/records/bombo/history')).status,401);assert.equal((await call('/api/login','POST',{password:'wrong'})).status,401);assert.equal((await call('/api/login','POST',{password:'Bombo'})).status,200);
 // Configuration is public to read, Admin-only to change, validated, and persistent.
 assert.deepEqual((await call('/api/config')).data,{editFlipEnabled:true,editFlipDuration:400,palette:'coastal'});
