@@ -5,7 +5,7 @@ const env={DB:{prepare:statement,async batch(statements){sqlite.exec('BEGIN');tr
 async function call(path,method='GET',body,origin='https://atlas.test'){const r=await worker.fetch(new Request('https://atlas.test'+path,{method,headers:{Origin:origin,'Content-Type':'application/json',Cookie:cookie,'CF-Connecting-IP':'203.0.113.8'},body:body===undefined?undefined:JSON.stringify(body)}),env);const data=await r.json();if(r.headers.get('set-cookie'))cookie=r.headers.get('set-cookie').split(';')[0];return{status:r.status,data};}
 assert.equal((await call('/api/records','POST',{})).status,401);assert.equal((await call('/api/audit')).status,401);assert.equal((await call('/api/records/bombo/history')).status,401);assert.equal((await call('/api/login','POST',{password:'wrong'})).status,401);assert.equal((await call('/api/login','POST',{password:'Bombo'})).status,200);
 // Configuration is public to read, Admin-only to change, validated, and persistent.
-assert.deepEqual((await call('/api/config')).data,{editFlipEnabled:true,editFlipDuration:720,palette:'coastal'});
+assert.deepEqual((await call('/api/config')).data,{editFlipEnabled:true,editFlipDuration:400,palette:'coastal'});
 assert.equal((await call('/api/config','PUT',{editFlipEnabled:true,editFlipDuration:50})).status,400);
 assert.equal((await call('/api/config','PUT',{editFlipEnabled:true,editFlipDuration:800},'https://evil.test')).status,403);
 assert.equal((await call('/api/config','PUT',{editFlipEnabled:false,editFlipDuration:1000})).status,200);
@@ -43,5 +43,5 @@ assert.equal((await call('/api/catalog')).data.programs.find(p=>p.id===id).editN
 noteHistory=(await call('/api/records/'+id+'/history')).data.entries;
 assert.equal(noteHistory.at(-1).before.editNotes,'Revised observation');assert.equal(noteHistory.at(-1).after.editNotes,'First observation');
 assert.equal((await call('/api/logout','POST',{})).status,200);assert.equal((await call('/api/audit')).status,401);
-assert.equal((await call('/api/config','PUT',{editFlipEnabled:true,editFlipDuration:720})).status,401);
+assert.equal((await call('/api/config','PUT',{editFlipEnabled:true,editFlipDuration:400})).status,401);
 console.log('PASS: configuration persistence, validation and authorization; authentication, protected audit access, CRUD, duplicate names, CSRF, URL validation, stale revisions, edit IPs, rollback, deletion restoration and logout.');

@@ -1,3 +1,9 @@
+## 4.4.0
+
+- Add compact expandable phone cards and a state-preserving Map/List switch.
+- Add persistent project Save/Cancel controls, draft status and Admin section navigation.
+- Remove nested evidence scrolling on phones and use a 0.4-second default page flip while preserving saved preferences.
+
 ## 4.3.0
 
 - Add five labelled site colour palettes with local preview, restore-saved control and authenticated persistent configuration.

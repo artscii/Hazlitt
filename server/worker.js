@@ -46,7 +46,7 @@ function validate(input){
 function auditStatement(env,request,action,record,before,deleted=false){return database(env).prepare('INSERT INTO audit_log (id,at,action,record_id,name,ip,before,after,revision) SELECT ?,?,?,?,?,?,?,?,(SELECT revision FROM records WHERE id=?) WHERE changes() > 0').bind(crypto.randomUUID(),Date.now(),action,record.id,record.name,request.headers.get('CF-Connecting-IP')||'Unavailable',before?JSON.stringify(before):null,action==='delete'||deleted?null:JSON.stringify(record),record.id);}
 // v3.8.0: shared presentation settings; writes require the existing Admin session.
 const paletteIds=['coastal','ocean','forest','plum','slate'];
-const defaultConfig={editFlipEnabled:true,editFlipDuration:720,palette:'coastal'};
+const defaultConfig={editFlipEnabled:true,editFlipDuration:400,palette:'coastal'};
 async function siteConfig(env){const row=await database(env).prepare('SELECT payload FROM site_settings WHERE key=?').bind('presentation').first();return row?{...defaultConfig,...JSON.parse(row.payload)}:{...defaultConfig};}
 export default {async fetch(request,env){
  const url=new URL(request.url),path=url.pathname;

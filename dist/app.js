@@ -6,6 +6,14 @@ if(!response.ok)throw new Error('Project records could not be loaded. Please ref
 const catalog=await response.json();window.atlasCatalog=catalog;
 const escapeHTML=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const programs=catalog.programs.map(p=>Object.fromEntries(Object.entries(p).map(([key,value])=>[key,typeof value==='string'?escapeHTML(value):value])));
+// v4.4.0: mobile view changes preserve the existing search, marker and project state.
+const mobileViews=document.createElement('nav');mobileViews.className='mobile-view-switch';mobileViews.setAttribute('aria-label','Atlas view');mobileViews.innerHTML='<button type="button" data-view="map" aria-pressed="true">Map</button><button type="button" data-view="list" aria-pressed="false">Project list</button>';
+document.querySelector('#map-overview').before(mobileViews);
+document.body.dataset.mobileView='map';
+function setMobileView(view,scroll=false){document.body.dataset.mobileView=view;mobileViews.querySelectorAll('button').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.view===view)));if(scroll&&matchMedia('(max-width:740px)').matches)mobileViews.scrollIntoView({block:'start',behavior:'instant'});requestAnimationFrame(()=>window.dispatchEvent(new Event('atlas-view-change')));}
+mobileViews.onclick=event=>{const button=event.target.closest('[data-view]');if(button)setMobileView(button.dataset.view,true);};
+function expandProject(card){if(!card)return;card.classList.add('project-expanded');const button=card.querySelector('.project-expand');if(button){button.setAttribute('aria-expanded','true');button.textContent='Collapse details';}updateEvidencePanels();}
+document.addEventListener('click',event=>{const button=event.target.closest('.project-expand');if(!button)return;const card=button.closest('.program'),expanded=card.classList.toggle('project-expanded');button.setAttribute('aria-expanded',String(expanded));button.textContent=expanded?'Collapse details':'Expand details';updateEvidencePanels();});
 let sharedProjectId=null;
 const projectURL=id=>{const url=new URL(location.href);url.search='';url.searchParams.set('project',id);url.hash=id;return url.href;};
 // v2.3.0: derive source coverage from the live catalog; never imply a fresh database search.
@@ -52,7 +60,7 @@ const links=p=>`<a href="${p.source}" target="_blank" rel="noopener">${p.sourceL
 const recordNumbers=new Map(programs.map((p,index)=>[p.id,index+1]));
 // v3.9.2: order every selected/search subset numerically, independent of previous selections.
 const orderProjectIds=ids=>[...ids].sort((a,b)=>recordNumbers.get(a)-recordNumbers.get(b));
-const renderProgram=p=>`<article class="program" id="${p.id}"><a class="edit-project" href="/admin?project=${encodeURIComponent(p.id)}" aria-label="Edit project: ${p.name}" title="Edit project"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5 4 4M4 20l4-1L20 7a2.8 2.8 0 0 0-4-4L4 15Z"/></svg></a><div><a class="back-to-map" href="#map-overview"><svg class="map-return-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2Z"/><path d="M9 3v16M15 5v16"/></svg>Back to map</a><span class="record-number" aria-label="Project number ${recordNumbers.get(p.id)}">Project ${String(recordNumbers.get(p.id)).padStart(2,'0')}</span>${badge(p)}<h3>${p.name}</h3><p class="geo">${p.geo}</p><p class="geo">${p.date}</p><a class="share-project" href="${escapeHTML(projectURL(p.id))}" aria-label="Share project: ${p.name}">Share project link</a><span class="share-feedback" role="status"></span></div><div><p class="label">REPORTED OUTCOMES</p><p>${p.outcome}</p>${links(p)}</div><div><p class="label">SPONSORS & PARTNERS</p><p>${p.partners}</p>${p.tel?`<a class="phone" href="tel:${p.tel}">${p.phone}</a>`:p.email?`<a class="phone" href="mailto:${p.email}">${p.email}</a>`:''}<p class="contact-note">${p.contact}</p>${p.contactSource?`<a href="${p.contactSource}" target="_blank" rel="noopener">Contact source ↗</a>`:''}</div></article>`;
+const renderProgram=p=>`<article class="program" id="${p.id}"><a class="edit-project" href="/admin?project=${encodeURIComponent(p.id)}" aria-label="Edit project: ${p.name}" title="Edit project"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5 4 4M4 20l4-1L20 7a2.8 2.8 0 0 0-4-4L4 15Z"/></svg></a><div><a class="back-to-map" href="#map-overview"><svg class="map-return-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2Z"/><path d="M9 3v16M15 5v16"/></svg>Back to map</a><span class="record-number" aria-label="Project number ${recordNumbers.get(p.id)}">Project ${String(recordNumbers.get(p.id)).padStart(2,'0')}</span>${badge(p)}<h3>${p.name}</h3><p class="geo">${p.geo}</p><p class="geo">${p.date}</p><a class="share-project" href="${escapeHTML(projectURL(p.id))}" aria-label="Share project: ${p.name}">Share project link</a><span class="share-feedback" role="status"></span><p class="mobile-project-summary">${p.short}</p><button type="button" class="project-expand" aria-expanded="false" aria-controls="${p.id}-outcomes ${p.id}-contacts">Expand details</button></div><div class="program-extra" id="${p.id}-outcomes"><p class="label">REPORTED OUTCOMES</p><p>${p.outcome}</p>${links(p)}</div><div class="program-extra" id="${p.id}-contacts"><p class="label">SPONSORS & PARTNERS</p><p>${p.partners}</p>${p.tel?`<a class="phone" href="tel:${p.tel}">${p.phone}</a>`:p.email?`<a class="phone" href="mailto:${p.email}">${p.email}</a>`:''}<p class="contact-note">${p.contact}</p>${p.contactSource?`<a href="${p.contactSource}" target="_blank" rel="noopener">Contact source ↗</a>`:''}</div></article>`;
 document.querySelector('#programs').innerHTML=programs.map(renderProgram).join('');
 
 // v1.3.11: filter visible profiles without rebuilding cards or moving keyboard focus.
@@ -162,7 +170,7 @@ document.addEventListener('click',e=>{
   const location=places.find(p=>p.name===tipButton?.dataset.name)||places.find(p=>p.name===activeLocationName&&p.ids.includes(id));
   if(location)showDetail({...location,ids:[id]});
  }
- const profile=document.getElementById(id);if(!profile)return;
+ const profile=document.getElementById(id);if(!profile)return;setMobileView(id==='map-overview'?'map':'list');if(id!=='map-overview')expandProject(profile);
  if(profile.hidden&&programs.some(p=>p.id===id)){document.querySelector('#project-search').value='';filterProfiles();}
  e.preventDefault();closeTip();
  // Wait for the docked preview to collapse before measuring the destination.
@@ -219,12 +227,13 @@ function updateMapScrollCue(){
 }
 // v3.4.0: explicit map panning and direct access to the filtered results.
 for(const [id,direction] of [['map-pan-left',-1],['map-pan-right',1]])document.getElementById(id).onclick=()=>mapScroller.scrollBy({left:direction*mapScroller.clientWidth*.7,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
-function jumpToResults(event){const card=[...document.querySelectorAll('article.program')].find(card=>!card.hidden);if(!card)return;event.preventDefault();card.setAttribute('tabindex','-1');card.focus({preventScroll:true});card.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});}
+function jumpToResults(event){setMobileView('list');const card=[...document.querySelectorAll('article.program')].find(card=>!card.hidden);if(!card)return;event.preventDefault();card.setAttribute('tabindex','-1');card.focus({preventScroll:true});card.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});}
 document.querySelector('#view-search-results').addEventListener('click',jumpToResults);
 document.querySelector('#project-search').addEventListener('keydown',event=>{if(event.key==='Enter')jumpToResults(event);});
 mapScroller.addEventListener('scroll',()=>{closeTip();updateMapScrollCue()},{passive:true});
 window.addEventListener('resize',()=>{closeTip();updateMapScrollCue()});
 new ResizeObserver(updateMapScrollCue).observe(mapScroller);
+window.addEventListener('atlas-view-change',()=>{updateMapScrollCue();updateEvidencePanels();});
 // Keep the selected coastal location visible on narrow screens without scrolling the page.
 mapScroller.scrollLeft=Math.max(0,(defaultPlace?projectX(defaultPlace.lon)/100:0)*mapScroller.scrollWidth-mapScroller.clientWidth/2);
 updateMapScrollCue();
@@ -389,7 +398,7 @@ function openSharedProject(){
  if(!project){syncSearchMap();sharedMessage.textContent='This shared project is no longer available. Showing all projects.';return;}
  sharedProjectId=id;document.querySelector('#project-search').value=project.name;sharedMessage.textContent='Shared project: '+project.name;
  syncSearchMap();
- requestAnimationFrame(()=>requestAnimationFrame(()=>{const card=document.getElementById(id);card?.setAttribute('tabindex','-1');card?.focus({preventScroll:true});card?.scrollIntoView({block:'start',behavior:'instant'});}));
+ requestAnimationFrame(()=>requestAnimationFrame(()=>{setMobileView('list');const card=document.getElementById(id);expandProject(card);card?.setAttribute('tabindex','-1');card?.focus({preventScroll:true});card?.scrollIntoView({block:'start',behavior:'instant'});}));
 }
 window.addEventListener('popstate',openSharedProject);
 document.addEventListener('click',async event=>{
@@ -412,7 +421,7 @@ window.dispatchEvent(new Event('atlas-ready'));
  window.addEventListener('pageshow',event=>{if(!event.persisted)return;pending=false;document.body.getAnimations().forEach(animation=>animation.cancel());document.documentElement.classList.remove('screen-flipping');document.body.style.transformOrigin='';});
  const error=dialog.querySelector('.edit-access-error'),password=dialog.querySelector('input'),submit=dialog.querySelector('[type=submit]');
  async function openEditor(url){
-  const config=window.atlasCatalog?.config||{editFlipEnabled:true,editFlipDuration:720};
+  const config=window.atlasCatalog?.config||{editFlipEnabled:true,editFlipDuration:400};
   if(config.editFlipEnabled&&!matchMedia('(prefers-reduced-motion: reduce)').matches){
    try{sessionStorage.setItem('atlas-editor-flip',JSON.stringify({duration:config.editFlipDuration}));document.documentElement.classList.add('screen-flipping');document.body.style.transformOrigin='50% '+(scrollY+innerHeight/2)+'px';await document.body.animate([{transform:'perspective(1800px) rotateY(0deg)',filter:'brightness(1)'},{transform:'perspective(1800px) rotateY(-90deg)',filter:'brightness(.72)'}],{duration:config.editFlipDuration/2,easing:'cubic-bezier(.55,0,1,.45)',fill:'forwards'}).finished;}catch{}
   }
