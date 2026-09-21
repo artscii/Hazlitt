@@ -14,6 +14,8 @@ const input=d.querySelector('#project-search'),cards=new Map([...d.querySelector
 const settle=()=>new Promise(resolve=>setTimeout(resolve,45));
 async function search(query){input.value=query;input.dispatchEvent(new w.Event('input',{bubbles:true}));await settle();}
 assert.equal(input.value,'Africa');assert.equal(d.querySelector('#detail h2').textContent,'Africa');assert(d.querySelector('.continent-summary'));
+assert(d.querySelector('#selected-projects-section .references-jump'));
+assert(!d.querySelector('.search-tips').open);
 assert.equal(input.placeholder,`All ${catalog.programs.length} projects`);
 await search('“Africa”');assert.equal(d.querySelector('#detail h2').textContent,'Africa');
 await search('cytology');assert(d.querySelectorAll('article.program:not([hidden])').length>0);
@@ -25,7 +27,7 @@ if(cytologyMatches.length>5){
  if(africaIds.length)assert.equal(d.querySelector('[data-continent="Africa"] span').textContent,`${africaIds.length} ${africaIds.length===1?'project':'projects'}`);
 }
 await search('bombo');assert(d.querySelector('#detail .detail-block'));assert(!d.querySelector('.continent-summary'));
-assert.strictEqual(d.querySelector('.continent-controls').nextElementSibling,d.querySelector('.tooltip-dock'),'Project previews follow continent filters');
+assert.strictEqual(d.querySelector('.selection-context').nextElementSibling,d.querySelector('.tooltip-dock'),'Project previews follow continent filters');
 const regionButton=name=>d.querySelector(`[data-map-continent="${name}"]`);
 assert.equal(mapScrolls.length,0,'Initial load and searches do not pan the map');
 const scroller=d.querySelector('.map-scroll');
@@ -53,6 +55,7 @@ for(const marker of [...markers,...markers]){
  assert.equal(updates.filter(r=>r.target.id==='search-status').length,1,'One project-list filtering pass per selection');
  assert(updates.filter(r=>r.target.id==='detail').length<=1,'No intermediate location-panel renders');
  assert.equal(d.querySelectorAll('.marker.selected').length,1,marker.dataset.name+' must be sole selected marker');
+ assert(d.querySelector('.selection-context button').textContent.startsWith('Back to '));
  assert(marker.classList.contains('selected'));assert(d.querySelector('#markers').classList.contains('has-selection'));
  assert(markers.every(m=>!m.hidden));
  assert(!marker.classList.contains('continent-hidden'),'Selected marker stays visible');

@@ -1,3 +1,10 @@
+## 4.9.0
+
+- Keep References navigation visible for selected results; shorten search guidance with expandable tips.
+- Compact mobile map and continent grid, add location context and Back to continent.
+- Simplify scoped summaries and project cards with expandable full evidence.
+- Add remaining-results scroll cues, touch-friendly preview dismissal and worldwide introductory wording.
+
 ## 4.8.18
 
 - Consolidate marker selection into one project-list and location-panel update, use indexed project/location lookups, and avoid moving the preview panel between containers.
