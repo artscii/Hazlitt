@@ -86,6 +86,25 @@ function highlightProfileMatches(query){
   });
  });
 }
+// v4.2.0: size each scroll panel to its first three visible projects; stripe visible rows.
+let evidenceLayoutFrame=0;
+function updateEvidencePanels(){
+ cancelAnimationFrame(evidenceLayoutFrame);
+ evidenceLayoutFrame=requestAnimationFrame(()=>{
+  for(const panel of document.querySelectorAll('.evidence-scroll')){
+   const rows=[...panel.querySelectorAll('article.program')].filter(row=>!row.hidden);
+   rows.forEach((row,index)=>row.classList.toggle('evidence-alternate',index%2===1));
+   const height=rows.slice(0,3).reduce((sum,row)=>sum+row.getBoundingClientRect().height,0);
+   panel.style.setProperty('--three-project-height',Math.ceil(height+2)+'px');
+   panel.tabIndex=rows.length>3?0:-1;
+  }
+ });
+}
+window.addEventListener('resize',updateEvidencePanels);
+document.fonts.ready.then(updateEvidencePanels);
+const evidenceObserver=new MutationObserver(updateEvidencePanels);
+for(const panel of document.querySelectorAll('.evidence-scroll'))evidenceObserver.observe(panel,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden']});
+updateEvidencePanels();
 function filterProfiles(){
  const input=document.querySelector('#project-search');
  const query=input.value.trim();

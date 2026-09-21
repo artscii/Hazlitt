@@ -1,3 +1,8 @@
+## 4.2.0
+
+- Show evidence lists in scrollable panels sized to three visible projects, with a phone-height cap and keyboard access.
+- Alternate subtle blue-grey row backgrounds while retaining selected-project highlights.
+
 ## 4.1.0
 
 - Add a Test import action that automatically downloads a diff report without changing projects; block applying test previews on the server.
