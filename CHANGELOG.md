@@ -1,3 +1,7 @@
+## 4.8.17
+
+- Place dynamic project previews below persistent continent filter buttons so preview updates do not shift the controls.
+
 ## 4.8.16
 
 - Remove the All button from continent navigation.

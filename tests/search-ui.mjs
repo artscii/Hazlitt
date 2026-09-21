@@ -25,6 +25,7 @@ if(cytologyMatches.length>5){
  if(africaIds.length)assert.equal(d.querySelector('[data-continent="Africa"] span').textContent,`${africaIds.length} ${africaIds.length===1?'project':'projects'}`);
 }
 await search('bombo');assert(d.querySelector('#detail .detail-block'));assert(!d.querySelector('.continent-summary'));
+assert.strictEqual(d.querySelector('.continent-controls').nextElementSibling,d.querySelector('.tooltip-dock'),'Project previews follow continent filters');
 const regionButton=name=>d.querySelector(`[data-map-continent="${name}"]`);
 assert.equal(mapScrolls.length,0,'Initial load and searches do not pan the map');
 const scroller=d.querySelector('.map-scroll');

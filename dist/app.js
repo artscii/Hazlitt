@@ -262,6 +262,8 @@ const availableContinents=[...new Set([...covered].map(name=>continentByCountry.
 continentControls.innerHTML=availableContinents.map(name=>`<button type="button" data-map-continent="${name}" aria-pressed="${name==='All'}">${name}</button>`).join('');
 // v4.8.10: keep continent filters directly below the visible map.
 document.querySelector('.map-shell').after(continentControls);
+// v4.8.17: previews update below the persistent continent controls.
+continentControls.after(tipDock);
 let visibleContinent='All';
 function revealContinent(name){
  if(name===visibleContinent)return;visibleContinent=name;
