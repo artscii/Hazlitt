@@ -1,3 +1,7 @@
+## 4.8.11
+
+- Replace the Share project link arrow with a monochrome paperclip matching the existing link icons.
+
 ## 4.8.10
 
 - Move centered continent filters directly below the map.
