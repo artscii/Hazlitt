@@ -45,7 +45,8 @@ function validate(input){
 }
 function auditStatement(env,request,action,record,before,deleted=false){return database(env).prepare('INSERT INTO audit_log (id,at,action,record_id,name,ip,before,after,revision) SELECT ?,?,?,?,?,?,?,?,(SELECT revision FROM records WHERE id=?) WHERE changes() > 0').bind(crypto.randomUUID(),Date.now(),action,record.id,record.name,request.headers.get('CF-Connecting-IP')||'Unavailable',before?JSON.stringify(before):null,action==='delete'||deleted?null:JSON.stringify(record),record.id);}
 // v3.8.0: shared presentation settings; writes require the existing Admin session.
-const defaultConfig={editFlipEnabled:true,editFlipDuration:720};
+const paletteIds=['coastal','ocean','forest','plum','slate'];
+const defaultConfig={editFlipEnabled:true,editFlipDuration:720,palette:'coastal'};
 async function siteConfig(env){const row=await database(env).prepare('SELECT payload FROM site_settings WHERE key=?').bind('presentation').first();return row?{...defaultConfig,...JSON.parse(row.payload)}:{...defaultConfig};}
 export default {async fetch(request,env){
  const url=new URL(request.url),path=url.pathname;
@@ -69,7 +70,9 @@ export default {async fetch(request,env){
    if(path==='/api/config'&&request.method==='PUT'){
     const input=await body(request);
     if(typeof input.editFlipEnabled!=='boolean'||!Number.isInteger(input.editFlipDuration)||input.editFlipDuration<300||input.editFlipDuration>1600)return json({error:'Choose a duration between 300 and 1600 milliseconds.'},400);
-    const config={editFlipEnabled:input.editFlipEnabled,editFlipDuration:input.editFlipDuration};
+    const palette=input.palette===undefined?(await siteConfig(env)).palette:input.palette;
+    if(!paletteIds.includes(palette))return json({error:'Choose one of the five colour palettes.'},400);
+    const config={editFlipEnabled:input.editFlipEnabled,editFlipDuration:input.editFlipDuration,palette};
     await database(env).prepare('INSERT INTO site_settings (key,payload) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET payload=excluded.payload').bind('presentation',JSON.stringify(config)).run();return json(config);
    }
 

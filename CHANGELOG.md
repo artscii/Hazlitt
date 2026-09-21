@@ -1,3 +1,8 @@
+## 4.3.0
+
+- Add five labelled site colour palettes with local preview, restore-saved control and authenticated persistent configuration.
+- Share semantic colour roles across Atlas and Admin; preserve warning/delete and version-diff semantics.
+
 ## 4.2.0
 
 - Show evidence lists in scrollable panels sized to three visible projects, with a phone-height cap and keyboard access.

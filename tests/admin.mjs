@@ -5,12 +5,17 @@ const env={DB:{prepare:statement,async batch(statements){sqlite.exec('BEGIN');tr
 async function call(path,method='GET',body,origin='https://atlas.test'){const r=await worker.fetch(new Request('https://atlas.test'+path,{method,headers:{Origin:origin,'Content-Type':'application/json',Cookie:cookie,'CF-Connecting-IP':'203.0.113.8'},body:body===undefined?undefined:JSON.stringify(body)}),env);const data=await r.json();if(r.headers.get('set-cookie'))cookie=r.headers.get('set-cookie').split(';')[0];return{status:r.status,data};}
 assert.equal((await call('/api/records','POST',{})).status,401);assert.equal((await call('/api/audit')).status,401);assert.equal((await call('/api/records/bombo/history')).status,401);assert.equal((await call('/api/login','POST',{password:'wrong'})).status,401);assert.equal((await call('/api/login','POST',{password:'Bombo'})).status,200);
 // Configuration is public to read, Admin-only to change, validated, and persistent.
-assert.deepEqual((await call('/api/config')).data,{editFlipEnabled:true,editFlipDuration:720});
+assert.deepEqual((await call('/api/config')).data,{editFlipEnabled:true,editFlipDuration:720,palette:'coastal'});
 assert.equal((await call('/api/config','PUT',{editFlipEnabled:true,editFlipDuration:50})).status,400);
 assert.equal((await call('/api/config','PUT',{editFlipEnabled:true,editFlipDuration:800},'https://evil.test')).status,403);
 assert.equal((await call('/api/config','PUT',{editFlipEnabled:false,editFlipDuration:1000})).status,200);
-assert.deepEqual((await call('/api/config')).data,{editFlipEnabled:false,editFlipDuration:1000});
+assert.deepEqual((await call('/api/config')).data,{editFlipEnabled:false,editFlipDuration:1000,palette:'coastal'});
 assert.equal((await call('/api/catalog')).data.config.editFlipEnabled,false);
+for(const palette of ['coastal','ocean','forest','plum','slate']){assert.equal((await call('/api/config','PUT',{editFlipEnabled:false,editFlipDuration:1000,palette})).status,200);assert.equal((await call('/api/catalog')).data.config.palette,palette);}
+assert.equal((await call('/api/config','PUT',{editFlipEnabled:false,editFlipDuration:1000,palette:'untrusted'})).status,400);
+assert.equal((await call('/api/config')).data.palette,'slate');
+await call('/api/config','PUT',{editFlipEnabled:false,editFlipDuration:1000});assert.equal((await call('/api/config')).data.palette,'slate');
+
 let catalog=(await call('/api/catalog')).data;assert.equal(catalog.programs.length,11);const base=catalog.programs[0];
 let result=await call('/api/records','POST',{...base,name:base.name.toUpperCase()});assert.equal(result.status,400);
 result=await call('/api/records','POST',{...base,name:'Test project',kind:'pilot',countries:['Canada']});assert.equal(result.status,201);const id=result.data.id;
