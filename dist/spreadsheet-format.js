@@ -2,6 +2,7 @@
 globalThis.AtlasWorkbook=(()=>{
  const columns=[
   ['projectNumber','Project #',false,12],['id','Project ID',false,42],['revision','Version',false,12],
+  ['followUp','Follow-up',false,65],['followUpDate','Follow-up reference date (YYYY-MM-DD)',false,25],
   ['publicationYear','Publication year',false,18],['evidenceBasis','Evidence basis',false,35],['sampleDetails','Participants / slides / images',false,65],
   ['name','Project name',true,42],['status','Evidence status',true,32],['kind','Category',false,20],
   ['countries','Countries',true,30],['geo','Location description',true,44],['metric','Headline outcome',true,25],

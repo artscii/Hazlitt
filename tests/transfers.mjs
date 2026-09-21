@@ -136,3 +136,14 @@ const defaultComment=await preview([newRow('Default comment record')]);assert(de
 assert.equal((await call('/api/imports/preview','POST',{filename:'test.xlsx',comment:'x'.repeat(501),rows:[newRow('Invalid comment')]})).status,400);
 const oversizedNotes=await preview([newRow('Oversized notes',{editNotes:'x'.repeat(12000)})]);assert.equal(oversizedNotes.data.invalid,1);
 console.log('PASS: batch comments in preview, new-record notes, version one, diff spreadsheet, import/undo history, default text, limits and idempotence.');
+// v4.8.4: follow-up metadata survives imports, version history, Excel and rollback.
+const followRow=newRow('Dated follow-up test',{followUp:'Verify external validation.',followUpDate:'2026-09-21'});
+const fp=(await preview([followRow])).data;assert.equal(fp.invalid,0);
+assert.equal((await commit(fp.id,[0])).status,200);
+const fr=(await projects()).find(p=>p.name===followRow.name);assert.equal(fr.followUpDate,'2026-09-21');
+const fh=(await call('/api/records/'+fr.id+'/history')).data;assert.equal(fh.entries.at(-1).after.followUp,followRow.followUp);
+assert.equal((await preview([{...followRow,name:'Bad follow date',followUpDate:'2026-02-30'}])).data.invalid,1);
+assert.equal((await preview([{...followRow,name:'Missing follow date',followUpDate:''}])).data.invalid,1);
+assert.equal((await undo(fp.id)).status,200);assert(!(await projects()).some(p=>p.id===fr.id));
+assert(AtlasWorkbook.columns.some(f=>f[0]==='followUpDate'));
+console.log('PASS: dated follow-up validation, import, history and rollback.');

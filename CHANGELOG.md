@@ -1,3 +1,8 @@
+## 4.8.4
+
+- Add dated public follow-up notes to records, Admin editing, version history and spreadsheet import/export.
+- Prepare verified literature additions with explicit evidence limitations.
+
 ## 4.8.3
 
 - Derive continent search filters from project countries in public and Admin search, including new and imported records.
