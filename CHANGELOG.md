@@ -1,3 +1,6 @@
+## 4.9.8
+- Align project titles with evidence columns; place project numbers and live result counts in the lower-left footer and Back to map in the lower right.
+
 ## 4.9.7
 - Fix admin form initialization that prevented Edit atlas from responding. Persist the salted administrator password hash in the database, initialized once from the protected setting.
 
