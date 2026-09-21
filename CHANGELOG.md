@@ -1,3 +1,9 @@
+# 4.7.0 — Evidence basis and publication-year search
+
+- Add versioned publication year, evidence basis and participant/slide/image denominator fields to Admin and Excel transfers.
+- Search publication years and ranges consistently on the Atlas and Admin; incidental review dates do not qualify.
+- Show evidence basis and publication year in project profiles.
+
 ## 4.6.0 — English and original-language evidence
 
 - Optional per-record language toggle; preserves source titles and labels editorial paraphrases.

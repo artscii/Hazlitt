@@ -55,3 +55,14 @@ assert.equal((await call('/api/catalog')).data.programs.find(p=>p.id===id).origi
 assert.equal((await call('/api/logout','POST',{})).status,200);assert.equal((await call('/api/audit')).status,401);
 assert.equal((await call('/api/config','PUT',{editFlipEnabled:true,editFlipDuration:400})).status,401);
 console.log('PASS: configuration persistence, validation and authorization; authentication, protected audit access, CRUD, duplicate names, CSRF, URL validation, stale revisions, edit IPs, rollback, deletion restoration and logout.');
+
+// Publication year and evidence unit survive saves and history.
+assert.equal((await call('/api/login','POST',{password:'Bombo'})).status,200);
+record=(await call('/api/catalog')).data.programs.find(p=>p.id===id);
+assert.equal((await call('/api/records/'+id,'PUT',{...record,publicationYear:'2024',evidenceBasis:'Slide scans',sampleDetails:'500 slides; patient count not established'})).status,200);
+record=(await call('/api/catalog')).data.programs.find(p=>p.id===id);
+assert.equal(record.publicationYear,'2024');assert.equal(record.evidenceBasis,'Slide scans');
+assert.equal((await call('/api/records/'+id,'PUT',{...record,publicationYear:'2024x'})).status,400);
+assert.equal((await call('/api/records/'+id,'PUT',{...record,evidenceBasis:'Unsupported'})).status,400);
+const latest=(await call('/api/records/'+id+'/history')).data.entries.at(-1);
+assert.equal(latest.after.publicationYear,'2024');assert.equal(latest.after.sampleDetails,record.sampleDetails);

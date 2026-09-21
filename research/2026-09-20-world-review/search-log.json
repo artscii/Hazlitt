@@ -1,0 +1,23 @@
+[
+  {
+    "search": "focused_clinical",
+    "query": "TITLE_ABS:(cervical OR cervix) AND TITLE_ABS:(screening OR cytology OR precancer OR intraepithelial OR colposcopy) AND TITLE_ABS:(\"artificial intelligence\" OR \"deep learning\" OR \"expert system\" OR \"neural network\" OR \"machine learning\" OR \"automation-assisted\" OR Papnet OR FocalPoint OR AutoPap) AND TITLE_ABS:(clinical OR patient OR women OR prospective OR retrospective OR validation OR trial) AND FIRST_PDATE:[1900-01-01 TO 2026-09-20]",
+    "hits": 690,
+    "retrieved": 690,
+    "pages": 1
+  },
+  {
+    "search": "focused_legacy",
+    "query": "TITLE_ABS:(cervical OR cervix OR cytology) AND TITLE_ABS:(Papnet OR AutoPap OR FocalPoint OR MAVARIC) AND FIRST_PDATE:[1900-01-01 TO 2026-09-20]",
+    "hits": 154,
+    "retrieved": 154,
+    "pages": 1
+  },
+  {
+    "search": "focused_systems",
+    "query": "TITLE_ABS:(cervical OR cervix OR cytology) AND TITLE_ABS:(BestCyte OR SureView OR Smart-CCS OR CerviCARE OR TruScreen OR CytoProcessor) AND FIRST_PDATE:[1900-01-01 TO 2026-09-20]",
+    "hits": 38,
+    "retrieved": 38,
+    "pages": 1
+  }
+]

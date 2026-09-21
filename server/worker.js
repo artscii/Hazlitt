@@ -32,10 +32,13 @@ async function records(env){
 }
 async function session(request,env){const token=request.headers.get('Cookie')?.match(/(?:^|;\s*)atlas_session=([a-f0-9]{64})(?:;|$)/)?.[1];if(!token)return null;const key=await hash(token);const row=await database(env).prepare('SELECT token FROM sessions WHERE token = ? AND expires > ?').bind(key,Date.now()).first();return row?key:null;}
 async function body(request,limit=65536){if(Number(request.headers.get('content-length'))>limit)throw new Error('Request too large');const text=await request.text();if(text.length>limit)throw new Error('Request too large');return JSON.parse(text);}
-const fields=['name','status','kind','geo','metric','metricLabel','short','outcome','partners','phone','tel','email','contact','source','sourceLabel','source2','source2Label','contactSource','date','editNotes','originalLanguage','originalTitle','originalSummary','originalOutcome','originalSource'];
+// v4.7.0: explicit publication year and evaluation unit, preserved in record snapshots.
+const fields=['publicationYear','evidenceBasis','sampleDetails','name','status','kind','geo','metric','metricLabel','short','outcome','partners','phone','tel','email','contact','source','sourceLabel','source2','source2Label','contactSource','date','editNotes','originalLanguage','originalTitle','originalSummary','originalOutcome','originalSource'];
 function validate(input){
  const out={};for(const field of fields){const value=input[field]??'';if(typeof value!=='string'||value.length>12000)throw new Error('Invalid '+field);out[field]=value.trim();}
  for(const required of ['name','status','geo','metric','metricLabel','short','outcome','partners','source','date'])if(!out[required])throw new Error('Please complete '+required);
+ if(out.publicationYear&&(!/^(19|20)\d{2}$/.test(out.publicationYear)||Number(out.publicationYear)>new Date().getUTCFullYear()+1))throw new Error('Enter a valid four-digit publication year, or leave it blank if unverified');
+ if(!['','Patient examinations','Slide scans','Cell or image datasets','Patient examinations and slide scans','Patient records / risk modelling','Implementation / service report','Protocol / planned study'].includes(out.evidenceBasis))throw new Error('Choose a valid evidence basis');
  if(!['','deployed','pilot','historical','related'].includes(out.kind))throw new Error('Choose an evidence category');
  for(const key of ['source','source2','contactSource','originalSource'])if(out[key]){const url=new URL(out[key]);if(!['http:','https:'].includes(url.protocol))throw new Error('Source links must use https or http');}
  if(out.email&&!/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(out.email))throw new Error('Invalid email');

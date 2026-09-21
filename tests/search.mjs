@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import '../dist/search.js';
+const p={name:'Kenya slide scans',publicationYear:'2024',date:'Reviewed 2026',source:'https://example.org/2023'};
+assert(AtlasSearch.matches(p,'2024'));
+assert(AtlasSearch.matches(p,'Kenya year:2024'));
+assert(AtlasSearch.matches(p,'2020–2025'));
+assert(!AtlasSearch.matches(p,'2026'));
+assert(!AtlasSearch.matches(p,'2023'));
+assert(!AtlasSearch.matches({...p,publicationYear:''},'2024'));
+assert(!AtlasSearch.matches(p,'2025-2020'));
+assert(AtlasSearch.matches(p,''));
+console.log('Publication-year search passed.');

@@ -105,3 +105,8 @@ assert.equal(badTest.invalid,1);assert.equal((await commit(badTest.id,[0])).stat
 assert.equal((await call('/api/exports','POST',{kind:'diff',previewId:badTest.id,selectedRows:[]})).status,200);
 assert.equal((await call('/api/logout','POST',{})).status,200);assert.equal((await undo(id)).status,401);
 console.log('PASS: Excel round trip, required headers/formulas, duplicate reconciliation, explicit update selection, atomic import/undo, stale conflicts, protected later edits, Edit notes restoration, global history, idempotence and authorization.');
+
+const metadataBook=AtlasWorkbook.makeWorkbook(ExcelJS,[{...base,publicationYear:'2025',evidenceBasis:'Slide scans',sampleDetails:'500 slides; 400 patients'}],catalog.countries);
+const metadataCopy=new ExcelJS.Workbook();await metadataCopy.xlsx.load(await metadataBook.xlsx.writeBuffer());
+const metadataRows=AtlasWorkbook.readWorkbook(metadataCopy,catalog.countries);
+assert.equal(metadataRows[0].publicationYear,'2025');assert.equal(metadataRows[0].evidenceBasis,'Slide scans');assert.equal(metadataRows[0].sampleDetails,'500 slides; 400 patients');
