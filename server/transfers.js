@@ -38,7 +38,7 @@ async function previewImport(env,input){
   }catch(error){row.status='invalid';row.message=error.message;invalid++;}
   rows.push(row);
  }
- const summary={total:rows.length,added,updates,skipped,invalid};
+ const summary={total:rows.length,added,updates,skipped,invalid,testOnly:input.testOnly===true};
  const payload=JSON.stringify({records:candidates,rows,...summary});
  if(new TextEncoder().encode(payload).length>1500000)throw new Error('This preview contains too much text for one batch. Split the spreadsheet into smaller imports.');
  const id=crypto.randomUUID();
@@ -50,6 +50,7 @@ async function applyImport(env,request,id){
  let payload=JSON.parse(operation.payload);
  if(operation.status==='applied')return json({ok:true,id,added:payload.added,updated:payload.updated,skipped:payload.skipped});
  if(operation.status!=='preview'||Date.now()-operation.at>1800000)return json({error:'This preview has expired or was already undone. Preview the file again.'},409);
+ if(payload.testOnly)return json({error:'Test imports cannot be applied. Run Preview import to review and confirm a real import.'},409);
  if(payload.invalid)return json({error:'Correct invalid rows and preview again.'},400);
  const input=await body(request),selected=new Set(Array.isArray(input.selectedRows)?input.selectedRows:[]);
  if(!Array.isArray(input.selectedRows)||!selected.size||input.selectedRows.some(key=>!Number.isInteger(key)||!payload.records.some(item=>item.key===key)))return json({error:'Choose the rows to import from the preview.'},400);
@@ -105,7 +106,7 @@ async function transferRoute(request,env,path,url){
    const data=JSON.parse(source.payload),selected=new Set(Array.isArray(input.selectedRows)?input.selectedRows:[]);
    if([...selected].some(key=>!data.records.some(item=>item.key===key)))return json({error:'Invalid preview selection.'},400);
    preview={...data,filename:source.filename,at:Date.now(),selectedRows:[...selected]};delete preview.records;
-   details={kind:'diff',count:data.total,added:data.records.filter(item=>selected.has(item.key)&&!item.before).length,updated:data.records.filter(item=>selected.has(item.key)&&item.before).length,skipped:data.total-selected.size,invalid:data.invalid};
+   details={kind:'diff',testOnly:!!data.testOnly,count:data.total,added:data.records.filter(item=>selected.has(item.key)&&!item.before).length,updated:data.records.filter(item=>selected.has(item.key)&&item.before).length,skipped:data.total-selected.size,invalid:data.invalid};
   }
   await database(env).prepare("INSERT INTO file_operations (id,kind,filename,at,status,payload,ip) VALUES (?,'export',?,?,'export_ready',?,?)").bind(id,filename,Date.now(),JSON.stringify(details),transferIp(request)).run();
   return json({id,programs:preview?undefined:programs,preview,filename});
@@ -114,7 +115,7 @@ async function transferRoute(request,env,path,url){
  if(complete&&request.method==='POST'){
   const op=await transferRow(env,complete[1]);if(!op||op.kind!=='export')return json({error:'Export not found.'},404);
   if(op.status==='exported')return json({ok:true});
-  const details=JSON.parse(op.payload),count=details.count,at=Date.now(),summary=details.kind==='diff'?`Exported bulk import diff preview: ${count} rows; ${details.added} selected additions, ${details.updated} selected updates, ${details.skipped} skips, ${details.invalid} invalid. No project records changed.`:`Exported ${count} projects to Excel. No project records changed.`;
+  const details=JSON.parse(op.payload),count=details.count,at=Date.now(),summary=details.kind==='diff'?`${details.testOnly?'Test import report':'Exported bulk import diff preview'}: ${count} rows; ${details.added} selected additions, ${details.updated} selected updates, ${details.skipped} skips, ${details.invalid} invalid. No project records changed.`:`Exported ${count} projects to Excel. No project records changed.`;
   await database(env).batch([
    database(env).prepare("INSERT INTO global_history (at,action,operation_id,summary,details,ip) SELECT ?,'export',id,?,?,? FROM file_operations WHERE id=? AND status='export_ready'").bind(at,summary,JSON.stringify({filename:op.filename,...details}),transferIp(request),op.id),
    database(env).prepare("UPDATE file_operations SET status='exported',completed=? WHERE id=? AND status='export_ready'").bind(at,op.id)

@@ -89,5 +89,19 @@ assert.equal(diffRead.getWorksheet('Field differences').getCell('G2').fill.fgCol
 await call('/api/exports/'+diffPlan.id+'/complete','POST',{});
 assert.match((await call('/api/global-history')).data.entries[0].summary,/bulk import diff preview/);
 assert.equal(JSON.stringify(await projects()),beforeDiff);
+// Test runs can generate reports but cannot commit, even via a direct API request.
+const testBefore=JSON.stringify(await projects()),auditBefore=sqlite.prepare('SELECT count(*) n FROM audit_log').get().n;
+const testRun=(await call('/api/imports/preview','POST',{testOnly:true,filename:'Dry-run.xlsx',rows:[newRow('Dry-run only'),{...current,outcome:'Dry-run outcome'}]})).data;
+assert.equal(testRun.testOnly,true);assert.equal((await commit(testRun.id,[0,1])).status,409);
+const testExport=(await call('/api/exports','POST',{kind:'diff',previewId:testRun.id,selectedRows:[0,1],filename:'Test report.xlsx'})).data;
+assert.equal(testExport.preview.testOnly,true);
+const testBook=AtlasWorkbook.makeDiffWorkbook(ExcelJS,testExport.preview);
+assert.match(testBook.getWorksheet('Review summary').getCell('B2').value,/Test import/);
+await call('/api/exports/'+testExport.id+'/complete','POST',{});
+assert.match((await call('/api/global-history')).data.entries[0].summary,/Test import report/);
+assert.equal(JSON.stringify(await projects()),testBefore);assert.equal(sqlite.prepare('SELECT count(*) n FROM audit_log').get().n,auditBefore);
+const badTest=(await call('/api/imports/preview','POST',{testOnly:true,rows:[{row:0,name:'Workbook validation',error:'Missing required column: Reported outcomes'}]})).data;
+assert.equal(badTest.invalid,1);assert.equal((await commit(badTest.id,[0])).status,409);
+assert.equal((await call('/api/exports','POST',{kind:'diff',previewId:badTest.id,selectedRows:[]})).status,200);
 assert.equal((await call('/api/logout','POST',{})).status,200);assert.equal((await undo(id)).status,401);
 console.log('PASS: Excel round trip, required headers/formulas, duplicate reconciliation, explicit update selection, atomic import/undo, stale conflicts, protected later edits, Edit notes restoration, global history, idempotence and authorization.');

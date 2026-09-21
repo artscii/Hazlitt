@@ -1,3 +1,9 @@
+## 4.1.0
+
+- Add a Test import action that automatically downloads a diff report without changing projects; block applying test previews on the server.
+- Include workbook parsing failures in test reports and retain import confirmation and protected rollback.
+- Include related initiatives such as Project 02 in the main numbered evidence list; clearing search restores numeric order.
+
 ## 4.0.0
 
 - Add Excel import/export above Admin configuration, with off-thread workbook processing and a reusable template.

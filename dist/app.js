@@ -53,8 +53,8 @@ const recordNumbers=new Map(programs.map((p,index)=>[p.id,index+1]));
 // v3.9.2: order every selected/search subset numerically, independent of previous selections.
 const orderProjectIds=ids=>[...ids].sort((a,b)=>recordNumbers.get(a)-recordNumbers.get(b));
 const renderProgram=p=>`<article class="program" id="${p.id}"><a class="edit-project" href="/admin?project=${encodeURIComponent(p.id)}" aria-label="Edit project: ${p.name}" title="Edit project"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5 4 4M4 20l4-1L20 7a2.8 2.8 0 0 0-4-4L4 15Z"/></svg></a><div><a class="back-to-map" href="#map-overview"><svg class="map-return-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2Z"/><path d="M9 3v16M15 5v16"/></svg>Back to map</a><span class="record-number" aria-label="Project number ${recordNumbers.get(p.id)}">Project ${String(recordNumbers.get(p.id)).padStart(2,'0')}</span>${badge(p)}<h3>${p.name}</h3><p class="geo">${p.geo}</p><p class="geo">${p.date}</p><a class="share-project" href="${escapeHTML(projectURL(p.id))}" aria-label="Share project: ${p.name}">Share project link</a><span class="share-feedback" role="status"></span></div><div><p class="label">REPORTED OUTCOMES</p><p>${p.outcome}</p>${links(p)}</div><div><p class="label">SPONSORS & PARTNERS</p><p>${p.partners}</p>${p.tel?`<a class="phone" href="tel:${p.tel}">${p.phone}</a>`:p.email?`<a class="phone" href="mailto:${p.email}">${p.email}</a>`:''}<p class="contact-note">${p.contact}</p>${p.contactSource?`<a href="${p.contactSource}" target="_blank" rel="noopener">Contact source ↗</a>`:''}</div></article>`;
-document.querySelector('#programs').innerHTML=programs.filter(p=>!p.related).map(renderProgram).join('');
-document.querySelector('#related-programs').innerHTML=programs.filter(p=>p.related).map(renderProgram).join('');
+document.querySelector('#programs').innerHTML=programs.map(renderProgram).join('');
+
 // v1.3.11: filter visible profiles without rebuilding cards or moving keyboard focus.
 function normalizeSearch(value){return value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();}
 // v2.7.4: plain text search; words are literal, without Boolean operators.
@@ -114,8 +114,8 @@ function prioritizeProfiles(place){
  const section=document.querySelector('#selected-projects-section');section.hidden=false;
  document.querySelector('#selected-projects-title').textContent=place.name;
  document.querySelector('#selected-projects').innerHTML=place.ids.map(id=>renderProgram(programs.find(p=>p.id===id)).replace('class="program"','class="program selected-profile"')).join('');
- document.querySelector('#programs').innerHTML=programs.filter(p=>!p.related&&!selected.has(p.id)).map(renderProgram).join('');
- document.querySelector('#related-programs').innerHTML=programs.filter(p=>p.related&&!selected.has(p.id)).map(renderProgram).join('');
+ document.querySelector('#programs').innerHTML=programs.filter(p=>!selected.has(p.id)).map(renderProgram).join('');
+
  filterProfiles();
  numberSelectedRows();
 }
@@ -237,7 +237,10 @@ function searchPlace(place){
  return {...place,ids:orderProjectIds(place.ids.filter(id=>ids.has(id)))};
 }
 function syncSearchMap({preserveMapPosition=false}={}){
- closeTip(true);filterProfiles();
+ closeTip(true);
+ // v4.1.0: an empty search restores one complete numeric list, including related initiatives.
+ if(!document.querySelector('#project-search').value.trim()&&!sharedProjectId){document.querySelector('#selected-projects').replaceChildren();document.querySelector('#programs').innerHTML=programs.map(renderProgram).join('');}
+ filterProfiles();
  const query=document.querySelector('#project-search').value.trim();
  const matches=matchingProjectIds(query);
  document.querySelectorAll('.marker').forEach(marker=>{
