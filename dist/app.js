@@ -432,7 +432,7 @@ function syncSearchMap({preserveMapPosition=true,selectedPlace=null}={}){
  const locations=places.filter(p=>p.ids.some(id=>matches.has(id))&&(!searchedCountries.length||p.countries.some(c=>searchedCountries.includes(c))));
  document.querySelectorAll('.marker').forEach(marker=>{
   const place=placesByName.get(marker.dataset.name),ids=place.ids.filter(id=>matches.has(id));
-  marker.hidden=false;marker.classList.toggle('search-muted',!ids.length||!locations.includes(place));
+  marker.hidden=!ids.length||!locations.includes(place);marker.classList.remove('search-muted');
   const visibleIds=ids.length?ids:place.ids;
   marker.firstChild.textContent=visibleIds.length>1?String(visibleIds.length):'•';
   marker.setAttribute('aria-label',`${place.name}: ${visibleIds.map(id=>programsById.get(id).name).join(', ')}. Show outcomes`);

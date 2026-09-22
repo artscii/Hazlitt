@@ -42,7 +42,7 @@ if(canada){canada.dispatchEvent(new w.Event('pointerenter'));assert.equal(region
 if(canada){canada.dispatchEvent(new w.Event('click'));assert.equal(input.value,'North America');assert([...d.querySelectorAll('article.program:not([hidden])')].every(c=>w.AtlasSearch.continentsOf(catalog.programs.find(p=>p.id===c.id)).includes('North America')));}
 assert.equal(regionButton('All'),null,'No All continents button');
 await search('');assert.equal(input.value,'');
-await search('nothing-matches-xyz');assert.equal(d.querySelectorAll('article.program:not([hidden])').length,0);assert(d.querySelector('#search-status').classList.contains('search-empty'));
+await search('nothing-matches-xyz');assert.equal(d.querySelectorAll('article.program:not([hidden])').length,0);assert([...d.querySelectorAll('.marker')].every(m=>m.hidden));assert(d.querySelector('#search-status').classList.contains('search-empty'));
 await search('');assert.equal(d.querySelectorAll('article.program:not([hidden])').length,catalog.programs.length);assert(!d.querySelector('#search-status').classList.contains('search-empty'));
 for(const [id,card]of cards)assert.strictEqual(d.getElementById(id),card,'Card identity retained');
 const markers=[...d.querySelectorAll('.marker')],positions=markers.map(m=>[m.style.left,m.style.top]);
@@ -57,7 +57,7 @@ for(const marker of [...markers,...markers]){
  assert.equal(d.querySelectorAll('.marker.selected').length,1,marker.dataset.name+' must be sole selected marker');
  assert(d.querySelector('.selection-context button').textContent.startsWith('Back to '));
  assert(marker.classList.contains('selected'));assert(d.querySelector('#markers').classList.contains('has-selection'));
- assert(markers.every(m=>!m.hidden));
+ assert(!marker.hidden);
  assert(!marker.classList.contains('continent-hidden'),'Selected marker stays visible');
  const selectedContinent=d.querySelector('[data-map-continent][aria-pressed="true"]').dataset.mapContinent;
  assert.notEqual(selectedContinent,'All','Marker selects its continent');

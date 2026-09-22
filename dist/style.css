@@ -498,3 +498,6 @@ main>.directory{border-top:1px solid color-mix(in srgb,var(--atlas-border) 65%,t
 .admin-section .url-test-row .test-url{flex:none;min-height:44px;margin:0;white-space:nowrap;font-size:13px;padding:8px 10px}
 .url-test-message{display:block;font-size:13px;font-weight:400;line-height:1.4;margin-top:4px;color:var(--atlas-muted)}
 .url-test-message:empty{display:none}
+
+/* v4.10.8: unmatched markers are removed from pointer and keyboard navigation. */
+#markers .marker[hidden]{display:none!important}

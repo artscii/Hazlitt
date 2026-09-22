@@ -1,3 +1,6 @@
+## 4.10.8
+- Hide markers without matching projects during search instead of merely dimming them; preserve marker coordinates.
+
 ## 4.10.7
 - Add Test link buttons for every editor URL field; validate web addresses and open current draft values in a separate tab without saving.
 
