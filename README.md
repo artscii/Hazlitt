@@ -68,6 +68,49 @@ The default database is `.local-data/atlas.sqlite`. Startup applies pending SQL 
 
 The local server loads the generated Worker at startup. After changing application files, run `npm run build` and restart the server, then refresh the browser.
 
+## Making the database persistent
+
+Persistence is already supported. The essential requirement is to keep the **same durable database location** across restarts and deployments. Persistence and backups solve different problems: persistence retains normal changes; backups protect against accidental deletion, corruption or unwanted edits.
+
+### Local Node.js installation
+
+`server/local.mjs` stores SQLite in `DATA_DIR/atlas.sqlite`, defaulting to `.local-data/atlas.sqlite` relative to the directory from which the server starts. For a durable installation, use an **absolute path outside the source checkout** on a persistent disk:
+
+```sh
+mkdir -p "$HOME/Library/Application Support/Hazlitt"
+DATA_DIR="$HOME/Library/Application Support/Hazlitt" PORT=8094 npm start
+```
+
+Set that same `DATA_DIR` in your service or startup configuration every time. Avoid `/tmp`, `/private/tmp`, temporary preview directories and disposable build folders. The development preview may use a temporary database; do not treat that as permanent storage.
+
+If you already have records, setting a new directory alone will create a separate database. To move the existing database, stop the app and any other processes using it, copy the existing data directory to the durable location, then restart with the new `DATA_DIR`. Keep the old copy until you have verified the records, login and history. Do not replace an existing target database without first backing it up.
+
+### Docker / Compose
+
+The supplied Compose configuration already maps the named volume `atlas-data` to `/data`, and the container sets `DATA_DIR=/data`. Once the Docker build limitation noted below is corrected, that volume retains the database across container restarts, rebuilds and replacement containers using the same volume.
+
+- Keep the Compose project name stable; changing it can create a different project-prefixed volume and make the app appear empty.
+- Ordinary `docker compose down` retains named volumes. **Do not use `docker compose down -v` or delete/prune the database volume** unless you intend to erase its data.
+- For storage with an explicit host location, replace the service's volume mapping with a bind mount such as `/srv/hazlitt-data:/data`. Create that directory on a persistent disk and ensure the container's `node` user can write to it.
+- For a volume managed separately from this Compose project, provision a named volume and declare it `external: true` with an explicit `name`. Migrate existing data before switching mounts.
+
+Do not store the database only in the container's writable layer: replacing that container would lose it. On a cloud VM, the volume or bind mount must ultimately reside on storage that survives VM replacement if that is part of your deployment process.
+
+### Hosted Atlas
+
+The published app uses the persistent D1 database exposed as `env.DB`; `.openai/hosting.json` declares its logical binding as `"d1": "DB"`. Reuse the existing Sites project and database binding when publishing new application versions. Browser storage, the Git repository and the Worker bundle are not the production database.
+
+When deploying to another provider, explicitly provision a persistent database and configure the application binding or adapter. A newly created site, a different binding or a fresh local database does not automatically inherit the hosted records. Plan a separate data migration and verify it before switching users to the replacement deployment.
+
+### Backups and recovery
+
+- Back up the **whole database**, not just the project catalogue: it also contains versions, audit/import history, configuration and authentication state.
+- For local SQLite, use a SQLite-aware backup operation for online backups. For a simple offline backup, stop all database users and copy the complete data directory, including any `atlas.sqlite-wal` and `atlas.sqlite-shm` companion files present. Copying only the main file while the app is running can miss recent transactions.
+- Store dated backups on a separate durable location with restricted access; automate a schedule appropriate to how often records change. Protect backups as sensitive administrative data and periodically test a restore into an isolated instance.
+- For hosted D1, arrange database backups/exports through the hosting platform's supported management tools. This repository does not configure an automatic hosted backup schedule.
+- The admin Excel export is useful for record transfer and an additional catalogue snapshot, but **it is not a full database backup** and does not reproduce the complete version history, sessions or credential state.
+- Before restoration, stop writes and preserve a copy of the current database. Restore into the configured persistent location, check permissions, then verify records, version history and admin access before reopening the app.
+
 ## Repository layout
 
 | Path | Contents |
