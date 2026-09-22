@@ -1,3 +1,6 @@
+## 4.10.1
+- Remove the map selection count and match Locations and Search heading typography to Results and References.
+
 ## 4.10.0
 - Apply the UI review: mobile search reveals results without losing focus, mobile lists use page scrolling, add a top search shortcut, clarify References links, enlarge footer action text, soften selected cards and use conventional link icons.
 

@@ -315,7 +315,6 @@ function updateSelectionContext(count){
  const place=placesByName.get(chosenMarkerName),region=place?continentByCountry.get(place.countries[0]):visibleContinent;
  const title=place?`${region} → ${place.countries.join(' / ')}`:region==='All'?'Results':region;
  selectionContext.replaceChildren();
- const label=document.createElement('span');label.textContent=`${title} · ${count} ${count===1?'project':'projects'}`;selectionContext.append(label);
  if(place&&region){const back=document.createElement('button');back.type='button';back.textContent=`Back to ${region}`;back.onclick=()=>selectContinent(region);selectionContext.append(back);}
 }
 let visibleContinent='All';
@@ -370,12 +369,10 @@ function updateMapScrollCue(){
  mapShell.classList.toggle('has-overflow',overflow);
  mapShell.classList.toggle('can-scroll-left',overflow&&left);
  mapShell.classList.toggle('can-scroll-right',overflow&&right);
- document.querySelector('#map-pan-left').disabled=!left;document.querySelector('#map-pan-right').disabled=!right;
  swipeHint.hidden=!overflow;
  swipeHint.innerHTML=left?(right?'← Swipe to explore →':'← Swipe to explore'):'Swipe to explore <span aria-hidden="true">→</span>';
 }
 // v3.4.0: explicit map panning and direct access to the filtered results.
-for(const [id,direction] of [['map-pan-left',-1],['map-pan-right',1]])document.getElementById(id).onclick=()=>mapScroller.scrollBy({left:direction*mapScroller.clientWidth*.7,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
 function jumpToResults(event){setMobileView('list');const card=[...document.querySelectorAll('article.program')].find(card=>!card.hidden);if(!card)return;window.dispatchEvent(new CustomEvent('atlas-project-view',{detail:card.id}));event.preventDefault();card.setAttribute('tabindex','-1');card.focus({preventScroll:true});card.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});}
 
 // v4.10.0: mobile searches reveal results while retaining input focus and position.

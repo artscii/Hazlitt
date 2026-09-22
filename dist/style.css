@@ -449,3 +449,8 @@ html.screen-flipping,html.editor-flip-pending{background:var(--atlas-soft);overf
 .project-footer-links .edit-project,.project-footer-links .share-project,.evidence-scroll>.program .back-to-map{font-size:14px;min-height:44px}
 .project-footer-links{gap:4px 12px}
 }
+
+/* v4.10.1: consistent section headings and no redundant map count. */
+.selection-context:empty{display:none}
+.map-top h2,.project-search>label{font-family:Georgia,serif;font-size:28px;font-weight:400;line-height:1.55;color:var(--atlas-text);text-transform:none;letter-spacing:normal}
+@media(max-width:740px){.map-top h2,.project-search>label{font-size:25px}}
