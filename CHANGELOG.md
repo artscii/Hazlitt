@@ -1,3 +1,6 @@
+## 4.9.20
+- Remove the visible count below search while retaining accessible announcements and the no-results message.
+
 ## 4.9.19
 - Position expandable Search tips with an info symbol below the right edge of the search bar.
 
