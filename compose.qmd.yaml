@@ -1,0 +1,26 @@
+# Private QMD backend. Keep the base Compose file for the existing database volume.
+services:
+  atlas:
+    environment:
+      QMD_SERVICE_URL: http://qmd:8080
+      QMD_PRIVATE_NETWORK: "1"
+      QMD_SERVICE_TOKEN: ${QMD_SERVICE_TOKEN:?Generate the QMD service secret in .env}
+  qmd:
+    build:
+      context: .
+      dockerfile: pilot/Dockerfile
+    environment:
+      QMD_SERVICE_TOKEN: ${QMD_SERVICE_TOKEN:?Generate the QMD service secret in .env}
+      ATLAS_CATALOG_URL: ${PUBLIC_ORIGIN:?Set PUBLIC_ORIGIN}/api/catalog
+    volumes:
+      - qmd-data:/data
+    restart: unless-stopped
+    mem_limit: 5g
+    cpus: 3
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+volumes:
+  qmd-data:

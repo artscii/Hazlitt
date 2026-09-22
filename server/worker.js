@@ -77,7 +77,7 @@ export default {async fetch(request,env){
    try{
     const payload=await body(request,4096);
     const endpoint=new URL('/api/search-pilot/compare',env.QMD_SERVICE_URL);
-    if(endpoint.protocol!=='https:')throw Error('HTTPS required');
+    if(endpoint.protocol!=='https:'&&!(env.QMD_PRIVATE_NETWORK==='1'&&endpoint.origin==='http://qmd:8080'))throw Error('HTTPS required');
     const upstream=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+env.QMD_SERVICE_TOKEN},body:JSON.stringify(payload),signal:AbortSignal.timeout(7500),redirect:'error'});
     if(!upstream.ok)return json({error:'Semantic search unavailable'},upstream.status===429?429:503);
     const result=await upstream.json();if(!Array.isArray(result.b))throw Error('Invalid results');
