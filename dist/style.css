@@ -501,3 +501,7 @@ main>.directory{border-top:1px solid color-mix(in srgb,var(--atlas-border) 65%,t
 
 /* v4.10.8: unmatched markers are removed from pointer and keyboard navigation. */
 #markers .marker[hidden]{display:none!important}
+
+/* v4.10.9: unchanged drafts have a clearly inactive, neutral save action. */
+#admin #record-form button[type=submit]:disabled,#admin .review-save:disabled{background:#e4e7e9!important;color:#687178!important;border-color:#d5dade!important;box-shadow:none;opacity:1;cursor:not-allowed}
+#record-form[hidden],#record-history[hidden]{display:none!important}

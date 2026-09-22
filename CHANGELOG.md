@@ -1,3 +1,6 @@
+## 4.10.9
+- Grey out unchanged record save actions; Cancel clears the editor and returns focus to project search, confirming draft discard when needed.
+
 ## 4.10.8
 - Hide markers without matching projects during search instead of merely dimming them; preserve marker coordinates.
 
