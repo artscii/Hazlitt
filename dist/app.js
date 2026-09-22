@@ -166,7 +166,8 @@ function filterProfiles(){
  const query=input.value.trim();
  const matches=matchingProjectIds(query);
  document.querySelectorAll('article.program').forEach(card=>{const hidden=!matches.has(card.id);if(card.hidden!==hidden)card.hidden=hidden;});
- document.querySelectorAll('.directory').forEach(section=>{section.hidden=![...section.querySelectorAll('article.program')].some(card=>!card.hidden)});
+ // v4.13.2: counts follow actual visible cards, including map and QMD subsets.
+ document.querySelectorAll('.directory').forEach(section=>{const count=[...section.querySelectorAll('article.program')].filter(card=>!card.hidden).length;section.hidden=false;const badge=section.querySelector('.results-count');if(badge){badge.textContent=count.toLocaleString();badge.setAttribute('aria-label',count+' '+(count===1?'project':'projects'));}});
  numberSelectedRows();
  highlightProfileMatches(query);
  document.querySelector('#clear-search').hidden=!input.value;
