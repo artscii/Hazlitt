@@ -1,3 +1,6 @@
+## 4.12.1
+- Preserve applied QMD result scope through map markers, continent navigation and profile previews; add reset/exit comparison controls.
+
 ## 4.12.0
 - Add optional local QMD paired search pilot with shared scope filters, result/map comparisons, timings and downloadable relevance evaluations. Hosted keyword search stays unchanged.
 
