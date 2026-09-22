@@ -4,6 +4,7 @@ import path from 'node:path';
 import {createHash} from 'node:crypto';
 import '../dist/search.js';
 import {parseParameters} from './parameters.mjs';
+import {catalogSearch} from './retrieval.mjs';
 const root=path.resolve(process.env.QMD_DATA_DIR||'pilot/.data');
 process.env.XDG_CACHE_HOME ||= path.join(root,'cache');
 const publicFields=['name','short','outcome','status','geo','countries','publicationYear','evidenceBasis','sampleDetails','metric','metricLabel','partners','followUp','followUpDate','originalLanguage','originalTitle','originalSummary','originalOutcome','source','source2','originalSource'];
@@ -40,7 +41,7 @@ export async function pilotRoute(request,getCatalog){
   const key=JSON.stringify([version,enteredQuery,scope,deep]);if(cache.has(key))return reply({...cache.get(key),cached:true,indexMs:Math.round(indexMs),indexChanged:false,totalMs:Math.round(performance.now()-started)});
   const allowed=new Set(programs.filter(p=>eligible(p,query,scope)).map(p=>p.id));
   const aStart=performance.now();const a=programs.filter((p,i)=>allowed.has(p.id)&&AtlasSearch.matches(p,query,'Project '+(i+1)+' '+String(i+1).padStart(2,'0'))).map(p=>({id:p.id}));const aMs=performance.now()-aStart;
-  const bStart=performance.now();const results=query?await store.search(deep?{query,collection:'atlas',limit:programs.length,candidateLimit:Math.min(30,programs.length),rerank:true}:{queries:[{type:'lex',query},{type:'vec',query}],collection:'atlas',limit:programs.length,rerank:false}):[];
+  const bStart=performance.now();const results=query?(deep?await store.search({query,collection:'atlas',limit:programs.length,candidateLimit:programs.length,rerank:true}):await catalogSearch(store,query,programs.length)):[];
   const idsByFilename=new Map(programs.map(p=>[createHash('sha256').update(p.id).digest('hex')+'.md',p.id]));const seen=new Set();
   const b=query?results.flatMap(r=>{const id=idsByFilename.get(path.basename(r.file));if(!id||!allowed.has(id)||seen.has(id))return [];seen.add(id);return [{id,score:r.score,passage:(r.bestChunk||r.body||'').slice(0,600)}];}).slice(0,10):programs.filter(p=>allowed.has(p.id)).map(p=>({id:p.id}));
   const result={query:enteredQuery,semanticQuery:query,scope,deep,a,b,aMs:+aMs.toFixed(2),bMs:Math.round(performance.now()-bStart),indexMs:Math.round(indexMs),indexChanged:indexing.changed,indexedAt,revision:version,engine:'QMD 2.8.3',cached:false,totalMs:Math.round(performance.now()-started)};
