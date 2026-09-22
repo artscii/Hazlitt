@@ -393,3 +393,8 @@ html.screen-flipping,html.editor-flip-pending{background:var(--atlas-soft);overf
 .evidence-scroll:has(>.program:hover)>.program.selected-profile:not(:hover):not(:focus-within){background-color:color-mix(in srgb,var(--atlas-highlight) 22%,var(--atlas-page));box-shadow:0 2px 5px color-mix(in srgb,var(--atlas-text) 4%,transparent)}
 }
 @media(prefers-reduced-motion:reduce){.evidence-scroll>.program{transition:none}}
+
+/* v4.9.12: edit control sits alongside the stable project identifier. */
+.project-row-meta .edit-project{position:static;display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;color:var(--atlas-muted);text-decoration:none;background:transparent;flex:none}
+.project-row-meta .edit-project:hover,.project-row-meta .edit-project:focus-visible{background:var(--atlas-soft);color:var(--atlas-accent)}
+.project-row-meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
