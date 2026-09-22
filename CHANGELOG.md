@@ -1,3 +1,6 @@
+## 4.10.6
+- Add subtle palette-aware rules between the title, map, search and results sections.
+
 ## 4.10.5
 - Fix dark preview contrast with light text, restrained dark hover surfaces and visible focus outlines across palettes.
 

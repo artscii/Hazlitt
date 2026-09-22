@@ -485,3 +485,9 @@ html.screen-flipping,html.editor-flip-pending{background:var(--atlas-soft);overf
 #tooltip .tooltip-profile,#tooltip .tooltip-close{color:#f5f8fa;border-color:#809ba9;background:transparent}
 #tooltip .tooltip-profile:hover,#tooltip .tooltip-profile:focus-visible,#tooltip .tooltip-close:hover{background:#405967;color:#fff}
 #tooltip a:focus-visible,#tooltip button:focus-visible{outline:2px solid #b9dff5;outline-offset:3px}
+
+/* v4.10.6: quiet rules separate the primary reading sections. */
+main>.intro{border-bottom:1px solid color-mix(in srgb,var(--atlas-border) 65%,transparent);margin-bottom:24px}
+main>.project-search{border-top:1px solid color-mix(in srgb,var(--atlas-border) 65%,transparent);padding-top:24px}
+main>.directory{border-top:1px solid color-mix(in srgb,var(--atlas-border) 65%,transparent);padding-top:20px}
+@media(max-width:740px){main>.intro{margin-bottom:18px}main>.project-search{padding-top:18px}main>.directory{padding-top:16px}}
