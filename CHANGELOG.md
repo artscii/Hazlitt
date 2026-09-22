@@ -1,3 +1,6 @@
+## 4.10.0
+- Apply the UI review: mobile search reveals results without losing focus, mobile lists use page scrolling, add a top search shortcut, clarify References links, enlarge footer action text, soften selected cards and use conventional link icons.
+
 ## 4.9.21
 - Shorten Search results to Results.
 

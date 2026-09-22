@@ -437,3 +437,15 @@ html.screen-flipping,html.editor-flip-pending{background:var(--atlas-soft);overf
 
 /* v4.9.20: announce result counts to assistive technology without redundant visible text. */
 #search-status:not(.search-empty){position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+
+/* v4.10.0: clearer navigation, quiet selection and natural mobile reading. */
+.mobile-search-shortcut{display:none}
+.directory>.section-heading .references-jump{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:6px;text-decoration-color:var(--atlas-border)}
+.directory>.section-heading .references-jump:hover{text-decoration-color:currentColor}
+.evidence-scroll>.program.selected-profile,.evidence-scroll>.program.search-first,.evidence-scroll>.program:target{background-color:color-mix(in srgb,var(--atlas-highlight) 38%,var(--atlas-page));box-shadow:inset 3px 0 0 var(--atlas-edge)}
+@media(max-width:740px){
+.mobile-search-shortcut{display:inline-flex;align-items:center;min-height:44px;margin-top:8px;font-size:14px}
+.evidence-scroll{max-height:none!important;overflow:visible;scrollbar-gutter:auto}
+.project-footer-links .edit-project,.project-footer-links .share-project,.evidence-scroll>.program .back-to-map{font-size:14px;min-height:44px}
+.project-footer-links{gap:4px 12px}
+}
