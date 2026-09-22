@@ -1,6 +1,9 @@
 import fs from 'node:fs';
 // v3.0.0: derive secondary pages from the Atlas shell so headers/footers stay identical.
-const source=fs.readFileSync('dist/index.html','utf8');
+// Keep every page footer aligned with the package release version.
+const {version}=JSON.parse(fs.readFileSync('package.json','utf8'));
+const source=fs.readFileSync('dist/index.html','utf8').replace(/(<span class="site-version">)[^<]*(<\/span>)/,`$1Version ${version}$2`);
+fs.writeFileSync('dist/index.html',source);
 const head=source.match(/<head>[\s\S]*?<\/head>/)[0].replace(/<script[\s\S]*?<\/script>/g,'').replace('href="style.css"','href="/style.css"');
 const header=source.match(/<header>[\s\S]*?<\/header>/)[0].replace('href="#"','href="/"');
 const footer=source.match(/<footer>[\s\S]*?<\/footer>/)[0];
