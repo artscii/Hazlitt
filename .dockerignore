@@ -6,3 +6,7 @@ node_modules
 dist/server
 dist/.openai
 **/.DS_Store
+
+pilot/node_modules
+pilot/.data
+Dockerfile.before-vps

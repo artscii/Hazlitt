@@ -1,7 +1,8 @@
 # Atlas 2.0.0: shared editor, persistent SQLite and version history.
 FROM node:24-alpine AS build
 WORKDIR /app
-COPY package.json ./
+COPY package.json package-lock.json ./
+RUN npm ci
 COPY scripts ./scripts
 COPY server ./server
 COPY data ./data
