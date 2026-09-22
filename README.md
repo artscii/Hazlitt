@@ -1,3 +1,5 @@
+> For the complete Debian/OVH installation and operations runbook, see [VPS deployment](docs/VPS-DEPLOYMENT.md).
+
 # Hazlitt Creek Evidence Atlas
 
 An interactive evidence atlas of AI-assisted cervical cancer screening and related early-intervention programmes, with particular attention to underserved communities. Readers can explore projects by geography, search the evidence, compare reported outcomes, and follow published sources and contact information. A separate administrator interface supports controlled editing and record history.
@@ -7,7 +9,7 @@ An interactive evidence atlas of AI-assisted cervical cancer screening and relat
 ## Technical goals
 
 - Make geographically distributed evidence easy to find on desktop and iPhone, with responsive layouts, keyboard-accessible controls, readable contrast and reduced-motion support.
-- Keep search fast and explainable: full-text matching includes outcomes and supporting fields; visible highlights and contextual excerpts explain matches. The current search does not use WebLLM, an LLM service or semantic embeddings.
+- Keep search fast and explainable: full-text matching includes outcomes and supporting fields; visible highlights and contextual excerpts explain matches. Configured deployments use QMD hybrid retrieval with browser-side keyword fallback; WebLLM is not used.
 - Keep map markers, search results, project previews and location summaries synchronized. Searches hide markers outside the matching subset while preserving marker positions.
 - Preserve evidence context: distinguish patient examinations from slide/image studies, record publication years and sample denominators, retain caveats, and track follow-up notes and dates.
 - Support English summaries alongside retained original-language descriptions, rather than discarding source-language context.
@@ -170,6 +172,6 @@ Admin passwords are stored as salted PBKDF2-SHA-256 hashes. `ADMIN_PASSWORD_HASH
 
 Hosted releases use the existing Sites project identified in `.openai/hosting.json`. A GitHub push updates source control; it does not by itself publish the hosted site or synchronize its database.
 
-Docker-related files are provided in `Dockerfile`, `compose.yaml` and [README-Docker.md](README-Docker.md). The Compose mapping is `127.0.0.1:8081:8080`, with a named data volume. **The current Dockerfile needs a dependency-install step before its build command**, because the build copies ExcelJS from `node_modules`; treat the recipe as needing maintenance rather than a verified one-command setup. The older Docker guide also predates the separate admin page and current version-history UI.
+Docker-related files are provided in `Dockerfile`, `compose.yaml` and [README-Docker.md](README-Docker.md). The Compose mapping is `127.0.0.1:8081:8080`, with a named data volume. The Dockerfile installs locked dependencies and checks source access as the non-root runtime user. The older Docker guide also predates the separate admin page and current version-history UI.
 
 The local server is intended for development. Before exposing it beyond a trusted local environment, configure appropriate HTTPS, access controls, proxy handling and database backups.

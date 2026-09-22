@@ -1,3 +1,5 @@
+> This older guide is retained for reference. Use [VPS deployment](docs/VPS-DEPLOYMENT.md) for the current Atlas, QMD, HTTPS and database migration procedure.
+
 # Hazlitt Creek Evidence Atlas — Docker
 
 Requires Docker Compose (or compatible Podman Compose) and Node.js 24 or newer for password setup.
