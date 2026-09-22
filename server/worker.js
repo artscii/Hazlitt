@@ -88,7 +88,7 @@ export default {async fetch(request,env){
    if(path==='/api/analytics/event'&&request.method==='POST')return collectAnalytics(request,env,auth);
    if(path==='/api/session'&&request.method==='GET')return json({authenticated:!!auth});
    if(!auth)return json({error:'Sign in to edit records'},401);
-   if(path==='/api/db-backup'&&request.method==='GET')return databaseBackup(env);
+   if(path==='/api/db-backup'&&request.method==='GET')return await databaseBackup(env);
    const analytics=await analyticsRoute(request,env,path,url);if(analytics)return analytics;
    const transfer=await transferRoute(request,env,path,url);if(transfer)return transfer;
    if(path==='/api/config'&&request.method==='PUT'){

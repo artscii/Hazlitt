@@ -1,4 +1,4 @@
-// v4.11.0: a portable logical snapshot; table data is read in one SQLite statement.
+// v4.11.0: a portable logical snapshot; table data is read in one transactional batch (compatible with D1 query limits).
 async function databaseBackup(env){
  const db=database(env),ident=value=>'"'+value.replaceAll('"','""')+'"',literal=value=>"'"+String(value).replaceAll("'","''")+"'";
  const schema=(await db.prepare("SELECT type,name,tbl_name,sql FROM sqlite_schema WHERE sql IS NOT NULL ORDER BY type,name").all()).results;
@@ -12,7 +12,7 @@ async function databaseBackup(env){
   queries.push('SELECT '+literal(prefix)+" || "+values.join(" || ',' || ")+" || ');' AS line FROM "+ident(table.name));
  }
  if(schema.some(s=>s.name==='sqlite_sequence'))queries.push("SELECT 'DELETE FROM sqlite_sequence WHERE name='||quote(name)||'; INSERT INTO sqlite_sequence(name,seq) VALUES ('||quote(name)||','||quote(seq)||');' AS line FROM sqlite_sequence");
- const rows=queries.length?(await db.prepare(queries.join(' UNION ALL ')).all()).results:[];
+ const rows=queries.length?(await db.batch(queries.map(query=>db.prepare(query)))).flatMap(result=>result.results||[]):[];
  const out=['-- Hazlitt complete application database backup · '+new Date().toISOString(),'-- Contains password hashes, sessions and audit IPs. Keep this file private.','-- Restore into an EMPTY SQLite database: sqlite3 restored.sqlite < backup.sql','-- Platform-owned D1 metadata is excluded. Application tables and history are included.','PRAGMA foreign_keys=OFF;','BEGIN TRANSACTION;'];
  out.push(...tables.map(t=>t.sql+';'),...rows.map(r=>r.line));
  // Unedited seed projects live in the bundle: materialize them for a self-contained catalogue.

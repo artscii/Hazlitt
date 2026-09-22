@@ -1,3 +1,6 @@
+## 4.11.1
+- Fix hosted backup compound-query limit using a transactional batch; handle backup failures without HTML/JSON parsing errors.
+
 ## 4.11.0
 - Admin DB backup downloads a portable full application SQL snapshot, including materialized seed records and restore instructions.
 

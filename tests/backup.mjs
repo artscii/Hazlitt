@@ -10,7 +10,7 @@ db.prepare('INSERT INTO site_settings VALUES (?,?)').run('test',"Quotes ' · Uni
 db.prepare('INSERT INTO records (id,payload,deleted,revision) VALUES (?,?,?,?)').run('removed','{}',1,4);
 db.prepare('INSERT INTO global_history(at,action,operation_id,summary,details,ip) VALUES (1,?,?,?,?,?)').run('test','op','summary','{}','127.0.0.1');
 db.exec('UPDATE sqlite_sequence SET seq=90 WHERE name=\'global_history\'');
-const env={DB:{prepare(sql){return {args:[],bind(...args){this.args=args;return this},async all(){return {results:db.prepare(sql).all(...this.args)}},async first(){return db.prepare(sql).get(...this.args)}}}}};
+const env={DB:{async batch(statements){db.exec('BEGIN');try{const out=[];for(const statement of statements)out.push(await statement.all());db.exec('COMMIT');return out;}catch(error){db.exec('ROLLBACK');throw error;}},prepare(sql){assert(!sql.includes(' UNION ALL '),'Backup avoids compound query limits');return {args:[],bind(...args){this.args=args;return this},async all(){return {results:db.prepare(sql).all(...this.args)}},async first(){return db.prepare(sql).get(...this.args)}}}}};
 const req=cookie=>new Request('https://atlas.test/api/db-backup',{headers:cookie?{Cookie:'atlas_session='+token}:{}});
 assert.equal((await worker.fetch(req(false),env)).status,401);
 const response=await worker.fetch(req(true),env);assert.equal(response.status,200);assert.equal(response.headers.get('Cache-Control'),'no-store');const sql=await response.text();
