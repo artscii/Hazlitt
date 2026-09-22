@@ -456,3 +456,11 @@ html.screen-flipping,html.editor-flip-pending{background:var(--atlas-soft);overf
 @media(max-width:740px){.map-top h2,.project-search>label{font-size:25px}}
 /* v4.10.2: profile actions size to their labels without losing touch height. */
 #tooltip .tooltip-profile{width:fit-content;max-width:100%;align-self:flex-start;justify-self:start;flex-grow:0}
+
+/* v4.10.3: compact desktop search and adjacent inline help. */
+.search-guidance{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:flex-start;gap:0 7px}
+.search-guidance .search-tips{margin:0;text-align:left;max-width:440px}
+.search-guidance .search-tips summary{margin-left:0;gap:7px}
+.search-guidance .search-tips p{max-width:100%}
+@media(min-width:741px){.search-controls{width:50%;min-width:min(440px,100%)}}
+@media(max-width:740px){.search-controls{width:100%;min-width:0}.search-guidance .search-tips[open]{width:auto;max-width:100%}}

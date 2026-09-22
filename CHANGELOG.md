@@ -1,3 +1,6 @@
+## 4.10.3
+- Place Search tips beside the hint with a hyphen; use half-width desktop search with a 440px minimum and full-width mobile search.
+
 ## 4.10.2
 - Size preview profile buttons to their labels.
 
