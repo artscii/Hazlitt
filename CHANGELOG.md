@@ -1,3 +1,6 @@
+## 4.9.17
+- Match the References link typography to the Search results heading.
+
 ## 4.9.16
 - Mute the Project number - (x of y) footer label; move labelled Edit Record before Share project link with a vertical divider.
 
