@@ -1,3 +1,6 @@
+## 4.9.19
+- Position expandable Search tips with an info symbol below the right edge of the search bar.
+
 ## 4.9.18
 - Use regular weight for References disclosure headings.
 

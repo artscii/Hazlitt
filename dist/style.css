@@ -424,3 +424,13 @@ html.screen-flipping,html.editor-flip-pending{background:var(--atlas-soft);overf
 
 /* v4.9.18: quieter References disclosure headings. */
 .references .reference-item>summary{font-weight:400}
+
+/* v4.9.19: expandable help anchored below the search field's right edge. */
+.search-guidance{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 16px;align-items:start}
+.search-guidance #search-help{margin:10px 0}
+.search-guidance .search-tips{justify-self:end;text-align:right;margin:0;max-width:min(440px,65vw)}
+.search-guidance .search-tips summary{margin-left:auto;gap:7px;text-decoration:none}
+.search-guidance .search-tips summary::-webkit-details-marker{display:none}
+.search-guidance .search-tips p{text-align:left;margin:0 0 12px;padding:10px 12px;background:var(--atlas-soft);border:1px solid var(--atlas-border)}
+.search-info-icon{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border:1px solid currentColor;border-radius:50%;font-size:12px;font-family:Georgia,serif;flex:none}
+@media(max-width:480px){.search-guidance{grid-template-columns:minmax(0,1fr) auto;gap:4px 8px}.search-guidance .search-tips[open]{grid-column:1/-1;max-width:100%;width:100%}}
