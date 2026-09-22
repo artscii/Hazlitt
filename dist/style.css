@@ -464,3 +464,12 @@ html.screen-flipping,html.editor-flip-pending{background:var(--atlas-soft);overf
 .search-guidance .search-tips p{max-width:100%}
 @media(min-width:741px){.search-controls{width:50%;min-width:min(440px,100%)}}
 @media(max-width:740px){.search-controls{width:100%;min-width:0}.search-guidance .search-tips[open]{width:auto;max-width:100%}}
+
+/* v4.10.4: subtle individual emphasis for map preview cards. */
+#tooltip .tooltip-entry{transition:background-color .16s ease,box-shadow .16s ease}
+@media(hover:hover){#tooltip .tooltip-entry:hover{background-color:color-mix(in srgb,var(--atlas-highlight) 40%,var(--atlas-page));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--atlas-edge) 35%,transparent)}}
+#tooltip .tooltip-entry:focus-within{background-color:color-mix(in srgb,var(--atlas-highlight) 40%,var(--atlas-page));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--atlas-edge) 35%,transparent)}
+@media(prefers-reduced-motion:reduce){#tooltip .tooltip-entry{transition:none}}
+
+.preview-study-details{display:grid;gap:4px;margin:8px 0 12px;font-size:13px;line-height:1.5;color:var(--atlas-muted)}
+.preview-study-details strong{font-size:inherit;font-weight:600}
