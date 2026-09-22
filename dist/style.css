@@ -372,7 +372,7 @@ html.screen-flipping,html.editor-flip-pending{background:var(--atlas-soft);overf
 @media(max-width:740px){.evidence-scroll>.program>div:nth-of-type(3){padding-right:0}.project-row-meta{display:grid;gap:3px}.evidence-scroll>.program>.project-row-footer{gap:8px}}
 
 .evidence-scroll>.program>div:first-of-type{display:flex;flex-direction:column;align-self:stretch;align-items:flex-start}
-.project-evidence-status{margin-top:auto;padding-top:14px}
+.project-evidence-status{margin:0 0 10px;padding:0}
 .project-evidence-status .badge{margin-bottom:0}
 
 /* v4.9.9: subset position belongs with project identification in the footer. */

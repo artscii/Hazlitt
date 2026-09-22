@@ -1,3 +1,6 @@
+## 4.9.10
+- Place evidence status directly below the project title.
+
 ## 4.9.9
 - Move the x-of-y subset indicator beside the footer project number and remove the redundant result-count text.
 
