@@ -1,3 +1,6 @@
+## 4.10.2
+- Size preview profile buttons to their labels.
+
 ## 4.10.1
 - Remove the map selection count and match Locations and Search heading typography to Results and References.
 

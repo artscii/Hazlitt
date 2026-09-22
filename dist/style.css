@@ -454,3 +454,5 @@ html.screen-flipping,html.editor-flip-pending{background:var(--atlas-soft);overf
 .selection-context:empty{display:none}
 .map-top h2,.project-search>label{font-family:Georgia,serif;font-size:28px;font-weight:400;line-height:1.55;color:var(--atlas-text);text-transform:none;letter-spacing:normal}
 @media(max-width:740px){.map-top h2,.project-search>label{font-size:25px}}
+/* v4.10.2: profile actions size to their labels without losing touch height. */
+#tooltip .tooltip-profile{width:fit-content;max-width:100%;align-self:flex-start;justify-self:start;flex-grow:0}
