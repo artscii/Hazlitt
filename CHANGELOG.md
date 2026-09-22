@@ -1,3 +1,6 @@
+## 4.9.18
+- Use regular weight for References disclosure headings.
+
 ## 4.9.17
 - Match the References link typography to the Search results heading.
 

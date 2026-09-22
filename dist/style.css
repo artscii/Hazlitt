@@ -421,3 +421,6 @@ html.screen-flipping,html.editor-flip-pending{background:var(--atlas-soft);overf
 @media(max-width:740px){.directory>.section-heading .references-jump{font-size:25px}}
 .references>#references-title{font-family:Georgia,serif;font-size:28px;font-weight:400;line-height:1.55;color:var(--atlas-text);text-transform:none;letter-spacing:normal}
 @media(max-width:740px){.references>#references-title{font-size:25px}}
+
+/* v4.9.18: quieter References disclosure headings. */
+.references .reference-item>summary{font-weight:400}
