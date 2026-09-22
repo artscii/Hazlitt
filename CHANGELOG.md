@@ -1,3 +1,6 @@
+## 4.11.0
+- Admin DB backup downloads a portable full application SQL snapshot, including materialized seed records and restore instructions.
+
 ## 4.10.9
 - Grey out unchanged record save actions; Cancel clears the editor and returns focus to project search, confirming draft discard when needed.
 

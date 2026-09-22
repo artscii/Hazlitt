@@ -104,6 +104,17 @@ When deploying to another provider, explicitly provision a persistent database a
 
 ### Backups and recovery
 
+In **Admin → DB backup**, choose **Download complete DB backup** to export the application schema and every application table as a portable `.sql` file. This includes records (including unedited seed projects and deleted-record state), version/audit history, settings, import history, analytics, password hashes and sessions. Keep it private. Unsaved edits and hosting-provider metadata are excluded.
+
+Restore into a new, empty SQLite database:
+
+```sh
+sqlite3 restored.sqlite < Hazlitt-DB-backup.sql
+```
+
+Use the actual downloaded filename. The final integrity check should return `ok`. Stop the target app before replacing its database, preserve the old database, and place the restored file at `DATA_DIR/atlas.sqlite`. Use the same application version or a compatible newer version. The backup includes migration tracking for the local adapter. To invalidate transferred login sessions, run `DELETE FROM sessions;` against the restored database. Hosted imports require the provider's supported database import tools; the admin UI downloads backups but does not overwrite a running database.
+
+
 - Back up the **whole database**, not just the project catalogue: it also contains versions, audit/import history, configuration and authentication state.
 - For local SQLite, use a SQLite-aware backup operation for online backups. For a simple offline backup, stop all database users and copy the complete data directory, including any `atlas.sqlite-wal` and `atlas.sqlite-shm` companion files present. Copying only the main file while the app is running can miss recent transactions.
 - Store dated backups on a separate durable location with restricted access; automate a schedule appropriate to how often records change. Protect backups as sensitive administrative data and periodically test a restore into an isolated instance.
@@ -141,6 +152,7 @@ After installing dependencies and building, run the relevant checks:
 node tests/search.mjs
 node tests/search-ui.mjs
 node tests/admin.mjs
+node tests/backup.mjs
 node tests/transfers.mjs
 node tests/analytics.mjs
 node tests/palettes.mjs
