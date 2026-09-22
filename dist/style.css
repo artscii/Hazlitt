@@ -398,3 +398,8 @@ html.screen-flipping,html.editor-flip-pending{background:var(--atlas-soft);overf
 .project-row-meta .edit-project{position:static;display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;color:var(--atlas-muted);text-decoration:none;background:transparent;flex:none}
 .project-row-meta .edit-project:hover,.project-row-meta .edit-project:focus-visible{background:var(--atlas-soft);color:var(--atlas-accent)}
 .project-row-meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+
+/* v4.9.13: compact explanations for otherwise invisible full-text matches. */
+.search-match-context{margin-top:12px;padding:10px 12px;border:1px solid var(--atlas-border);background:var(--atlas-soft);font-size:14px}
+.search-match-context strong{display:block;font-size:12px;font-weight:600;color:var(--atlas-muted);margin-bottom:4px}
+.evidence-scroll>.program .search-match-context p{margin:0;font-size:14px}

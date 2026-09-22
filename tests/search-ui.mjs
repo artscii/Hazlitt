@@ -75,4 +75,9 @@ assert.equal(d.querySelector('.project-card-content'),null,'No nested card scrol
 assert(d.querySelector('#bombo-outcomes'));assert(d.querySelector('#bombo-contacts'));
 assert.equal(errors.length,0,errors.join('\n'));
 console.log(`DOM integration passed: ${catalog.programs.length} cards reused; ${markers.length} markers selected twice without position changes; clear, rapid input, full-text search.`);
+await search('colposcopy');
+for(const card of d.querySelectorAll('article.program:not([hidden])'))assert(card.querySelector('mark.search-match'),'Every colposcopy result explains its match');
+for(const n of [12,13,29]){const p=catalog.programs[n-1];if(p&&p.short?.toLowerCase().includes('colposcopy'))assert(d.getElementById(p.id).querySelector('.search-match-context mark.search-match'));}
+await search('');assert.equal(d.querySelectorAll('.search-match-context').length,0);
+console.log('PASS: hidden-field match explanations and clearing.');
 dom.window.close();

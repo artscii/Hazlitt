@@ -1,3 +1,6 @@
+## 4.9.13
+- Explain hidden-field search matches with concise labelled excerpts and blue term highlighting; remove excerpts when the query is cleared.
+
 ## 4.9.12
 - Move the password-gated edit pencil beside the footer project number with a subtle vertical divider.
 

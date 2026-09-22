@@ -97,8 +97,26 @@ function highlightProfileMatches(query){
   if(card.hidden||highlightedCards.get(card)===signature)return;
   highlightedCards.set(card,signature);
   card.querySelectorAll('mark.search-match').forEach(mark=>mark.replaceWith(document.createTextNode(mark.textContent)));
+  card.querySelectorAll('.search-match-context').forEach(el=>el.remove());
   card.normalize();
   if(card.hidden||!terms.length)return;
+  // v4.9.13: explain matches in fields absent from the visible card.
+  const visibleWalker=document.createTreeWalker(card,NodeFilter.SHOW_TEXT);let visibleText='';
+  while(visibleWalker.nextNode()){const node=visibleWalker.currentNode;if(!node.parentElement.closest('[hidden]'))visibleText+=' '+node.nodeValue;}
+  const missing=terms.filter(term=>!normalizeSearch(visibleText).includes(term));
+  const record=programsById.get(card.id);
+  const fieldLabels={short:'short description',metric:'headline outcome',metricLabel:'headline outcome explanation',originalTitle:'original-language title',originalSummary:'original-language summary',originalOutcome:'original-language outcomes',source:'primary source URL',source2:'additional source URL',editNotes:'edit notes'};
+  const explained=new Set();
+  for(const [key,value] of Object.entries(record||{})){
+   if(typeof value!=='string')continue;
+   const term=missing.find(term=>!explained.has(term)&&normalizeSearch(value).includes(term));if(!term)continue;
+   const at=normalizeSearch(value).indexOf(term),start=Math.max(0,at-65),end=Math.min(value.length,at+term.length+145);
+   const context=document.createElement('aside');context.className='search-match-context';
+   const label=document.createElement('strong');label.textContent='Matched in '+(fieldLabels[key]||key.replace(/([A-Z])/g,' $1').toLowerCase());
+   const excerpt=document.createElement('p');excerpt.textContent=(start?'…':'')+value.slice(start,end)+(end<value.length?'…':'');
+   context.append(label,excerpt);card.querySelector('.program-extra').append(context);
+   missing.filter(t=>normalizeSearch(excerpt.textContent).includes(t)).forEach(t=>explained.add(t));
+  }
   const walker=document.createTreeWalker(card,NodeFilter.SHOW_TEXT);
   const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
   nodes.forEach(node=>{
