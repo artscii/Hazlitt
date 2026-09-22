@@ -1,0 +1,11 @@
+{
+  "dependencies": {
+    "@tobilu/qmd": "2.8.3"
+  },
+  "name": "hazlitt-qmd-pilot",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:cpu": "node node_modules/node-llama-cpp/dist/cli/cli.js source download --gpu false --noUsageExample"
+  }
+}

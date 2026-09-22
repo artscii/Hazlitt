@@ -9,3 +9,5 @@ dist/.openai/
 
 dist/exceljs.min.js
 dist/exceljs-LICENSE.txt
+
+pilot/.data/

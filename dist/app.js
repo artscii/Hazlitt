@@ -79,10 +79,11 @@ const projectCards=new Map([...document.querySelectorAll('article.program')].map
 // v1.3.11: filter visible profiles without rebuilding cards or moving keyboard focus.
 function normalizeSearch(value){return value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();}
 // v2.7.4: plain text search; words are literal, without Boolean operators.
-let markerProjectIds=null;
+let markerProjectIds=null,pilotProjectIds=null;
 function searchGroups(query){const terms=normalizeSearch(query).trim().split(/\s+/).filter(Boolean);return terms.length?[terms]:[];}
 function searchResult(query){return searchIndex.search(query);}
 function matchingProjectIds(query){
+ if(pilotProjectIds)return pilotProjectIds;
  if(sharedProjectId)return new Set([sharedProjectId]);
  if(markerProjectIds)return markerProjectIds;
  return searchResult(query).ids;
@@ -548,6 +549,7 @@ const sharedMessage=document.createElement('span');
 const showAll=document.createElement('button');showAll.type='button';showAll.textContent='Show all projects';
 sharedNotice.append(sharedMessage,showAll);document.querySelector('.project-search').append(sharedNotice);
 function clearSharedProject(){
+ pilotProjectIds=null;
  markerProjectIds=null;chosenMarkerName=null;cancelAnimationFrame(searchFrame);revealContinent('All');
  sharedProjectId=null;sharedNotice.hidden=true;
  const url=new URL(location.href);url.searchParams.delete('project');url.hash='';history.replaceState(null,'',url);
@@ -577,6 +579,7 @@ document.addEventListener('click',async event=>{
 });
 // v4.8.7: start with Africa; explicit shared-project links take precedence.
 if(new URL(location.href).searchParams.has('project'))openSharedProject();else selectContinent('Africa');
+window.addEventListener('atlas-pilot-results',event=>{clearSharedProject();pilotProjectIds=new Set(event.detail.ids.filter(id=>programsById.has(id)));document.querySelector('#project-search').value=event.detail.query;revealContinent('All');syncSearchMap();});
 window.dispatchEvent(new Event('atlas-ready'));
 })().catch(error=>{const message=document.createElement('p');message.className='load-error';message.textContent=error.message;document.querySelector('#map-overview').before(message);console.error(error);});
 

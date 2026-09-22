@@ -1,3 +1,6 @@
+## 4.12.0
+- Add optional local QMD paired search pilot with shared scope filters, result/map comparisons, timings and downloadable relevance evaluations. Hosted keyword search stays unchanged.
+
 ## 4.11.1
 - Fix hosted backup compound-query limit using a transactional batch; handle backup failures without HTML/JSON parsing errors.
 

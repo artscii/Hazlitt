@@ -16,6 +16,10 @@ An interactive evidence atlas of AI-assisted cervical cancer screening and relat
 
 The Atlas organizes reported evidence; inclusion does not itself establish clinical effectiveness or suitability for deployment. Outcome definitions, study populations and validation settings should be checked in the linked reports.
 
+## Optional semantic-search comparison
+
+The [local QMD pilot](pilot/README.md) compares existing keyword results with QMD hybrid semantic retrieval, shared hard filters, timings and relevance ratings. It is opt-in and does not change the public hosted search.
+
 ## Tools and architecture
 
 | Layer | Implementation | Purpose |

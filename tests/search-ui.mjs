@@ -80,4 +80,11 @@ for(const card of d.querySelectorAll('article.program:not([hidden])'))assert(car
 for(const n of [12,13,29]){const p=catalog.programs[n-1];if(p&&p.short?.toLowerCase().includes('colposcopy'))assert(d.getElementById(p.id).querySelector('.search-match-context mark.search-match'));}
 await search('');assert.equal(d.querySelectorAll('.search-match-context').length,0);
 console.log('PASS: hidden-field match explanations and clearing.');
+// Pilot result sets use the same list/marker filtering without moving markers.
+const pilotId=catalog.programs[0].id;
+w.dispatchEvent(new w.CustomEvent('atlas-pilot-results',{detail:{query:'conceptual example',ids:[pilotId,'invalid-id']}}));
+assert.deepEqual([...d.querySelectorAll('article.program:not([hidden])')].map(c=>c.id),[pilotId]);
+assert([...d.querySelectorAll('.marker:not([hidden])')].every(m=>m.getAttribute('aria-label').includes(catalog.programs[0].name)));
+await search('');assert.equal(d.querySelectorAll('article.program:not([hidden])').length,catalog.programs.length);
+console.log('PASS: applying pilot subset and returning to ordinary search.');
 dom.window.close();

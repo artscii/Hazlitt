@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {projectDocument,eligible} from '../pilot/service.mjs';
+const p={id:'x',name:'Test',countries:['Kenya'],publicationYear:2024,evidenceBasis:'Patient examinations',outcome:'Public results',editNotes:'SECRET',password:'SECRET'};
+assert(!projectDocument(p).includes('SECRET'));assert(projectDocument(p).includes('Public results'));
+assert(eligible(p,'Africa 2024',{}));assert(!eligible(p,'Asia',{}));assert(!eligible(p,'2025',{}));assert(!eligible(p,'screening',{country:'China'}));assert(!eligible(p,'screening',{basis:'Slide scans'}));assert(eligible(p,'screening',{basis:'Patient examinations'}));
+const source=fs.readFileSync('dist/search-pilot.js','utf8');assert(!source.includes('innerHTML=item.passage'));assert(source.includes("text.textContent=item.passage"));
+console.log('PASS: public-field whitelist and shared geography/year/examination constraints.');
+const {JSDOM}=await import('jsdom');
+const dom=new JSDOM('<section class="project-search"><input id="project-search" value="screening"></section>',{url:'http://localhost:8094',runScripts:'outside-only'}),w=dom.window,d=w.document;
+w.atlasCatalog={programs:[p]};let applied=null;w.addEventListener('atlas-pilot-results',e=>applied=e.detail);
+w.fetch=async url=>({ok:true,json:async()=>url.endsWith('/status')?{enabled:true}:{query:'screening',a:[],b:[{id:'x',passage:'<script>not executable</script>'}],aMs:1,bMs:20,indexMs:0,totalMs:21}});
+w.eval(fs.readFileSync('dist/search-pilot.js','utf8'));await new Promise(r=>setTimeout(r,10));
+const form=d.querySelector('.search-pilot form');form.elements.query.value='screening';form.dispatchEvent(new w.Event('submit',{cancelable:true}));await new Promise(r=>setTimeout(r,10));
+assert.equal(d.querySelectorAll('.pilot-results section').length,2);assert.equal(d.querySelectorAll('.pilot-results script').length,0);
+d.querySelectorAll('.pilot-results section button')[1].click();assert.deepEqual(Array.from(applied.ids),['x']);
+d.querySelector('[data-vote=B]').click();assert.equal(JSON.parse(w.localStorage.getItem('atlas-qmd-evaluations'))[0].vote,'B');
+assert(!d.querySelector('.pilot-feedback').hidden);dom.window.close();console.log('PASS: side-by-side results, safe excerpts, applying results, and evaluation persistence.');
