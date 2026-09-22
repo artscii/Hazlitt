@@ -1,3 +1,6 @@
+## 4.10.7
+- Add Test link buttons for every editor URL field; validate web addresses and open current draft values in a separate tab without saving.
+
 ## 4.10.6
 - Add subtle palette-aware rules between the title, map, search and results sections.
 

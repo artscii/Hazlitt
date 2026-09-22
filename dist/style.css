@@ -491,3 +491,10 @@ main>.intro{border-bottom:1px solid color-mix(in srgb,var(--atlas-border) 65%,tr
 main>.project-search{border-top:1px solid color-mix(in srgb,var(--atlas-border) 65%,transparent);padding-top:24px}
 main>.directory{border-top:1px solid color-mix(in srgb,var(--atlas-border) 65%,transparent);padding-top:20px}
 @media(max-width:740px){main>.intro{margin-bottom:18px}main>.project-search{padding-top:18px}main>.directory{padding-top:16px}}
+
+/* v4.10.7: draft URL testing preserves existing field height. */
+.url-test-row{display:flex;align-items:stretch;gap:8px;min-width:0}
+.admin-section .url-test-row input{flex:1;min-width:0;width:0;margin:0}
+.admin-section .url-test-row .test-url{flex:none;min-height:44px;margin:0;white-space:nowrap;font-size:13px;padding:8px 10px}
+.url-test-message{display:block;font-size:13px;font-weight:400;line-height:1.4;margin-top:4px;color:var(--atlas-muted)}
+.url-test-message:empty{display:none}
