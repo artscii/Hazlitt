@@ -111,6 +111,10 @@ When deploying to another provider, explicitly provision a persistent database a
 - The admin Excel export is useful for record transfer and an additional catalogue snapshot, but **it is not a full database backup** and does not reproduce the complete version history, sessions or credential state.
 - Before restoration, stop writes and preserve a copy of the current database. Restore into the configured persistent location, check permissions, then verify records, version history and admin access before reopening the app.
 
+## Catalogue export snapshot
+
+The user-provided [Excel catalogue export dated 2026-09-22](data/exports/Hazlitt-Creek-Atlas-2026-09-22.xlsx) is retained unchanged in `data/exports/`. It is a dated record snapshot, not a live database connection or a complete database backup. Use the admin **Test import** / **Preview import** workflow to review duplicates and proposed changes before importing it into another Atlas instance. Adding this file to the repository does not import it into the running app.
+
 ## Repository layout
 
 | Path | Contents |
