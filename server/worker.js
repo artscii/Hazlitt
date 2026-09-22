@@ -69,6 +69,21 @@ async function siteConfig(env){const row=await database(env).prepare('SELECT pay
 export default {async fetch(request,env){
  const url=new URL(request.url),path=url.pathname;
  try{
+  // v4.13.0: authenticated external QMD gateway; clients never receive its token.
+  if(path==='/api/search-pilot/compare'){
+   if(request.method!=='POST')return json({error:'Use POST'},405);
+   if(request.headers.get('Origin')!==url.origin)return json({error:'Invalid origin'},403);
+   if(!env.QMD_SERVICE_URL||!env.QMD_SERVICE_TOKEN)return json({error:'Semantic search unavailable'},503);
+   try{
+    const payload=await body(request,4096);
+    const endpoint=new URL('/api/search-pilot/compare',env.QMD_SERVICE_URL);
+    if(endpoint.protocol!=='https:')throw Error('HTTPS required');
+    const upstream=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+env.QMD_SERVICE_TOKEN},body:JSON.stringify(payload),signal:AbortSignal.timeout(7500),redirect:'error'});
+    if(!upstream.ok)return json({error:'Semantic search unavailable'},upstream.status===429?429:503);
+    const result=await upstream.json();if(!Array.isArray(result.b))throw Error('Invalid results');
+    return json(result);
+   }catch{return json({error:'Semantic search unavailable'},503);}
+  }
   if(path==='/api/catalog'&&request.method==='GET')return json({programs:await records(env),countries:COUNTRIES,config:await siteConfig(env)});
   if(path==='/api/config'&&request.method==='GET')return json(await siteConfig(env));
   if(path.startsWith('/api/')){

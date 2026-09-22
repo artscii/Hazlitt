@@ -464,7 +464,7 @@ let searchFrame=0,composing=false;
 function scheduleSearch(event){
  if(composing||event?.isComposing)return;
  cancelAnimationFrame(searchFrame);
- searchFrame=requestAnimationFrame(()=>{syncSearchMap();});
+ searchFrame=requestAnimationFrame(()=>{if(window.atlasPrimarySearch)window.atlasPrimarySearch(document.querySelector("#project-search").value,()=>syncSearchMap());else syncSearchMap();});
 }
 for(const event of ['input','search','change'])document.querySelector('#project-search').addEventListener(event,scheduleSearch);
 document.querySelector('#project-search').addEventListener('compositionstart',()=>{composing=true;});
@@ -551,6 +551,7 @@ const sharedMessage=document.createElement('span');
 const showAll=document.createElement('button');showAll.type='button';showAll.textContent='Show all projects';
 sharedNotice.append(sharedMessage,showAll);document.querySelector('.project-search').append(sharedNotice);
 function clearSharedProject({preservePilot=false}={}){
+ window.dispatchEvent(new Event('atlas-search-cancel'));
  if(!preservePilot){pilotProjectIds=null;pilotQuery='';}pilotContinent=null;
  document.querySelector('#pilot-map-notice')?.toggleAttribute('hidden',!pilotProjectIds);
  markerProjectIds=null;chosenMarkerName=null;cancelAnimationFrame(searchFrame);revealContinent('All');
@@ -586,7 +587,7 @@ if(new URL(location.href).searchParams.has('project'))openSharedProject();else s
 const pilotNotice=document.createElement('div');pilotNotice.id='pilot-map-notice';pilotNotice.className='pilot-status';pilotNotice.hidden=true;pilotNotice.innerHTML='<span>Comparison results are active on the map.</span> <button type="button" data-pilot-reset>All comparison results</button> <button type="button" data-pilot-exit>Exit comparison</button>';document.querySelector('.project-search').append(pilotNotice);
 pilotNotice.querySelector('[data-pilot-reset]').onclick=()=>{clearSharedProject({preservePilot:true});document.querySelector('#project-search').value=pilotQuery;syncSearchMap();};
 pilotNotice.querySelector('[data-pilot-exit]').onclick=()=>{clearSharedProject();document.querySelector('#project-search').value='';syncSearchMap();};
-window.addEventListener('atlas-pilot-results',event=>{clearSharedProject();pilotProjectIds=new Set(event.detail.ids.filter(id=>programsById.has(id)));pilotQuery=event.detail.query;pilotNotice.hidden=false;document.querySelector('#project-search').value=event.detail.query;revealContinent('All');syncSearchMap();});
+window.addEventListener('atlas-pilot-results',event=>{clearSharedProject();pilotProjectIds=new Set(event.detail.ids.filter(id=>programsById.has(id)));pilotQuery=event.detail.query;pilotNotice.hidden=event.detail.primary===true;document.querySelector('#project-search').value=event.detail.query;revealContinent('All');syncSearchMap();});
 window.dispatchEvent(new Event('atlas-ready'));
 })().catch(error=>{const message=document.createElement('p');message.className='load-error';message.textContent=error.message;document.querySelector('#map-overview').before(message);console.error(error);});
 
