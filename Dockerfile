@@ -13,8 +13,11 @@ RUN node scripts/build.mjs
 FROM node:24-alpine
 WORKDIR /app
 COPY --from=build /app /app
-RUN mkdir /data && chown node:node /data
+# Git checkouts with a restrictive umask must still be readable by the runtime user.
+RUN chmod -R a+rX /app && mkdir /data && chown node:node /data
 USER node
+# Fail the image build if the runtime user cannot read startup code or migrations.
+RUN node --check server/local.mjs && node --input-type=module -e "import fs from 'node:fs'; await import('./server/request-origin.mjs'); await import('./dist/server/index.js'); for(const name of fs.readdirSync('drizzle').filter(n=>n.endsWith('.sql'))) fs.readFileSync('drizzle/'+name)"
 ENV DATA_DIR=/data PORT=8080
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s CMD wget -q -O /dev/null http://127.0.0.1:8080/healthz || exit 1
