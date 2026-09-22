@@ -377,3 +377,19 @@ html.screen-flipping,html.editor-flip-pending{background:var(--atlas-soft);overf
 
 /* v4.9.9: subset position belongs with project identification in the footer. */
 .project-row-meta .result-number{position:static;display:inline-block;margin:0;font-size:13px;line-height:1.5;padding:2px 8px;font-variant-numeric:tabular-nums}
+
+/* v4.9.11: related card actions share a compact, touch-friendly footer. */
+.project-footer-links{display:flex;align-items:center;justify-content:flex-end;gap:12px;min-width:0}
+.project-footer-share{display:flex;flex-direction:column;min-width:0}
+.project-footer-links .share-project{display:inline-flex;align-items:center;min-height:44px;margin:0;font-size:13px}
+.project-footer-divider{width:1px;height:16px;background:var(--atlas-border);flex:none;margin:0}
+.project-footer-links .share-feedback:empty{display:none}
+.project-footer-links .share-feedback{margin:0;font-size:12px}
+@media(max-width:740px){.evidence-scroll>.program>.project-row-footer{flex-wrap:wrap}.project-footer-links{margin-left:auto;gap:10px}.project-footer-links .share-project{white-space:nowrap}}
+/* v4.9.11: square project surfaces; quiet neighbouring selections on hover. */
+.evidence-scroll,.evidence-scroll>.program{border-radius:0}
+.evidence-scroll>.program{transition:background-color .18s ease,box-shadow .18s ease}
+@media(hover:hover){
+.evidence-scroll:has(>.program:hover)>.program.selected-profile:not(:hover):not(:focus-within){background-color:color-mix(in srgb,var(--atlas-highlight) 22%,var(--atlas-page));box-shadow:0 2px 5px color-mix(in srgb,var(--atlas-text) 4%,transparent)}
+}
+@media(prefers-reduced-motion:reduce){.evidence-scroll>.program{transition:none}}

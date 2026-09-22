@@ -1,3 +1,6 @@
+## 4.9.11
+- Group Share project link and Back to map in the right footer with a subtle vertical divider.
+
 ## 4.9.10
 - Place evidence status directly below the project title.
 
