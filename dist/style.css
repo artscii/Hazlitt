@@ -408,3 +408,10 @@ html.screen-flipping,html.editor-flip-pending{background:var(--atlas-soft);overf
 .directory>.section-heading{display:flex;align-items:center;flex-wrap:wrap}
 .references-jump{margin-left:auto;border:0;border-radius:0;background:transparent;padding:4px 0;font-weight:400;min-height:44px}
 .references-jump:hover{background:transparent;text-decoration:underline}
+
+/* v4.9.16: muted record position and a labelled edit action in the right footer. */
+.project-row-meta .record-number,.project-row-meta .result-number{color:var(--atlas-muted);font-weight:400;font-size:13px;background:transparent;padding:0;margin:0}
+.project-row-meta{gap:5px}
+.project-footer-links .edit-project{display:inline-flex;align-items:center;gap:6px;min-height:44px;color:var(--atlas-muted);font-size:13px;text-decoration:none;white-space:nowrap}
+.project-footer-links .edit-project:hover{color:var(--atlas-accent);text-decoration:underline}
+@media(max-width:740px){.project-footer-links{flex-wrap:wrap;justify-content:flex-start;width:100%;margin-left:0;gap:4px 8px}.project-footer-links .edit-project,.project-footer-links .share-project,.evidence-scroll>.program .back-to-map{font-size:12px}}

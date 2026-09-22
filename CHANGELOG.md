@@ -1,3 +1,6 @@
+## 4.9.16
+- Mute the Project number - (x of y) footer label; move labelled Edit Record before Share project link with a vertical divider.
+
 ## 4.9.15
 - Simplify results navigation to a right-aligned References text link; remove the results jump and selection subtitle.
 
