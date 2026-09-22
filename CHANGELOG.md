@@ -1,3 +1,6 @@
+## 4.10.5
+- Fix dark preview contrast with light text, restrained dark hover surfaces and visible focus outlines across palettes.
+
 ## 4.10.4
 - Give each map preview card a subtle hover and keyboard-focus highlight without shifting its layout.
 - Include publication year and explicitly labelled reported sample/reach in previews; missing data stays Not reported.

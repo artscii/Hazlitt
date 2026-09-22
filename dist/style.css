@@ -473,3 +473,15 @@ html.screen-flipping,html.editor-flip-pending{background:var(--atlas-soft);overf
 
 .preview-study-details{display:grid;gap:4px;margin:8px 0 12px;font-size:13px;line-height:1.5;color:var(--atlas-muted)}
 .preview-study-details strong{font-size:inherit;font-weight:600}
+
+/* v4.10.5: dedicated dark-surface colours stay readable in every site palette. */
+#tooltip{background:#24343d;color:#f5f8fa}
+#tooltip .tooltip-entry{background:#293b45;color:#f5f8fa}
+#tooltip .tooltip-entry:nth-child(even){background:#2d404a}
+#tooltip .tooltip-entry small,#tooltip .preview-study-details,#tooltip .preview-study-details strong{color:#dce7ee}
+#tooltip .tooltip-entry-title,#tooltip>strong{color:#f5f8fa}
+@media(hover:hover){#tooltip .tooltip-entry:hover{background:#344853;box-shadow:inset 0 0 0 1px #809ba9}}
+#tooltip .tooltip-entry:focus-within{background:#344853;box-shadow:inset 0 0 0 1px #809ba9}
+#tooltip .tooltip-profile,#tooltip .tooltip-close{color:#f5f8fa;border-color:#809ba9;background:transparent}
+#tooltip .tooltip-profile:hover,#tooltip .tooltip-profile:focus-visible,#tooltip .tooltip-close:hover{background:#405967;color:#fff}
+#tooltip a:focus-visible,#tooltip button:focus-visible{outline:2px solid #b9dff5;outline-offset:3px}
