@@ -168,7 +168,7 @@ function filterProfiles(){
  document.querySelectorAll('.directory').forEach(section=>{section.hidden=![...section.querySelectorAll('article.program')].some(card=>!card.hidden)});
  numberSelectedRows();
  highlightProfileMatches(query);
- document.querySelector('#clear-search').hidden=!input.value;document.querySelector('#view-search-results').hidden=!matches.size;
+ document.querySelector('#clear-search').hidden=!input.value;
  document.querySelector('#search-status').classList.toggle('search-empty',!matches.size);
  document.querySelector('#search-status').textContent=matches.size?`${matches.size} of ${programs.length} projects shown`:'No matching projects. Try another term or clear your search.';
 }
@@ -195,7 +195,6 @@ function prioritizeProfiles(place,{filter=true}={}){
  place=searchPlace(place);if(!place.ids.length)return;
  document.querySelector('#selected-projects-section').hidden=false;
  document.querySelector('#selected-projects-title').textContent=place.name;
- const subtitle=document.querySelector('#selected-projects-section .section-heading span');if(subtitle)subtitle.textContent=place.name==='Search results'?'Matching indexed evidence':'From your map selection';
  arrangeProfiles(place.ids);
  if(filter)filterProfiles();
 }
@@ -378,7 +377,7 @@ function updateMapScrollCue(){
 // v3.4.0: explicit map panning and direct access to the filtered results.
 for(const [id,direction] of [['map-pan-left',-1],['map-pan-right',1]])document.getElementById(id).onclick=()=>mapScroller.scrollBy({left:direction*mapScroller.clientWidth*.7,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
 function jumpToResults(event){setMobileView('list');const card=[...document.querySelectorAll('article.program')].find(card=>!card.hidden);if(!card)return;window.dispatchEvent(new CustomEvent('atlas-project-view',{detail:card.id}));event.preventDefault();card.setAttribute('tabindex','-1');card.focus({preventScroll:true});card.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});}
-document.querySelector('#view-search-results').addEventListener('click',jumpToResults);
+
 document.querySelector('#project-search').addEventListener('keydown',event=>{if(event.key==='Enter')jumpToResults(event);});
 mapScroller.addEventListener('scroll',()=>{closeTip();updateMapScrollCue()},{passive:true});
 window.addEventListener('resize',()=>{closeTip();updateMapScrollCue()});

@@ -1,3 +1,6 @@
+## 4.9.15
+- Simplify results navigation to a right-aligned References text link; remove the results jump and selection subtitle.
+
 ## 4.9.14
 - Order the left card footer as project number, subset position, divider, then edit pencil.
 

@@ -403,3 +403,8 @@ html.screen-flipping,html.editor-flip-pending{background:var(--atlas-soft);overf
 .search-match-context{margin-top:12px;padding:10px 12px;border:1px solid var(--atlas-border);background:var(--atlas-soft);font-size:14px}
 .search-match-context strong{display:block;font-size:12px;font-weight:600;color:var(--atlas-muted);margin-bottom:4px}
 .evidence-scroll>.program .search-match-context p{margin:0;font-size:14px}
+
+/* v4.9.15: one quiet references link at the right of each results heading. */
+.directory>.section-heading{display:flex;align-items:center;flex-wrap:wrap}
+.references-jump{margin-left:auto;border:0;border-radius:0;background:transparent;padding:4px 0;font-weight:400;min-height:44px}
+.references-jump:hover{background:transparent;text-decoration:underline}
