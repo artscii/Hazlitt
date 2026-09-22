@@ -1,3 +1,6 @@
+## 4.9.14
+- Order the left card footer as project number, subset position, divider, then edit pencil.
+
 ## 4.9.13
 - Explain hidden-field search matches with concise labelled excerpts and blue term highlighting; remove excerpts when the query is cleared.
 

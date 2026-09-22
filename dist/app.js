@@ -182,7 +182,7 @@ function updateCountryOutlines(place){
 function numberSelectedRows(){
  const rows=[...document.querySelectorAll('#selected-projects article.program')].filter(row=>!row.hidden);
  document.querySelectorAll('.result-number').forEach(b=>b.remove());
- rows.forEach((row,i)=>{const badge=document.createElement('span');badge.className='result-number';badge.textContent=`${i+1} of ${rows.length}`;badge.setAttribute('aria-label',`Selected project ${i+1} of ${rows.length}`);row.querySelector('.project-row-meta').append(badge);row.classList.add('selected-profile');});
+ rows.forEach((row,i)=>{const badge=document.createElement('span');badge.className='result-number';badge.textContent=`${i+1} of ${rows.length}`;badge.setAttribute('aria-label',`Selected project ${i+1} of ${rows.length}`);row.querySelector('.project-row-meta').insertBefore(badge,row.querySelector('.project-row-meta .project-footer-divider'));row.classList.add('selected-profile');});
 }
 // v4.8.0: move existing cards instead of rebuilding the full catalog on each keystroke.
 function arrangeProfiles(ids){
