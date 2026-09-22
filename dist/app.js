@@ -313,7 +313,7 @@ continentControls.after(tipDock);
 const selectionContext=document.createElement('div');selectionContext.className='selection-context';selectionContext.setAttribute('aria-live','polite');continentControls.after(selectionContext);
 function updateSelectionContext(count){
  const place=placesByName.get(chosenMarkerName),region=place?continentByCountry.get(place.countries[0]):visibleContinent;
- const title=place?`${region} → ${place.countries.join(' / ')}`:region==='All'?'Search results':region;
+ const title=place?`${region} → ${place.countries.join(' / ')}`:region==='All'?'Results':region;
  selectionContext.replaceChildren();
  const label=document.createElement('span');label.textContent=`${title} · ${count} ${count===1?'project':'projects'}`;selectionContext.append(label);
  if(place&&region){const back=document.createElement('button');back.type='button';back.textContent=`Back to ${region}`;back.onclick=()=>selectContinent(region);selectionContext.append(back);}
@@ -417,7 +417,7 @@ function syncSearchMap({preserveMapPosition=true,selectedPlace=null}={}){
  const query=document.querySelector('#project-search').value.trim(),matches=matchingProjectIds(query);
  const filtered=!!(query||sharedProjectId),orderedIds=orderProjectIds([...matches]);
  if(filtered&&orderedIds.length){
-  prioritizeProfiles({name:selectedPlace?.name||(sharedProjectId?programsById.get(sharedProjectId).name:'Search results'),ids:orderedIds},{filter:false});
+  prioritizeProfiles({name:selectedPlace?.name||(sharedProjectId?programsById.get(sharedProjectId).name:'Results'),ids:orderedIds},{filter:false});
  }else arrangeProfiles([]);
  filterProfiles();
  const searchedCountries=AtlasSearch.parse(query).countries;

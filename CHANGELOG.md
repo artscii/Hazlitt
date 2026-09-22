@@ -1,3 +1,6 @@
+## 4.9.21
+- Shorten Search results to Results.
+
 ## 4.9.20
 - Remove the visible count below search while retaining accessible announcements and the no-results message.
 
