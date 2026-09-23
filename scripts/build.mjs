@@ -180,6 +180,8 @@ fs.writeFileSync(
     "\n" +
     fs.readFileSync("server/response-cache.js", "utf8") +
     "\n" +
+    fs.readFileSync("server/search-sharing.js", "utf8") +
+    "\n" +
     fs.readFileSync("server/worker.js", "utf8"),
 );
 fs.copyFileSync(".openai/hosting.json", "dist/.openai/hosting.json");

@@ -222,3 +222,11 @@ Keyword search stays immediate; QMD adds only approved related concepts. Cached/
 System diagrams are built as SVG, keeping Mermaid out of the Admin browser bundle. For local builds install Chromium with `npx playwright install chromium` (or set `CHROMIUM_PATH`). Docker supplies Chromium only in its build stage.
 
 Deploy both services with `bash scripts/deploy-system.sh --with-qmd`, then run `bash scripts/verify-performance.sh https://YOUR_HOST`. See [VPS deployment guide](docs/VPS-DEPLOYMENT.md#performance-release-41327) for checks and operational limits.
+
+### Sharing search results (4.13.31)
+
+Use the paperclip beside the search cloud to copy a public link. The query and any explicit location subset are restored along with the map. Normal query links run the current search again; results can change as records or vocabulary change. Explicit location selections retain their selected project IDs, excluding deleted records.
+
+The server stores a deduplicated descriptor in SQLite (`shared_searches`) and generates Open Graph metadata plus a logo-based PNG with the saved profile count. Preview images do not run QMD. The query remains in the link title, but is omitted from the image. Social platforms may cache previews. The bundled Noto Sans font is licensed under the SIL Open Font License (`server/fonts/OFL.txt`); PNG rendering uses `@resvg/resvg-js`.
+
+Shares require the public server and its persistent SQLite volume. Database backups include them. Creation is bounded to 10,000 distinct links; existing links remain readable at that limit. A clipboard-denied browser receives a selectable URL instead.

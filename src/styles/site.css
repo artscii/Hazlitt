@@ -4978,3 +4978,41 @@ body > footer .site-navigation a {
     grid-column: 1/-1;
   }
 }
+
+/* v4.13.31: compact, touch-accessible search sharing beside QMD status. */
+.search-share-divider {
+  opacity: 0.35;
+  margin-inline: 0.2rem;
+}
+#share-search {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+#share-search:hover,
+#share-search:focus-visible {
+  background: color-mix(in srgb, currentColor 8%, transparent);
+}
+#share-search:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+#share-search:disabled {
+  opacity: 0.45;
+  cursor: wait;
+}
+#share-search-status {
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+#share-search-status input {
+  max-width: 100%;
+  font-size: 0.8rem;
+}

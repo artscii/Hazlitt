@@ -544,3 +544,19 @@ bash scripts/deploy-system.sh
 ```
 
 Verify footer 4.13.28. Reload Admin → Search and confirm the saved alias and vocabulary version remain. Do not use `docker compose down -v`, which would remove persistent volumes. The VIA/acetic regression also closes/reopens SQLite in an isolated temporary database and checks a fresh search runtime; it never restarts or restores over production.
+
+## Search sharing and social previews (4.13.31)
+
+From the VPS checkout:
+
+```bash
+cd ~/apps/Hazlitt
+git pull --ff-only
+bash scripts/deploy-system.sh
+```
+
+This rebuilds Atlas and its monitor, preserves the SQLite volume and leaves QMD and Umami running. Startup applies the additive `shared_searches` migration. No new environment variable, port, or proxy route is needed: `/api/search/share` and `/og/search/<id>.png` use the existing Atlas proxy. Keep `PUBLIC_ORIGIN` configured to your public HTTPS origin so copied links and preview URLs are public.
+
+Verify the footer says **4.13.31**. Search for `country:Kenya`, click the paperclip beside the cloud, and open the copied URL in a new tab. Confirm the search field, profiles and map agree; refresh the tab and repeat with a no-match query. The copied URL contains `q` and `search` parameters. Inspect its page source for `og:image` and open that image URL: it should return a PNG with the logo, count and “Explore the outcomes”. Check that a one-profile image uses the singular label.
+
+Ordinary shared searches are live; the preview count is the saved set minus subsequently deleted records. Explicit location subsets preserve selected IDs. Crawlers never invoke QMD, and social services may retain older previews. Back up SQLite normally to preserve shared links when migrating. Do not remove Docker volumes during deployment.

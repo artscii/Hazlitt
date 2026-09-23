@@ -1,3 +1,4 @@
+import { renderSearchPreview } from "./search-preview.mjs";
 import { failResponse } from "./http-response.mjs";
 import { streamSqliteBackup } from "./sqlite-backup.mjs";
 import { once } from "node:events";
@@ -111,6 +112,7 @@ http
       );
       const env = {
         DB,
+        RENDER_SEARCH_PREVIEW: renderSearchPreview,
         MONITOR_SERVICE_TOKEN: process.env.MONITOR_SERVICE_TOKEN,
         UMAMI_WEBSITE_ID: process.env.UMAMI_WEBSITE_ID,
         UMAMI_DASHBOARD_URL: process.env.UMAMI_DASHBOARD_URL,

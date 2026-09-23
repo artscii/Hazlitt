@@ -336,6 +336,8 @@ const atlasWorker = {
           return json({ ready: false });
         }
       }
+      const sharedResponse = await sharedSearchResponse(request, env);
+      if (sharedResponse) return sharedResponse;
       if (path === "/api/search/query") {
         if (!(await siteConfig(env)).qmdEnabled)
           return json(
@@ -824,7 +826,7 @@ export default {
     } finally {
       if (
         !["GET", "HEAD"].includes(request.method) &&
-        !/^\/api\/(search\/(query|status)|login|logout|analytics)(?:\/|$)/.test(
+        !/^\/api\/(search\/(query|status|share)|login|logout|analytics)(?:\/|$)/.test(
           new URL(request.url).pathname,
         )
       )

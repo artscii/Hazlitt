@@ -1,6 +1,6 @@
 {
   "name": "hazlitt-creek-evidence-atlas",
-  "version": "4.13.30",
+  "version": "4.13.31",
   "private": true,
   "type": "module",
   "scripts": {
@@ -24,6 +24,7 @@
     "yaml": "2.8.1"
   },
   "dependencies": {
+    "@resvg/resvg-js": "2.6.2",
     "exceljs": "4.4.0",
     "geoip-country": "5.0.202609230144",
     "proxy-addr": "2.0.8"

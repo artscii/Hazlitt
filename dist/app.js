@@ -1476,10 +1476,11 @@
       end: performance.now(),
     });
   }
+  let restoringSharedSearch = false;
   let searchFrame = 0,
     composing = false;
   function scheduleSearch(event) {
-    if (composing || event?.isComposing) return;
+    if (restoringSharedSearch || composing || event?.isComposing) return;
     cancelAnimationFrame(searchFrame);
     searchFrame = requestAnimationFrame(() => {
       if (window.atlasPrimarySearch)
@@ -1701,7 +1702,13 @@
   showAll.textContent = "Show all projects";
   sharedNotice.append(sharedMessage, showAll);
   document.querySelector(".project-search").append(sharedNotice);
-  function clearSharedProject({ preserveSemantic = false } = {}) {
+  let sharedSearchGeneration = 0;
+  function clearSharedProject({
+    preserveSemantic = false,
+    preserveSearchLink = false,
+  } = {}) {
+    restoringSharedSearch = false;
+    sharedSearchGeneration++;
     window.dispatchEvent(new Event("atlas-search-cancel"));
     if (!preserveSemantic) {
       semanticProjectIds = null;
@@ -1716,6 +1723,10 @@
     sharedNotice.hidden = true;
     const url = new URL(location.href);
     url.searchParams.delete("project");
+    if (!preserveSearchLink) {
+      url.searchParams.delete("search");
+      url.searchParams.delete("q");
+    }
     url.hash = "";
     history.replaceState(null, "", url);
   }
@@ -1768,7 +1779,7 @@
       }),
     );
   }
-  window.addEventListener("popstate", openSharedProject);
+  window.addEventListener("popstate", openSharedSelection);
   document.addEventListener("click", async (event) => {
     const link = event.target.closest("a.share-project");
     if (
@@ -1812,12 +1823,118 @@
       input.select();
     }
   });
+  // v4.13.31: share the current search and preserve explicit location selections.
+  async function openSharedSelection(initial = false) {
+    const url = new URL(location.href);
+    if (url.searchParams.has("project")) return openSharedProject();
+    if (!url.searchParams.has("q") && !url.searchParams.has("search")) {
+      if (initial === true) selectContinent("Africa");
+      else {
+        clearSharedProject();
+        document.querySelector("#project-search").value = "";
+        syncSearchMap();
+      }
+      return;
+    }
+    clearSharedProject();
+    restoringSharedSearch = true;
+    history.replaceState(null, "", url);
+    const epoch = sharedSearchGeneration;
+    const input = document.querySelector("#project-search");
+    input.value = (url.searchParams.get("q") || "").slice(0, 500);
+    syncSearchMap();
+    let data;
+    if (url.searchParams.has("search")) {
+      try {
+        const response = await fetch(
+          "/api/search/share/" +
+            encodeURIComponent(url.searchParams.get("search")),
+          { signal: AbortSignal.timeout(5000) },
+        );
+        if (!response.ok) throw Error("Unavailable share");
+        data = await response.json();
+      } catch {
+        if (epoch === sharedSearchGeneration)
+          document.querySelector("#share-search-status").textContent =
+            "Saved selection unavailable; showing current search.";
+      }
+    }
+    if (epoch !== sharedSearchGeneration) return;
+    restoringSharedSearch = false;
+    if (data) {
+      input.value = data.query;
+      if (data.filterIds !== null) {
+        markerProjectIds = new Set(
+          data.filterIds.filter((id) => programsById.has(id)),
+        );
+        syncSearchMap();
+        return;
+      }
+    }
+    scheduleSearch();
+  }
+  document
+    .querySelector("#share-search")
+    .addEventListener("click", async () => {
+      const button = document.querySelector("#share-search"),
+        feedback = document.querySelector("#share-search-status");
+      const query = document.querySelector("#project-search").value.trim();
+      if (query.length > 500) {
+        feedback.textContent =
+          "Shorten the search to 500 characters to share it.";
+        return;
+      }
+      button.disabled = true;
+      feedback.textContent = "Preparing link…";
+      try {
+        const ids = [...matchingProjectIds(query)];
+        const response = await fetch("/api/search/share", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            query,
+            ids,
+            filterIds:
+              markerProjectIds || semanticContinent || sharedProjectId
+                ? ids
+                : null,
+          }),
+          signal: AbortSignal.timeout(10000),
+        });
+        if (!response.ok) throw Error("Could not save shared search");
+        const data = await response.json();
+        try {
+          await navigator.clipboard.writeText(data.url);
+          feedback.textContent = "Link copied";
+        } catch {
+          feedback.textContent = "Copy link: ";
+          const field = document.createElement("input");
+          field.readOnly = true;
+          field.value = data.url;
+          field.setAttribute("aria-label", "Search share URL — copy this link");
+          feedback.append(field);
+          field.focus();
+          field.select();
+        }
+        window.dispatchEvent(
+          new CustomEvent("atlas-analytics", {
+            detail: {
+              name: "search-shared",
+              data: { query, result_count: ids.length },
+            },
+          }),
+        );
+      } catch {
+        feedback.textContent = "Could not create link. Please try again.";
+      } finally {
+        button.disabled = false;
+      }
+    });
   // v4.8.7: start with Africa; explicit shared-project links take precedence.
-  if (new URL(location.href).searchParams.has("project")) openSharedProject();
-  else selectContinent("Africa");
+
   // v4.12.1: map navigation narrows the semantic result set, never the whole catalogue.
   window.addEventListener("atlas-semantic-results", (event) => {
-    clearSharedProject();
+    clearSharedProject({ preserveSearchLink: true });
     semanticProjectIds = new Set(
       event.detail.ids.filter((id) => programsById.has(id)),
     );
@@ -1826,6 +1943,7 @@
     revealContinent("All");
     syncSearchMap();
   });
+  await openSharedSelection(true);
   window.dispatchEvent(new Event("atlas-ready"));
 })().catch((error) => {
   window.dispatchEvent(

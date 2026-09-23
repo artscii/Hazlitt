@@ -1,6 +1,6 @@
 # Changelog
 
-Current application release: **4.13.30**. This matches `package.json`, the Compose image tag, and generated page footers. A repository commit identifies source history; it does not prove that version has been deployed on a VPS.
+Current application release: **4.13.31**. This matches `package.json`, the Compose image tag, and generated page footers. A repository commit identifies source history; it does not prove that version has been deployed on a VPS.
 
 Entries are newest first and describe behavior at each release. Later entries supersede earlier behavior. Versions 4.12.1–4.13.7 have been checked against Git history; older entries are retained without a new historical audit. Version 4.13.1 groups several changes made without individual version increments.
 
@@ -9,6 +9,12 @@ Entries are newest first and describe behavior at each release. Later entries su
 - Backfilled releases 4.13.0–4.13.7 in [e1a0536](https://github.com/artscii/Hazlitt/commit/e1a0536); reviewed release/commit mapping and clarified deployment and historical behavior afterward.
 - Documentation-only corrections do not change the application version or require a container rebuild.
 - Future application releases should update this changelog in the release commit, with changes, validation and deployment notes. Use `npm run release:patch` to advance the package version and synchronize generated footer/Compose versions; write the corresponding changelog entry before committing.
+
+## 4.13.31 — 2026-09-23
+- Add a paperclip share control after the QMD cloud and vertical separator. Shared URLs restore search text, project profiles and map filtering; explicit location subsets retain their project selection.
+- Store deduplicated shared-search descriptors in SQLite, included in complete database backups. Ordinary shared searches rerun against current records; preview counts describe the saved set, excluding deleted records.
+- Generate crawler-readable Open Graph metadata and a 1200×630 PNG with the Atlas logo, dynamic profile count and “Explore the outcomes”. The image deliberately omits the search phrase; the link title retains it. PNG rendering uses a bundled, licensed font and a bounded memory cache, without QMD inference.
+- Test persistence, metadata escaping, invalid input, zero/single results, PNG dimensions, clipboard fallback, and desktop/mobile search restoration. Deployment uses the existing system deployment script; QMD does not need rebuilding.
 
 ## 4.13.30 — 2026-09-23
 - Display equivalent terms in collapsed thesaurus summaries so aliases such as acetic remain visible under VIA.
