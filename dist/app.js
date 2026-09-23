@@ -148,11 +148,17 @@ function updateEvidencePanels(){
 }
 // v4.9.0: scroll affordance reflects actual remaining content.
 function updateScrollHint(panel){
+ const rows=[...panel.querySelectorAll('article.program')].filter(row=>!row.hidden);
  const more=panel.scrollHeight>panel.clientHeight+2&&panel.scrollTop+panel.clientHeight<panel.scrollHeight-3;
  panel.parentElement.classList.toggle('has-more-projects',more);
  const bottom=panel.getBoundingClientRect().top+panel.clientTop+panel.clientHeight;
- const remaining=more?[...panel.querySelectorAll('article.program')].filter(row=>!row.hidden&&row.getBoundingClientRect().top>=bottom-1).length:0;
- const hint=panel.nextElementSibling;if(hint?.classList.contains('more-projects-hint')){hint.hidden=!remaining;hint.textContent=`${remaining} more ${remaining===1?'project':'projects'} below`;}
+ const remaining=more?rows.filter(row=>row.getBoundingClientRect().bottom>bottom+3).length:0;
+ const hint=panel.nextElementSibling;
+ if(hint?.classList.contains('more-projects-hint')){
+  hint.hidden=!rows.length||!panel.clientHeight;
+  hint.textContent=remaining?`${remaining} more ${remaining===1?'project':'projects'} below`:'No more projects to scroll';
+ }
+
 }
 for(const panel of document.querySelectorAll('.evidence-scroll')){
  const hint=document.createElement('p');hint.className='more-projects-hint';hint.textContent='More projects below ↓';hint.hidden=true;panel.after(hint);

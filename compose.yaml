@@ -1,7 +1,7 @@
 services:
   atlas:
     build: .
-    image: hazlitt-creek-evidence-atlas:4.13.16
+    image: hazlitt-creek-evidence-atlas:4.13.17
     ports:
       - "127.0.0.1:8081:8080"
     environment:
