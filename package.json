@@ -1,12 +1,13 @@
 {
   "name": "hazlitt-creek-evidence-atlas",
-  "version": "4.13.1",
+  "version": "4.13.2",
   "private": true,
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
     "start": "node server/local.mjs",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "release:patch": "npm version patch --no-git-tag-version && npm run build"
   },
   "devDependencies": {
     "drizzle-kit": "^0.31.0",

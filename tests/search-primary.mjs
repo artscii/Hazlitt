@@ -7,7 +7,7 @@ w.fetch=async()=>{if(mode==='fail')throw Error('offline');return {ok:true,json:a
 w.addEventListener('atlas-pilot-results',e=>{applied=e.detail;});
 w.eval(fs.readFileSync('dist/search-pilot.js','utf8'));
 const input=w.document.querySelector('input');const run=q=>{input.value=q;w.atlasPrimarySearch(q,()=>fallbacks++);};
-run('Kenya');await new Promise(r=>setTimeout(r,350));assert.deepEqual(Array.from(applied.ids),['kinondo']);assert.equal(fallbacks,0);
-mode='fail';run('screening');await new Promise(r=>setTimeout(r,350));assert.equal(fallbacks,1);assert.match(w.document.querySelector('[role=status]').textContent,/Keyword search/);
+run('Kenya');await new Promise(r=>setTimeout(r,350));assert.deepEqual(Array.from(applied.ids),['kinondo']);assert.equal(fallbacks,0);assert.ok(w.document.querySelector('.qmd-cloud').classList.contains('is-connected'));
+mode='fail';run('screening');await new Promise(r=>setTimeout(r,350));assert.equal(fallbacks,1);assert.match(w.document.querySelector('[role=status]').getAttribute('aria-label'),/keyword search/);assert.equal(w.document.querySelector('.qmd-cloud').classList.contains('is-connected'),false);
 run('other');assert.equal(fallbacks,2);run('');assert.equal(fallbacks,3);
 dom.window.close();console.log('PASS primary results, failure fallback, cooldown, and empty search.');

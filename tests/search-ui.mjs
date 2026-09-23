@@ -15,7 +15,8 @@ const settle=()=>new Promise(resolve=>setTimeout(resolve,45));
 async function search(query){input.value=query;input.dispatchEvent(new w.Event('input',{bubbles:true}));await settle();}
 assert.equal(input.value,'Africa');assert.equal(d.querySelector('#detail h2').textContent,'Africa');assert(d.querySelector('.continent-summary'));
 assert(d.querySelector('#selected-projects-section .references-jump'));
-assert(!d.querySelector('.search-tips').open);
+assert.equal(d.querySelector('.search-tips'),null);
+assert(d.querySelector('#qmd-connection'));
 assert.equal(input.placeholder,`All ${catalog.programs.length} projects`);
 await search('“Africa”');assert.equal(d.querySelector('#detail h2').textContent,'Africa');
 await search('cytology');assert(d.querySelectorAll('article.program:not([hidden])').length>0);

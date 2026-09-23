@@ -2,6 +2,8 @@ import fs from 'node:fs';
 // v3.0.0: derive secondary pages from the Atlas shell so headers/footers stay identical.
 // Keep every page footer aligned with the package release version.
 const {version}=JSON.parse(fs.readFileSync('package.json','utf8'));
+// Release builds share one version across the footer and Docker image tag.
+if(fs.existsSync('compose.yaml'))fs.writeFileSync('compose.yaml',fs.readFileSync('compose.yaml','utf8').replace(/hazlitt-creek-evidence-atlas:[\d.]+/,`hazlitt-creek-evidence-atlas:${version}`));
 const source=fs.readFileSync('dist/index.html','utf8').replace(/(<span class="site-version">)[^<]*(<\/span>)/,`$1Version ${version}$2`);
 fs.writeFileSync('dist/index.html',source);
 const head=source.match(/<head>[\s\S]*?<\/head>/)[0].replace(/<script[\s\S]*?<\/script>/g,'').replace('href="style.css"','href="/style.css"');
