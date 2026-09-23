@@ -111,7 +111,11 @@ export default {async fetch(request,env){
     return json({ok:true},200,{'Set-Cookie':`atlas_session=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=28800${url.protocol==='https:'?'; Secure':''}`});
    }
    const auth=await session(request,env);
-   if(path==='/api/analytics/event'&&request.method==='POST')return collectAnalytics(request,env,auth);
+   if(path==='/api/analytics/event'&&request.method==='POST')return json({ignored:true,reason:'Replaced by Umami'});
+   if(path==='/api/analytics/config'&&request.method==='GET'){
+    const websiteId=env.UMAMI_WEBSITE_ID||'';let dashboardUrl='';try{const u=new URL(env.UMAMI_DASHBOARD_URL);if(u.protocol==='https:'&&!u.username&&!u.password)dashboardUrl=u.href;}catch{}
+    return json({enabled:!auth&&!!dashboardUrl&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(websiteId),websiteId,dashboardUrl:auth?dashboardUrl:''});
+   }
    if(path==='/api/session'&&request.method==='GET')return json({authenticated:!!auth});
    if(!auth)return json({error:'Sign in to edit records'},401);
    if(path==='/api/db-backup'&&request.method==='GET')return await databaseBackup(env);

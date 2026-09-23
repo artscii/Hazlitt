@@ -1,15 +1,18 @@
-// Anonymous visit state is tab-local and expires after 30 minutes of inactivity.
-(()=>{
- let state=null;try{state=JSON.parse(sessionStorage.getItem('atlas-visit')||'null');}catch{}
- let queue=Promise.resolve();
- async function send(project,renew=false){
-  if(navigator.doNotTrack==='1'||navigator.globalPrivacyControl||location.pathname.startsWith('/admin'))return;
-  const now=Date.now();if(renew||!state||now-state.last>1800000)state={id:crypto.randomUUID(),last:now};state.last=now;
-  try{sessionStorage.setItem('atlas-visit',JSON.stringify(state));}catch{}
-  const response=await fetch('/api/analytics/event',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({visit:state.id,project}),keepalive:true});
-  if(response.status===409&&!renew)await send(project,true);
- }
- const track=project=>{queue=queue.then(()=>send(project)).catch(()=>{});};
+// Umami only: no parallel legacy collector and no tracking on Admin pages.
+(async()=>{
+ if(location.pathname.startsWith('/admin')||navigator.doNotTrack==='1'||navigator.globalPrivacyControl)return;
+ let ready=false;const pending=new Set(),seen=new Set();
+ const track=id=>{if(!id||seen.has(id))return;if(!ready){if(pending.size<100)pending.add(id);return;}seen.add(id);try{Promise.resolve(window.umami.track('project-view',{project_id:id})).catch(()=>{});}catch{}};
  window.addEventListener('atlas-project-view',event=>{if(typeof event.detail==='string')track(event.detail);});
- track('');for(const name of ['pointerdown','keydown'])document.addEventListener(name,()=>{if(state&&Date.now()-state.last>1800000)track('');else if(state){state.last=Date.now();try{sessionStorage.setItem('atlas-visit',JSON.stringify(state));}catch{}}},{passive:true});
+ try{
+  const response=await fetch('/api/analytics/config',{cache:'no-store'});if(!response.ok)return;
+  const config=await response.json();if(!config.enabled)return;
+  const script=document.createElement('script');script.src='/metrics/script.js';script.defer=true;
+  script.dataset.websiteId=config.websiteId;script.dataset.hostUrl=location.origin+'/metrics';
+  window.atlasUmamiBeforeSend=(type,payload)=>({...payload,url:location.pathname,referrer:''});script.dataset.beforeSend='atlasUmamiBeforeSend';
+  script.dataset.autoTrack='false';script.dataset.doNotTrack='true';
+  // Send only the path, never search terms, project URL parameters or referrer queries.
+  script.onload=()=>{if(!window.umami)return;ready=true;Promise.resolve(window.umami.track(props=>({...props,url:location.pathname,referrer:''}))).catch(()=>{});for(const id of pending)track(id);pending.clear();};
+  document.head.append(script);
+ }catch{/* Analytics must never block the Atlas. */}
 })();

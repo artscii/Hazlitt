@@ -1,0 +1,24 @@
+# Replace the hostname if deploying elsewhere. Change Umami's default password first.
+vps-f8d31735.vps.ovh.ca {
+ encode gzip
+ handle /metrics/script.js {
+  rewrite * /script.js
+  reverse_proxy 127.0.0.1:8082 {
+   header_up X-Atlas-Client-IP {remote_host}
+  }
+ }
+ handle /metrics/api/send {
+  rewrite * /api/send
+  reverse_proxy 127.0.0.1:8082 {
+   header_up X-Atlas-Client-IP {remote_host}
+  }
+ }
+ handle {
+  reverse_proxy 127.0.0.1:8081
+ }
+}
+https://vps-f8d31735.vps.ovh.ca:8443 {
+ reverse_proxy 127.0.0.1:8082 {
+  header_up X-Atlas-Client-IP {remote_host}
+ }
+}

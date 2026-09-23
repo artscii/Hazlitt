@@ -315,3 +315,73 @@ sudo docker compose -f compose.yaml -f compose.qmd.yaml -f compose.qmd-dns.yaml 
 Verify with a new private-browser session on the public HTTPS URL, while logged out of Admin, then open a project. In a separate authenticated Admin session, inspect visitor statistics. Authenticated admins, bots, Do Not Track and Global Privacy Control requests are excluded. SSH-tunnel visits can remain Unknown. If public visits are still Unknown, check Caddy forwarding and proxy-mode configuration; do not reset analytics or trust arbitrary country headers to fix it.
 
 The dependency bundles a country database; rebuilding a pinned dependency does not guarantee fresh data. Periodically review and update the pinned `geoip-country` package in a tested repository release, then rebuild Atlas. No automatic database refresh has been configured. Preserve the package's data licensing and attribution: this product includes GeoLite2 data created by [MaxMind](https://www.maxmind.com/), distributed under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). See the dependency README for supported database update options.
+
+## Umami analytics (4.13.14 onward)
+
+The Admin analytics section now links to a separately authenticated Umami dashboard. Old visit history is not migrated; its SQLite tables remain unused by the new tracker. Umami stores new data in a separate PostgreSQL volume. Atlas database backups do **not** include this volume. This replaces the visitor-country collection workflow described earlier: Umami uses its own geolocation database and trusted client-IP header.
+
+The optional `compose.umami.yaml` pins Umami 3.4.0, adds PostgreSQL 16, health checks, restart policies, log rotation and resource limits (1 GB for Umami, 512 MB for PostgreSQL). Database ports are not published; Umami binds only to localhost:8082. QMD retains its existing model volume and warm process. Monitor `docker stats` on the 8 GB VPS; these caps are limits, not guarantees of performance.
+
+### First-time setup
+
+Run on the VPS:
+
+```sh
+cd ~/apps/Hazlitt
+git pull --ff-only github main
+sudo docker run --rm --user "$(id -u):$(id -g)" -v "$PWD:/work" -w /work node:24-alpine node scripts/umami-setup.mjs
+sudo docker compose -f compose.yaml -f compose.qmd.yaml -f compose.qmd-dns.yaml -f compose.umami.yaml up -d umami
+```
+
+Use your actual remote name (`git remote -v`); replace `github` with `origin` if necessary. The setup script generates secrets in `.env` with restricted permissions and preserves existing values. Keep these secrets backed up securely; do not commit `.env` or regenerate the PostgreSQL password after initialization.
+
+Before exposing the dashboard, open an SSH tunnel **on your Mac**, keeping its terminal open:
+
+```sh
+ssh -N -L 8099:127.0.0.1:8082 debian@vps-f8d31735.vps.ovh.ca
+```
+
+Open http://127.0.0.1:8099. Log in with Umami's initial `admin` / `umami` credentials and immediately change the password. Add a website named Hazlitt Creek Evidence Atlas with domain `vps-f8d31735.vps.ovh.ca`. Copy its website UUID. In the VPS `.env`, add:
+
+```dotenv
+UMAMI_WEBSITE_ID=replace-with-the-website-uuid
+UMAMI_DASHBOARD_URL=https://vps-f8d31735.vps.ovh.ca:8443/
+```
+
+After changing the password, review `deploy/Caddyfile.umami`. It preserves the Atlas route, serves only the tracker and collection endpoint under `/metrics/`, and exposes the password-protected dashboard on HTTPS port 8443. No custom domain is required. It overwrites the analytics client-IP header with the real peer address; this configuration assumes Caddy directly receives internet traffic, with no additional proxy or CDN.
+
+```sh
+sudo cp /etc/caddy/Caddyfile /etc/caddy/Caddyfile.before-umami
+sudo cp deploy/Caddyfile.umami /etc/caddy/Caddyfile
+sudo caddy validate --config /etc/caddy/Caddyfile
+sudo systemctl reload caddy
+sudo docker compose -f compose.yaml -f compose.qmd.yaml -f compose.qmd-dns.yaml -f compose.umami.yaml up -d --build --no-deps atlas
+```
+
+Allow inbound TCP 8443 in any active host/OVH firewall for dashboard access. Leave 8081, 8082 and PostgreSQL private. Public visitors continue using ordinary HTTPS 443. Do not replace a customized Caddy configuration without merging its existing routes.
+
+### Verify and operate
+
+```sh
+curl -fsS http://127.0.0.1:8082/api/heartbeat
+curl -fsS https://vps-f8d31735.vps.ovh.ca/api/analytics/config
+curl -fsS https://vps-f8d31735.vps.ovh.ca/metrics/script.js -o /tmp/atlas-umami-tracker.js
+sudo docker compose -f compose.yaml -f compose.qmd.yaml -f compose.qmd-dns.yaml -f compose.umami.yaml ps
+```
+
+Anonymous config should report `enabled:true`. In a private browser window without a privacy opt-out, visit Atlas and open a project. Confirm a visit and `project-view` event (property `project_id`) in Umami. Confirm Admin's dashboard link opens the protected dashboard. Admin sessions, `/admin`, Do Not Track and Global Privacy Control opt-outs do not load the tracker. URLs sent by this integration omit search strings, fragments and referrers. Ad blockers may also prevent collection. Umami's country/device charts replace the old built-in graphics. No project descriptions or admin edit fields are sent.
+
+For subsequent Atlas-only updates, retain all four Compose files and use `up -d --build --no-deps atlas`; this does not restart QMD. To update Umami, deliberately change its pinned image after checking release notes, back up PostgreSQL, pull and recreate only Umami. Do not use `down -v` on production.
+
+Back up analytics separately:
+
+```sh
+mkdir -p ~/hazlitt-backups
+chmod 700 ~/hazlitt-backups
+sudo docker compose -f compose.yaml -f compose.qmd.yaml -f compose.qmd-dns.yaml -f compose.umami.yaml exec -T umami-db pg_dump -U umami -d umami -Fc > ~/hazlitt-backups/umami-$(date +%Y%m%d-%H%M%S).dump
+chmod 600 ~/hazlitt-backups/umami-*.dump
+```
+
+Copy backups off the VPS securely and verify restores in a separate PostgreSQL instance. The former 365-day cleanup does not apply to Umami; establish a retention policy and monitor database size. To disable new tracking, clear `UMAMI_WEBSITE_ID` and recreate Atlas with all four Compose files. The site continues working if Umami is unavailable.
+
+Local validation uses an isolated disposable Compose project: `node tests/umami-ui.mjs`, `node tests/analytics.mjs` after building, and `node tests/umami-container.mjs` against loopback:8082 with the test stack's default credentials. Never run the container test against production. Official references: https://docs.umami.is/docs/install and https://docs.umami.is/docs/environment-variables.

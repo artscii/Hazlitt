@@ -175,3 +175,7 @@ Hosted releases use the existing Sites project identified in `.openai/hosting.js
 Docker-related files are provided in `Dockerfile`, `compose.yaml` and [README-Docker.md](README-Docker.md). The Compose mapping is `127.0.0.1:8081:8080`, with a named data volume. The Dockerfile installs locked dependencies and checks source access as the non-root runtime user. The older Docker guide also predates the separate admin page and current version-history UI.
 
 The local server is intended for development. Before exposing it beyond a trusted local environment, configure appropriate HTTPS, access controls, proxy handling and database backups.
+
+### Umami analytics
+
+Release 4.13.14 replaces the built-in visitor dashboard with an Admin link to optional, self-hosted Umami. Docker runs Umami and PostgreSQL separately from Atlas SQLite and QMD. New analytics start fresh; old visit history is not migrated. Follow [the VPS Umami setup guide](docs/VPS-DEPLOYMENT.md#umami-analytics-41314-onward) before enabling tracking. PostgreSQL requires its own backups.
