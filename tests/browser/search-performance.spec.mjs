@@ -23,15 +23,16 @@ test("viewport highlights, scrolling count and stale-query replacement", async (
   await expect(last.locator("mark.search-match").first()).toBeVisible();
   await input.fill("umami");
   await expect(page.locator("article.program:not([hidden])")).toHaveCount(0);
-  await input.fill("colposcopy");
+  await input.fill("cytology");
   await page
     .locator("article.program:not([hidden])")
     .first()
     .scrollIntoViewIfNeeded();
   await expect(
     page.locator("article.program:not([hidden]) mark.search-match").first(),
-  ).toContainText(/colposcopy/i);
+  ).toContainText(/cytology/i);
   await input.fill("");
+  await page.locator("article.program:not([hidden])").first().scrollIntoViewIfNeeded();
   await expect(
     page
       .locator(".section-heading h2")
