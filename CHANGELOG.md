@@ -17,7 +17,7 @@ Entries are newest first and describe behavior at each release. Later entries su
 - Cache catalogue serialization, record reads and readiness briefly; invalidate data caches after mutation requests and guard against stale in-flight fills.
 - Pre-render release architecture diagrams to SVG during builds, removing Mermaid from the browser bundle. Chromium is build-only.
 - Add `--with-qmd` deployment, startup health retries and a read-only VPS performance verification script; update README and deployment guidance.
-- Validation: queue, search-service and response-cache regression tests; full build/browser/release checks recorded before release completion.
+- Validation: full regression suite, desktop/mobile browser checks, all three Docker builds and real socket monitoring passed in [Linux release checks](https://github.com/artscii/Hazlitt/actions/runs/35917404587). Deployment/verification shell and embedded Python syntax also checked. The System browser bundle is 3.4 KB uncompressed, down from about 2.6 MB; SVG data is delivered separately.
 - Deployment: rebuild Atlas and QMD using the five existing overlays; persistent data volumes remain unchanged.
 
 ## 4.13.26 — 2026-09-23

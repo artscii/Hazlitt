@@ -23,6 +23,8 @@ print('QMD ready')
 for query in ['umami', 'country:Kenya', 'screening']:
     for repeat in range(2):
         data, elapsed = request('/api/search/query', {'query':query, 'scope':{}})
+        if data.get('semanticUnavailable'):
+            raise SystemExit('QMD fell back during verification. Inspect QMD_REQUEST/QMD_PROFILE logs.')
         results = data.get('results', [])
         if query == 'umami' and results: raise SystemExit('FAIL: noise query returned projects')
         print(json.dumps({'query':query, 'run':repeat+1, 'results':len(results), 'requestMs':elapsed,
