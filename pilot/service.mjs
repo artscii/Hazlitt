@@ -42,7 +42,7 @@ export async function pilotRoute(request,getCatalog){
   const key=JSON.stringify([version,enteredQuery,scope,deep]);if(cache.has(key)){console.log('QMD_PROFILE '+JSON.stringify({cached:true,catalogMs:Math.round(timings.catalogMs),indexMs:Math.round(indexMs),totalMs:Math.round(performance.now()-started)}));return reply({...cache.get(key),timings:{cached:true,catalogMs:Math.round(timings.catalogMs),indexMs:Math.round(indexMs)},cached:true,indexMs:Math.round(indexMs),indexChanged:false,totalMs:Math.round(performance.now()-started)});}
   const allowed=new Set(programs.filter(p=>eligible(p,query,scope)).map(p=>p.id));
   const aStart=performance.now();const a=programs.filter((p,i)=>allowed.has(p.id)&&AtlasSearch.matches(p,query,'Project '+(i+1)+' '+String(i+1).padStart(2,'0'))).map(p=>({id:p.id}));const aMs=performance.now()-aStart;
-  profiling=await startProfile();const bStart=performance.now();const results=query?(deep?await store.search({query,collection:'atlas',limit:programs.length,candidateLimit:programs.length,rerank:true}):await catalogSearch(store,query,programs.length,timings)):[];
+  profiling=await startProfile(store.internal?.llm);const bStart=performance.now();const results=query?(deep?await store.search({query,collection:'atlas',limit:programs.length,candidateLimit:programs.length,rerank:true}):await catalogSearch(store,query,programs.length,timings)):[];
   const idsByFilename=new Map(programs.map(p=>[createHash('sha256').update(p.id).digest('hex')+'.md',p.id]));const seen=new Set();
   const b=query?results.flatMap(r=>{const id=idsByFilename.get(path.basename(r.file));if(!id||!allowed.has(id)||seen.has(id))return [];seen.add(id);return [{id,score:r.score,passage:(r.bestChunk||r.body||'').slice(0,600)}];}).slice(0,10):programs.filter(p=>allowed.has(p.id)).map(p=>({id:p.id}));
   const model=profiling.finish();profiling=null;Object.assign(timings,model);timings.indexMs=indexMs;timings.queryMs=performance.now()-bStart;timings.vectorLookupAndOverheadMs=Math.max(0,(timings.vectorTotalMs||0)-model.modelLoadMs-model.contextSetupMs-model.embeddingMs);
@@ -51,4 +51,21 @@ export async function pilotRoute(request,getCatalog){
   const result={timings,query:enteredQuery,semanticQuery:query,scope,deep,a,b,aMs:+aMs.toFixed(2),bMs:Math.round(performance.now()-bStart),indexMs:Math.round(indexMs),indexChanged:indexing.changed,indexedAt,revision:version,engine:'QMD 2.8.3',cached:false,totalMs:Math.round(performance.now()-started)};
   cache.set(key,result);if(cache.size>50)cache.delete(cache.keys().next().value);return reply(result);
  }catch(error){lastError=error.message;console.error('QMD pilot:',error.message);return reply({error:'QMD could not complete this comparison. '+error.message},503);}finally{profiling?.finish();running=false;}
+}
+
+// Authenticated readiness probe: warm the actual store, coalescing all browser polls.
+let probeAt=0,probeReady=false,probing=false;
+export function readiness(getCatalog){
+ if(!probing&&!running&&Date.now()-probeAt>60000){
+  probing=true;running=true;probeReady=false;
+  (async()=>{let profile;const t=performance.now();try{
+   const {programs}=await getCatalog();await sync(programs);
+   profile=await startProfile(store.internal?.llm);
+   await store.internal.llm.embed('cervical screening readiness');
+   probeReady=true;
+   console.log('QMD_PROFILE '+JSON.stringify({phase:'readiness',...profile.finish(),totalMs:Math.round(performance.now()-t)}));profile=null;
+  }catch(error){console.error('QMD readiness:',error.message);probeReady=false;}
+  finally{profile?.finish();probeAt=Date.now();probing=false;running=false;}})();
+ }
+ return {ready:probeReady&&!running&&!!store?.internal?.llm?.embedContexts?.length,indexedAt,warming:probing};
 }

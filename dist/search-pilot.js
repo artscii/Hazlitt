@@ -6,7 +6,18 @@
  const cloud='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 18a5 5 0 0 1-.6-9.96A6 6 0 0 1 18 7a5.5 5.5 0 0 1 0 11Z"/><path class="cloud-slash" d="m3 3 18 18"/></svg>';
  function connection(active,label){status.classList.toggle('is-connected',active);status.title=label;status.setAttribute('aria-label',label);status.innerHTML=cloud;}
  connection(false,'QMD connection not yet verified');
- let generation=0,timer,controller,cooldown=0;
+ let generation=0,timer,controller,cooldown=0,checking=false;
+ async function checkReady(){
+  if(checking||document.hidden||status.getAttribute('aria-busy')==='true')return;
+  checking=true;const epoch=generation;
+  try{const response=await fetch('/api/search-pilot/status',{cache:'no-store',signal:AbortSignal.timeout(4000)});const data=await response.json();
+   if(epoch!==generation)return;
+   const ready=response.ok&&data.ready===true;
+   connection(ready,ready?'QMD ready — semantic search available':data.warming?'QMD warming up':'QMD unavailable — keyword search available');
+   if(ready)cooldown=0;
+  }catch{if(epoch===generation)connection(false,'QMD unavailable — keyword search available');}finally{checking=false;}
+ }
+ checkReady();setInterval(checkReady,15000);window.addEventListener('focus',checkReady);
  function cancel(){generation++;clearTimeout(timer);controller?.abort();status.removeAttribute('aria-busy');}
  window.addEventListener('atlas-search-cancel',cancel);
  window.atlasPrimarySearch=(raw,fallback)=>{

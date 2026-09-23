@@ -1,10 +1,9 @@
 // QMD 2.8.3 diagnostic adapter. Internal hooks are guarded; no search text is logged.
-export async function startProfile(){
+export async function startProfile(llm){
  const metrics={modelLoadMs:0,contextSetupMs:0,embeddingMs:0};
  const restore=[];
  try{
-  const {getDefaultLlamaCpp}=await import(new URL('./llm.js',import.meta.resolve('@tobilu/qmd')).href);
-  const llm=getDefaultLlamaCpp();
+  if(!llm)throw Error('Missing store model');
   metrics.modelResidentAtStart=!!llm.embedModel;
   metrics.contextResidentAtStart=!!llm.embedContexts?.length;
   function wrap(name,measure){
