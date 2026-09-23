@@ -5090,6 +5090,11 @@ body > footer .site-navigation a {
   cursor: pointer;
   padding: 8px 0;
 }
+.thesaurus-aliases {
+  font-weight: 400;
+  opacity: 0.85;
+  overflow-wrap: anywhere;
+}
 .thesaurus-row[open] > label {
   display: block;
   margin: 10px 0;

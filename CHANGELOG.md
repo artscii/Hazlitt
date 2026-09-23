@@ -1,6 +1,6 @@
 # Changelog
 
-Current application release: **4.13.29**. This matches `package.json`, the Compose image tag, and generated page footers. A repository commit identifies source history; it does not prove that version has been deployed on a VPS.
+Current application release: **4.13.30**. This matches `package.json`, the Compose image tag, and generated page footers. A repository commit identifies source history; it does not prove that version has been deployed on a VPS.
 
 Entries are newest first and describe behavior at each release. Later entries supersede earlier behavior. Versions 4.12.1–4.13.7 have been checked against Git history; older entries are retained without a new historical audit. Version 4.13.1 groups several changes made without individual version increments.
 
@@ -9,6 +9,12 @@ Entries are newest first and describe behavior at each release. Later entries su
 - Backfilled releases 4.13.0–4.13.7 in [e1a0536](https://github.com/artscii/Hazlitt/commit/e1a0536); reviewed release/commit mapping and clarified deployment and historical behavior afterward.
 - Documentation-only corrections do not change the application version or require a container rebuild.
 - Future application releases should update this changelog in the release commit, with changes, validation and deployment notes. Use `npm run release:patch` to advance the package version and synchronize generated footer/Compose versions; write the corresponding changelog entry before committing.
+
+## 4.13.30 — 2026-09-23
+- Display equivalent terms in collapsed thesaurus summaries so aliases such as acetic remain visible under VIA.
+- Expand matching rows when filtering by term, equivalent or related term; restore previous expansion state when clearing the filter. Clear filters when adding a new term so its editor remains visible.
+- Validation: Admin DOM regression verifies saved acetic visibility, case-insensitive filtering, expansion and clearing. Update browser selectors to target the canonical term independently from aliases.
+- Deployment: rebuild Atlas only; no vocabulary or database changes.
 
 ## 4.13.29 — 2026-09-23
 - Show `Admin ( current version )` in the Admin page heading, sourced from the package version at build time. Preserve the existing heading element, font and size.

@@ -71,7 +71,7 @@ test("VIA/acetic vocabulary survives editor reload and reaches public search", a
   await search();
   const via = page
     .locator(".thesaurus-row")
-    .filter({ has: page.locator("summary", { hasText: /^via$/ }) });
+    .filter({ has: page.locator("[data-summary-term]", { hasText: /^via$/ }) });
   await via.locator("summary").click();
   const aliases = via.locator("[data-equivalents]");
   if (!(await aliases.inputValue()).includes("acetic;")) {

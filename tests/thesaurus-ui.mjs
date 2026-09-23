@@ -99,6 +99,32 @@ try {
       input.value.includes("acetic"),
     ),
   );
+  const aliasRow = [...reopened.querySelectorAll(".thesaurus-row")].find(
+    (row) => row.querySelector("[data-term]").value === "via",
+  );
+  assert.match(
+    aliasRow.querySelector("summary").textContent,
+    /Equivalents: .*acetic/,
+  );
+  assert.equal(aliasRow.open, false);
+  const filter = reopened.querySelector("[data-filter]");
+  filter.value = "ACETIC";
+  filter.dispatchEvent(new w.Event("input"));
+  assert.equal(aliasRow.hidden, false);
+  assert.equal(aliasRow.open, true);
+  assert.equal(
+    [...reopened.querySelectorAll(".thesaurus-row")].filter(
+      (row) => !row.hidden,
+    ).length,
+    1,
+  );
+  filter.value = "";
+  filter.dispatchEvent(new w.Event("input"));
+  assert.equal(
+    aliasRow.open,
+    false,
+    "clearing filter restores collapsed state",
+  );
   console.log(
     "PASS thesaurus form editing, disabled save, local query test and restore-as-new-version flow",
   );

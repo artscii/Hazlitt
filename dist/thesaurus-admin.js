@@ -50,6 +50,40 @@ window.mountAtlasThesaurus = async function (parent, api) {
         control.disabled = busy;
       });
   }
+  function updateSummary(row) {
+    const summary = row.querySelector("summary");
+    const term = document.createElement("span");
+    term.dataset.summaryTerm = "";
+    term.textContent = row.querySelector("[data-term]").value || "New term";
+    const aliases = document.createElement("span");
+    aliases.className = "thesaurus-aliases";
+    const equivalents = split(row.querySelector("[data-equivalents]").value);
+    aliases.textContent = equivalents.length
+      ? " — Equivalents: " + equivalents.join("; ")
+      : "";
+    summary.replaceChildren(term, aliases);
+  }
+  function filterRows() {
+    const q = $("[data-filter]").value.trim().toLowerCase();
+    for (const row of rows.children) {
+      const matches = [
+        "[data-term]",
+        "[data-equivalents]",
+        "[data-related]",
+      ].some((selector) =>
+        row.querySelector(selector).value.toLowerCase().includes(q),
+      );
+      row.hidden = !matches;
+      if (q) {
+        if (!row.hasAttribute("data-before-filter"))
+          row.dataset.beforeFilter = String(row.open);
+        if (matches) row.open = true;
+      } else if (row.hasAttribute("data-before-filter")) {
+        row.open = row.dataset.beforeFilter === "true";
+        delete row.dataset.beforeFilter;
+      }
+    }
+  }
   function draw(entries) {
     rows.replaceChildren();
     for (const e of entries) {
@@ -66,18 +100,12 @@ window.mountAtlasThesaurus = async function (parent, api) {
         row.remove();
         update();
       };
-      row.querySelector("summary").textContent = e.term || "New term";
+      updateSummary(row);
       row.open = !e.term;
-      row
-        .querySelector("[data-term]")
-        .addEventListener(
-          "input",
-          () =>
-            (row.querySelector("summary").textContent =
-              row.querySelector("[data-term]").value || "New term"),
-        );
+      row.addEventListener("input", () => updateSummary(row));
       rows.append(row);
     }
+    filterRows();
     update();
   }
   function versions() {
@@ -105,18 +133,13 @@ window.mountAtlasThesaurus = async function (parent, api) {
       " · saved in the server database and included in database backups.";
   }
   section.addEventListener("input", update);
-  $("[data-filter]").oninput = () => {
-    const q = $("[data-filter]").value.toLowerCase();
-    for (const row of rows.children)
-      row.hidden = ![...row.querySelectorAll("input")].some((input) =>
-        input.value.toLowerCase().includes(q),
-      );
-  };
+  $("[data-filter]").oninput = filterRows;
   section.addEventListener("keydown", (event) => {
     if (event.key === "Enter" && event.target.tagName === "INPUT")
       event.preventDefault();
   });
   $("[data-add]").onclick = () => {
+    $("[data-filter]").value = "";
     draw([
       ...values(),
       { term: "", equivalents: [], related: [], enabled: true },
