@@ -401,14 +401,22 @@ sudo docker compose -f compose.yaml -f compose.qmd.yaml -f compose.qmd-dns.yaml 
 
 Merge rather than replace Caddy if you have added custom routes. The new routes expose only `/metrics/recorder.js`, `/metrics/api/record`, and UUID-specific recorder configuration in addition to the existing tracker routes. QMD, Umami and PostgreSQL do not need restarting.
 
-In Umami, edit the Atlas website and open **Replays & Heatmaps**. Enable both features. Set replay sample rate to **0.15**, mask level **moderate**, maximum duration **300000 ms**. Keep inputs masked. Heatmap sampling is independently configurable; begin at 15% and adjust to traffic/storage needs. Umami manages recorder settings; merely updating Atlas does not enable recording in Umami.
+In Umami, edit the Atlas website and open **Replays & Heatmaps**. Enable both features. Set replay sample rate to **1 (100%)**, mask level **moderate**, maximum duration **300000 ms**. Keep inputs masked. Heatmap sampling is independently configurable; set it to 100% as requested; monitor storage growth. Umami manages recorder settings; merely updating Atlas does not enable recording in Umami.
 
 Test:
 
 1. Confirm the Atlas footer reads 4.13.16. Check `curl -fsS https://vps-f8d31735.vps.ovh.ca/metrics/recorder.js -o /tmp/atlas-recorder.js` succeeds.
 2. In a fresh browser session without an Atlas Admin login or privacy opt-out, search `Kenya`, then a phrase with no matches. Pause after results settle. Umami should show `project-search` events with query, result_count, engine and origin. Search content is retained without email/phone filtering. URLs in standard event payloads still omit query strings.
 3. Click a map marker or continent button and confirm a search event with origin `map`. Initial default selection is not counted as an intentional search. Repeating the same completed search consecutively should not inflate counts.
-4. For deterministic replay testing, temporarily set replay and heatmap sample rates to **1**, save, and use a new browser session. Click, scroll and navigate to a project; leave the page to flush pending events. Check Replays and Heatmaps in Umami. Verify inputs are masked and no Admin form is recorded. Return both rates to **0.15** afterward.
+4. For deterministic replay testing, temporarily set replay and heatmap sample rates to **1**, save, and use a new browser session. Click, scroll and navigate to a project; leave the page to flush pending events. Check Replays and Heatmaps in Umami. Verify inputs are masked and no Admin form is recorded. Keep both rates at **1** per the owner’s full-capture preference.
 5. Check search remains responsive and the QMD readiness indicator still works. Run `sudo docker stats --no-stream` and monitor PostgreSQL disk usage as traffic grows. Replay data is materially larger than normal analytics.
 
 If recording is absent, check browser network requests to `/metrics/api/websites/<website-id>/recorder` and `/metrics/api/record`; configuration must be enabled and requests successful. Sampling, opt-outs and ad blockers can explain absent sessions. Umami documents 30-day replay storage; monitor your self-hosted storage and backups. Heatmaps combine page states, so use replay to interpret moving map markers and filtered cards. No old history is backfilled.
+
+## Full public interaction instrumentation (4.13.19)
+
+Keep both Umami sample rates at **1 (100%)**, as requested. Save under Replays & Heatmaps and verify the public recorder-config endpoint returns `sampleRate:1` and `heatmapSampleRate:1`. Keep moderate input masking and the five-minute limit.
+
+Deploy using the four-file Compose command above, rebuilding only Atlas (`up -d --build --no-deps atlas`). No additional proxy change is needed if the 4.13.16 recorder routes are already installed. QMD and Umami stay running.
+
+In a fresh non-Admin visitor session, perform a search and a zero-result search; choose a continent and marker; keep half a project card in view for a second; click its evidence/contact links; copy a share link; switch an available language; expand a reference group; and scroll the project list to the end. Umami Events should show the named events in the README, with project IDs where applicable. Repeat scrolling to the end and viewing a card: these should not inflate their counts within the same page/filter. Test a phone viewport as well as desktop. Confirm Admin pages and browser privacy opt-outs send no Atlas events. Search/failure events are reported only when their corresponding operations actually occur; do not intentionally interrupt production services merely to test fallback.

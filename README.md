@@ -184,4 +184,10 @@ Release 4.13.14 replaces the built-in visitor dashboard with an Admin link to op
 
 Umami receives `project-search` events after completed searches settle for 900 ms: `query`, `result_count`, `engine` (`qmd`/`keyword`) and `origin` (`typed`/`map`). Consecutive duplicate events are suppressed. Search text is not redacted; avoid entering personal information. Tracking excludes authenticated Admin visitors, Admin pages and browser privacy opt-outs.
 
-The recorder supports click/scroll heatmaps and session replay. Enable these separately in the website's Umami settings; recommended replay sampling is 15%, moderate input masking and a five-minute maximum. New Caddy collection routes must be deployed. See the VPS guide for activation and testing. This records the Atlas page, not other browser tabs.
+The recorder supports click/scroll heatmaps and session replay. Enable these separately in the website's Umami settings; replay and heatmap sampling are now set to 100%, moderate input masking and a five-minute maximum. New Caddy collection routes must be deployed. See the VPS guide for activation and testing. This records the Atlas page, not other browser tabs.
+
+### Public interaction event catalogue (4.13.19)
+
+Events now include `map-marker-selected`, `continent-selected`, `project-read`, `project-list-end`, `evidence-link-clicked`, `contact-clicked`, `back-to-map`, `references-opened`, `reference-expanded`, `language-switched`, `share-copied`, `share-copy-failed`, `search-cleared`, `search-no-matches`, `search-fallback` and `catalogue-failed`. Existing `project-search` and `project-view` remain. Search events include elapsed milliseconds from the latest user input to the result update. A `project-read` requires 50% visibility for one second and is deduplicated per page; it measures exposure, not comprehension. Contact clicks do not prove a completed call/email. Automatic defaults and hover are not counted as intentional clicks.
+
+Replay and heatmap sampling are **100% of eligible sessions**, configured in Umami rather than the Atlas repository. Admin and privacy exclusions still apply. Moderate masking and five-minute recording limits remain. Monitor PostgreSQL growth and maintain separate analytics backups.

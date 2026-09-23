@@ -586,15 +586,15 @@ document.addEventListener('click',async event=>{
  if(!link||event.button>0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
  event.preventDefault();
  const feedback=link.nextElementSibling;
- try{await navigator.clipboard.writeText(link.href);feedback.textContent='Link copied';}
- catch{feedback.replaceChildren();const input=document.createElement('input');input.readOnly=true;input.value=link.href;input.setAttribute('aria-label','Project share URL — copy this link');feedback.append(input);input.focus();input.select();}
+ try{await navigator.clipboard.writeText(link.href);feedback.textContent='Link copied';window.dispatchEvent(new CustomEvent('atlas-analytics',{detail:{name:'share-copied',data:{project_id:link.closest('article.program')?.id||''}}}));}
+ catch{window.dispatchEvent(new CustomEvent('atlas-analytics',{detail:{name:'share-copy-failed',data:{project_id:link.closest('article.program')?.id||''}}}));feedback.replaceChildren();const input=document.createElement('input');input.readOnly=true;input.value=link.href;input.setAttribute('aria-label','Project share URL — copy this link');feedback.append(input);input.focus();input.select();}
 });
 // v4.8.7: start with Africa; explicit shared-project links take precedence.
 if(new URL(location.href).searchParams.has('project'))openSharedProject();else selectContinent('Africa');
 // v4.12.1: map navigation narrows the semantic result set, never the whole catalogue.
 window.addEventListener('atlas-semantic-results',event=>{clearSharedProject();semanticProjectIds=new Set(event.detail.ids.filter(id=>programsById.has(id)));semanticQuery=event.detail.query;document.querySelector('#project-search').value=event.detail.query;revealContinent('All');syncSearchMap();});
 window.dispatchEvent(new Event('atlas-ready'));
-})().catch(error=>{const message=document.createElement('p');message.className='load-error';message.textContent=error.message;document.querySelector('#map-overview').before(message);console.error(error);});
+})().catch(error=>{window.dispatchEvent(new CustomEvent('atlas-analytics',{detail:{name:'catalogue-failed',data:{operation:'catalogue-load'}}}));const message=document.createElement('p');message.className='load-error';message.textContent=error.message;document.querySelector('#map-overview').before(message);console.error(error);});
 
 // v3.7.0: password-gated direct editing with a lightweight native page flip.
 (()=>{

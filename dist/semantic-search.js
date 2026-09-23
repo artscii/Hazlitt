@@ -37,7 +37,7 @@
     if(token!==generation||input.value.trim()!==query)return;
     window.dispatchEvent(new CustomEvent('atlas-semantic-results',{detail:{query,ids:data.results.map(x=>x.id),primary:true}}));
     connection(true,'QMD connected — semantic search active');
-   }catch(error){if(token!==generation||input.value.trim()!==query)return;cooldown=Date.now()+30000;fallback();connection(false,'QMD unavailable — keyword search active');}
+   }catch(error){if(token!==generation||input.value.trim()!==query)return;window.dispatchEvent(new CustomEvent('atlas-analytics',{detail:{name:'search-fallback',data:{reason:error.name==='AbortError'?'timeout':'unavailable'}}}));cooldown=Date.now()+30000;fallback();connection(false,'QMD unavailable — keyword search active');}
    finally{clearTimeout(deadline);if(token===generation)status.removeAttribute('aria-busy');}
   },300);
  };

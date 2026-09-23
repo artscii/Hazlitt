@@ -16,8 +16,8 @@ async function check({enabled=true,path='/',dnt=false,gpc=false}={}){
   const detail={query:'email@example.com cervical screening',result_count:0,engine:'qmd'};
   w.dispatchEvent(new w.CustomEvent('atlas-search-complete',{detail}));await new Promise(r=>setTimeout(r,950));
   assert.equal(events[2][0],'project-search');assert.equal(events[2][1].query,detail.query);assert.equal(events[2][1].result_count,0);
-  w.dispatchEvent(new w.CustomEvent('atlas-search-complete',{detail}));await new Promise(r=>setTimeout(r,950));assert.equal(events.length,3);
-  assert.equal(events.length,3);assert.equal(events[1][0],'project-view');assert.equal(events[1][1].project_id,'bombo');
+  w.dispatchEvent(new w.CustomEvent('atlas-search-complete',{detail}));await new Promise(r=>setTimeout(r,950));assert.equal(events.length,4);
+  assert.equal(events.length,4);assert.equal(events[1][0],'project-view');assert.equal(events[1][1].project_id,'bombo');
   assert.equal(w.atlasUmamiBeforeSend('event',{url:'/?secret=yes',referrer:'secret'}).url,'/');
  }
  dom.window.close();
