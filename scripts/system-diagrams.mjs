@@ -68,6 +68,33 @@ export async function generateSystemDiagrams() {
         "v" + createHash("sha256").update(mount).digest("hex").slice(0, 8);
       lines.push(`${id}[${quote(mount)}] -.-> ${name.replaceAll("-", "_")}`);
     }
+    for (const port of s.ports || []) {
+      const label =
+        typeof port === "string"
+          ? port
+          : [port.host_ip || "", port.published || "", port.target || ""].join(
+              ":",
+            );
+      const portId =
+        "p" +
+        createHash("sha256")
+          .update(name + label)
+          .digest("hex")
+          .slice(0, 8);
+      lines.push(
+        `${portId}[${quote("Port " + label)}] --> ${name.replaceAll("-", "_")}`,
+      );
+    }
+    const networks = Array.isArray(s.networks)
+      ? s.networks
+      : Object.keys(s.networks || { default: {} });
+    for (const network of networks) {
+      const networkId =
+        "net" + createHash("sha256").update(network).digest("hex").slice(0, 8);
+      lines.push(
+        `${name.replaceAll("-", "_")} -.-> ${networkId}[${quote("Network " + network)}]`,
+      );
+    }
     for (const dep of Object.keys(
       Array.isArray(s.depends_on)
         ? Object.fromEntries(s.depends_on.map((d) => [d, true]))
