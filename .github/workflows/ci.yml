@@ -18,3 +18,36 @@ jobs:
       - run: docker build -t atlas-ci .
       - run: docker build -f pilot/Dockerfile -t atlas-qmd-ci .
       - run: docker build -f monitor/Dockerfile -t atlas-monitor-ci .
+      - name: Verify live socket monitor
+        run: |
+          export MONITOR_SERVICE_TOKEN=$(openssl rand -hex 32)
+          docker run -d --name monitor-smoke \
+            --label com.docker.compose.project=ci-monitor \
+            --label com.docker.compose.service=monitor \
+            -e MONITOR_SERVICE_TOKEN -e MONITOR_PROJECT=ci-monitor \
+            -v /var/run/docker.sock:/var/run/docker.sock:ro \
+            -p 127.0.0.1:8133:8080 atlas-monitor-ci
+          trap 'docker rm -f monitor-smoke' EXIT
+          python3 - <<'PY'
+          import json, os, time, urllib.request, urllib.error
+          base='http://127.0.0.1:8133'
+          for attempt in range(20):
+              try:
+                  urllib.request.urlopen(base+'/health',timeout=2)
+                  break
+              except Exception:
+                  time.sleep(1)
+          try:
+              urllib.request.urlopen(base+'/status')
+              raise AssertionError('Unauthenticated status was allowed')
+          except urllib.error.HTTPError as error:
+              assert error.code == 401
+          token=os.environ['MONITOR_SERVICE_TOKEN']
+          request=urllib.request.Request(base+'/status',headers={'Authorization':'Bearer '+token})
+          data=json.load(urllib.request.urlopen(request,timeout=15))
+          assert len(data['services']) == 1
+          assert data['services'][0]['service'] == 'monitor'
+          assert data['services'][0]['state'] == 'running'
+          assert token not in json.dumps(data)
+          print('Live Docker socket monitoring passed: authorization, project filter, sanitized response')
+          PY
