@@ -1,2 +1,34 @@
-import fs from 'node:fs';import assert from 'node:assert/strict';import {DatabaseSync} from 'node:sqlite';import {streamSqliteBackup} from '../server/sqlite-backup.mjs';
-const dir=fs.mkdtempSync('/tmp/atlas-stream-test-'),file=dir+'/source.sqlite';const db=new DatabaseSync(file);db.exec('CREATE TABLE records(id TEXT PRIMARY KEY,payload TEXT,name_key TEXT,deleted INTEGER,revision INTEGER); CREATE TABLE sample(id INTEGER PRIMARY KEY AUTOINCREMENT,value TEXT,data BLOB)');db.prepare('INSERT INTO sample(value,data) VALUES (?,?)').run('é\0test',Buffer.from([0,1,255]));db.close();const response=streamSqliteBackup(file,[],['test.sql']);const sql=await response.text();const dest=new DatabaseSync(dir+'/restored.sqlite');dest.exec(sql);assert.equal(dest.prepare('SELECT value FROM sample').get().value,'é\0test');assert.deepEqual(Buffer.from(dest.prepare('SELECT data FROM sample').get().data),Buffer.from([0,1,255]));assert.equal(dest.prepare('PRAGMA integrity_check').get().integrity_check,'ok');dest.close();const cancelled=streamSqliteBackup(file,[],[]);await cancelled.body.cancel();console.log('PASS streaming backup restore, Unicode/NUL, blob preservation, sequences and cancellation');
+import fs from "node:fs";
+import assert from "node:assert/strict";
+import { DatabaseSync } from "node:sqlite";
+import { streamSqliteBackup } from "../server/sqlite-backup.mjs";
+const dir = fs.mkdtempSync("/tmp/atlas-stream-test-"),
+  file = dir + "/source.sqlite";
+const db = new DatabaseSync(file);
+db.exec(
+  "CREATE TABLE records(id TEXT PRIMARY KEY,payload TEXT,name_key TEXT,deleted INTEGER,revision INTEGER); CREATE TABLE sample(id INTEGER PRIMARY KEY AUTOINCREMENT,value TEXT,data BLOB)",
+);
+db.prepare("INSERT INTO sample(value,data) VALUES (?,?)").run(
+  "é\0test",
+  Buffer.from([0, 1, 255]),
+);
+db.close();
+const response = streamSqliteBackup(file, [], ["test.sql"]);
+const sql = await response.text();
+const dest = new DatabaseSync(dir + "/restored.sqlite");
+dest.exec(sql);
+assert.equal(dest.prepare("SELECT value FROM sample").get().value, "é\0test");
+assert.deepEqual(
+  Buffer.from(dest.prepare("SELECT data FROM sample").get().data),
+  Buffer.from([0, 1, 255]),
+);
+assert.equal(
+  dest.prepare("PRAGMA integrity_check").get().integrity_check,
+  "ok",
+);
+dest.close();
+const cancelled = streamSqliteBackup(file, [], []);
+await cancelled.body.cancel();
+console.log(
+  "PASS streaming backup restore, Unicode/NUL, blob preservation, sequences and cancellation",
+);

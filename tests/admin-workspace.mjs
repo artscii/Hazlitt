@@ -1,14 +1,57 @@
-import {JSDOM} from 'jsdom';import fs from 'node:fs';import assert from 'node:assert/strict';
-const dom=new JSDOM('<div id="admin-page"></div>',{url:'http://localhost/admin',runScripts:'outside-only',pretendToBeVisual:true});const w=dom.window;
-w.ResizeObserver=class{observe(){}};w.matchMedia=()=>({matches:true});w.HTMLElement.prototype.scrollIntoView=()=>{};
-w.fetch=async url=>({ok:true,json:async()=>url==='/api/session'?{authenticated:false}:{ready:false}});
-w.AtlasTheme={palettes:[]};w.AtlasTransfers={mount:({before})=>{const e=w.document.createElement('section');e.id='file-transfers';before.before(e);return {refreshHistory(){}};}};
-w.eval(fs.readFileSync('dist/analytics-admin.js','utf8'));w.eval(fs.readFileSync('dist/admin.js','utf8'));
-await new Promise(r=>setTimeout(r,10));const d=w.document;
-assert(d.querySelector('#workspace-data').hidden);d.querySelector('[data-workspace=data]').click();assert(!d.querySelector('#workspace-data').hidden);assert(d.querySelector('#workspace-projects').hidden);
-assert(d.querySelector('#workspace-data #file-transfers'));assert(d.querySelector('#workspace-data #db-backup'));
-assert(d.querySelector('#record-form .workspace-danger #admin-delete'));assert(!d.querySelector('.admin-actions #admin-delete'));
-assert.equal(d.querySelector('.workspace-history').open,false);assert(d.querySelector('#project-number-form').hidden);
-assert.equal(d.querySelector('#config-qmd-enabled').form,null);d.querySelector('[data-workspace=search]').click();assert(!d.querySelector('#workspace-search').hidden);assert(d.querySelector('#workspace-search #search-fieldset'));assert(d.querySelector('#workspace-search #vocabulary-host'));assert(!d.querySelector('#vocabulary-host').closest('form'));
-const mobile=d.querySelector('.workspace-mobile');mobile.value='projects';mobile.dispatchEvent(new w.Event('change'));assert(!d.querySelector('#workspace-projects').hidden);
-console.log('PASS workspace navigation, independent settings/vocabulary, preserved forms, collapsed history and separate delete');dom.window.close();
+import { JSDOM } from "jsdom";
+import fs from "node:fs";
+import assert from "node:assert/strict";
+const dom = new JSDOM('<div id="admin-page"></div>', {
+  url: "http://localhost/admin",
+  runScripts: "outside-only",
+  pretendToBeVisual: true,
+});
+const w = dom.window;
+w.ResizeObserver = class {
+  observe() {}
+};
+w.matchMedia = () => ({ matches: true });
+w.HTMLElement.prototype.scrollIntoView = () => {};
+w.fetch = async (url) => ({
+  ok: true,
+  json: async () =>
+    url === "/api/session" ? { authenticated: false } : { ready: false },
+});
+w.AtlasTheme = { palettes: [] };
+w.AtlasTransfers = {
+  mount: ({ before }) => {
+    const e = w.document.createElement("section");
+    e.id = "file-transfers";
+    before.before(e);
+    return { refreshHistory() {} };
+  },
+};
+w.eval(fs.readFileSync("dist/search.js", "utf8"));
+w.eval(fs.readFileSync("dist/analytics-admin.js", "utf8"));
+w.eval(fs.readFileSync("dist/admin.js", "utf8"));
+await new Promise((r) => setTimeout(r, 10));
+const d = w.document;
+assert(d.querySelector("#workspace-data").hidden);
+d.querySelector("[data-workspace=data]").click();
+assert(!d.querySelector("#workspace-data").hidden);
+assert(d.querySelector("#workspace-projects").hidden);
+assert(d.querySelector("#workspace-data #file-transfers"));
+assert(d.querySelector("#workspace-data #db-backup"));
+assert(d.querySelector("#record-form .workspace-danger #admin-delete"));
+assert(!d.querySelector(".admin-actions #admin-delete"));
+assert.equal(d.querySelector(".workspace-history").open, false);
+assert(d.querySelector("#project-number-form").hidden);
+assert.equal(d.querySelector("#config-qmd-enabled").form, null);
+d.querySelector("[data-workspace=search]").click();
+assert(!d.querySelector("#workspace-search").hidden);
+assert(d.querySelector("#workspace-search #search-fieldset"));
+assert(d.querySelector("#workspace-search #vocabulary-host"));
+assert(!d.querySelector("#vocabulary-host").closest("form"));
+const mobile = d.querySelector(".workspace-mobile");
+mobile.value = "projects";
+mobile.dispatchEvent(new w.Event("change"));
+assert(!d.querySelector("#workspace-projects").hidden);
+console.log(
+  "PASS workspace navigation, independent settings/vocabulary, preserved forms, collapsed history and separate delete",
+);
+dom.window.close();

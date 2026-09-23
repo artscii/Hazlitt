@@ -202,3 +202,9 @@ Validation: automated relevance, service, queue, Admin, transfer, backup and res
 
 ### Admin workspace (4.13.22)
 Projects is the default workspace. Search accepts an exact project number or descriptive text, with numerically ordered matches and previous/next navigation. Data management groups Excel operations and SQL backups. Configuration separates Search/thesaurus, transitions and appearance. Vocabulary saves independently. Version history starts collapsed; switching workspace preserves the project draft. Analytics opens Umami in a separate tab.
+
+### Maintenance and release checks (4.13.24)
+
+See [source layout](src/README.md). Run `npm ci`, `npm test`, and `npm run test:browser` (after `npx playwright install chromium`). GitHub Actions runs the regression suite, Chromium desktop/mobile workflows and both Docker builds on Linux. The browser suite uses an isolated temporary database and a generated test password. The separately running Umami integration remains opt-in: `node tests/umami-container.mjs`.
+
+Admin settings use partial revision-checked writes. A conflict asks the editor to reload instead of overwriting another editor's change. Search vocabulary history is paginated; restoration still creates a new revision. QMD queue deadlines now settle while another inference remains active. An active native inference itself is not forcibly terminated on cancellation.

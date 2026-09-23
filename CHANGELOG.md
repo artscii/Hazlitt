@@ -1,6 +1,6 @@
 # Changelog
 
-Current application release: **4.13.23**. This matches `package.json`, the Compose image tag, and generated page footers. A repository commit identifies source history; it does not prove that version has been deployed on a VPS.
+Current application release: **4.13.24**. This matches `package.json`, the Compose image tag, and generated page footers. A repository commit identifies source history; it does not prove that version has been deployed on a VPS.
 
 Entries are newest first and describe behavior at each release. Later entries supersede earlier behavior. Versions 4.12.1–4.13.7 have been checked against Git history; older entries are retained without a new historical audit. Version 4.13.1 groups several changes made without individual version increments.
 
@@ -9,6 +9,16 @@ Entries are newest first and describe behavior at each release. Later entries su
 - Backfilled releases 4.13.0–4.13.7 in [e1a0536](https://github.com/artscii/Hazlitt/commit/e1a0536); reviewed release/commit mapping and clarified deployment and historical behavior afterward.
 - Documentation-only corrections do not change the application version or require a container rebuild.
 - Future application releases should update this changelog in the release commit, with changes, validation and deployment notes. Use `npm run release:patch` to advance the package version and synchronize generated footer/Compose versions; write the corresponding changelog entry before committing.
+
+## 4.13.24 — 2026-09-23
+- Enforce actual queued-search deadlines even while a native inference job is stalled.
+- Use field-specific, revision-checked Admin configuration updates; reject stale changes with 409.
+- Preserve ready status during background index refresh and refresh Admin Search status on entry, focus and while visible.
+- Page vocabulary history in groups of 50 and retrieve selected snapshots on demand.
+- Safely terminate interrupted streaming responses without attempting a second HTTP header response.
+- Split Admin source by responsibility, centralize project field metadata, format maintained source, consolidate styles and remove obsolete fusion code and identical CSS blocks.
+- Add a unified regression command and Linux CI with desktop/mobile browser tests and both Docker builds. Tests use generated credentials rather than local secrets.
+- Validation: local regression suite passed. Local Chromium installation was incomplete, so browser execution and Docker builds remain Linux CI/VPS acceptance checks; native QMD still requires VPS verification.
 
 ## 4.13.23 — 2026-09-23
 - Give Search a dedicated Admin navigation section on desktop and mobile, grouping the QMD switch, readiness and thesaurus.

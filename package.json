@@ -1,18 +1,23 @@
 {
   "name": "hazlitt-creek-evidence-atlas",
-  "version": "4.13.23",
+  "version": "4.13.24",
   "private": true,
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
     "start": "node server/local.mjs",
     "db:generate": "drizzle-kit generate",
-    "release:patch": "npm version patch --no-git-tag-version && npm run build"
+    "release:patch": "npm version patch --no-git-tag-version && npm run build",
+    "test": "npm run build && node scripts/test.mjs",
+    "format": "prettier --write src server pilot/*.mjs scripts tests dist/app.js dist/thesaurus-admin.js dist/semantic-search.js",
+    "test:browser": "npm run build && playwright test"
   },
   "devDependencies": {
+    "@playwright/test": "1.55.1",
     "drizzle-kit": "^0.31.0",
     "drizzle-orm": "^0.44.0",
-    "jsdom": "30.1.0"
+    "jsdom": "30.1.0",
+    "prettier": "3.6.2"
   },
   "dependencies": {
     "exceljs": "4.4.0",

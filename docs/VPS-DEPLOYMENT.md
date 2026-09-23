@@ -453,3 +453,21 @@ Release validation limitation: local functional tests passed, but the Mac model 
 
 ## Admin workspace update: 4.13.22
 Use the same four-overlay deployment command above. No new environment variables or database migration are required for this UI release. Confirm footer 4.13.22, unlock Admin and verify Projects/Data management/Configuration navigation. Search by a project number, edit a field, switch sections and return: the draft must remain and Save must enable only for changes. Verify Cancel clears selection, Delete retains confirmation, version history opens on demand, and thesaurus saves independently. Check the mobile section selector and keyboard focus. Local DOM/API tests passed; complete these browser checks on the VPS before acceptance.
+
+## Reliability/refactoring update: 4.13.24
+
+Back up the database from Admin first. Check the GitHub Release checks workflow for this commit before deployment: local regression tests passed, but the local Chromium installation was incomplete and Docker was unavailable. Keep the existing Compose overlays, project name and volumes. Rebuild both Atlas and QMD:
+
+```bash
+cd ~/apps/Hazlitt
+git pull --ff-only
+sudo docker compose -f compose.yaml -f compose.qmd.yaml -f compose.qmd-dns.yaml -f compose.umami.yaml build atlas qmd
+sudo docker compose -f compose.yaml -f compose.qmd.yaml -f compose.qmd-dns.yaml -f compose.umami.yaml up -d atlas qmd
+sudo docker compose -f compose.yaml -f compose.qmd.yaml -f compose.qmd-dns.yaml -f compose.umami.yaml ps
+curl -fsS http://127.0.0.1:8081/healthz
+curl -fsS https://vps-f8d31735.vps.ovh.ca/api/search/status
+```
+
+Wait for QMD readiness, then run the warm/query smoke test from the preceding section. Confirm footer 4.13.24; verify zero results for unrelated noise, map/list agreement and preserved Admin drafts on desktop/mobile. Open Admin in two tabs: after saving settings in one, saving an older settings draft in the other must report a conflict rather than overwrite it. Check that vocabulary versions load in pages and historical restoration remains reviewable. Download and restore a backup into a separate temporary SQLite database; never test restoration over the live database.
+
+For development/CI-equivalent regression testing on a checkout with Node 24 installed, run `npm ci && npm test`. Browser tests additionally require `npx playwright install --with-deps chromium` followed by `npm run test:browser`. These are test tools; the runtime container does not need them.

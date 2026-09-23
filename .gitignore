@@ -11,3 +11,6 @@ dist/exceljs.min.js
 dist/exceljs-LICENSE.txt
 
 pilot/.data/
+
+playwright-report/
+test-results/

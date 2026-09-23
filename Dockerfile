@@ -4,6 +4,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY scripts ./scripts
+COPY src ./src
 COPY server ./server
 COPY data ./data
 COPY drizzle ./drizzle
