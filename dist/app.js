@@ -1873,9 +1873,11 @@
     }
     scheduleSearch();
   }
+  let searchCopyDismissed = false;
   document
     .querySelector("#share-search")
     .addEventListener("click", async () => {
+      searchCopyDismissed = false;
       const button = document.querySelector("#share-search"),
         feedback = document.querySelector("#share-search-status");
       const query = document.querySelector("#project-search").value.trim();
@@ -1905,16 +1907,9 @@
         const data = await response.json();
         try {
           await navigator.clipboard.writeText(data.url);
-          feedback.textContent = "Link copied";
+          feedback.textContent = searchCopyDismissed ? "" : "(Link copied)";
         } catch {
-          feedback.textContent = "Copy link: ";
-          const field = document.createElement("input");
-          field.readOnly = true;
-          field.value = data.url;
-          field.setAttribute("aria-label", "Search share URL — copy this link");
-          feedback.append(field);
-          field.focus();
-          field.select();
+          feedback.textContent = "Clipboard unavailable. Please allow clipboard access and try again.";
         }
         window.dispatchEvent(
           new CustomEvent("atlas-analytics", {
@@ -1930,6 +1925,17 @@
         button.disabled = false;
       }
     });
+  // v4.13.34: dismiss confirmation even if the pointer leaves during copying.
+  const searchShareButton = document.querySelector("#share-search");
+  const dismissSearchCopy = () => {
+    searchCopyDismissed = true;
+    const feedback = document.querySelector("#share-search-status");
+    if (feedback.textContent === "(Link copied)") feedback.textContent = "";
+  };
+  searchShareButton.addEventListener("mouseleave", dismissSearchCopy);
+  searchShareButton.addEventListener("blur", () => {
+    if (!searchShareButton.disabled) dismissSearchCopy();
+  });
   // v4.8.7: start with Africa; explicit shared-project links take precedence.
 
   // v4.12.1: map navigation narrows the semantic result set, never the whole catalogue.

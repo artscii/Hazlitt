@@ -17,7 +17,10 @@ test("shared search restores query, profiles, map and survives reload", async ({
   await input.fill("country:Kenya");
   await expect(page.locator("article.program:not([hidden])")).toHaveCount(1);
   await page.locator("#share-search").click();
-  await expect(page.locator("#share-search-status")).toHaveText("Link copied");
+  await expect(page.locator("#share-search-status")).toHaveText("(Link copied)");
+  await page.locator("#project-search").focus();
+  await page.mouse.move(0, 0);
+  await expect(page.locator("#share-search-status")).toHaveText("");
   const url = await page.evaluate(() => window.copiedSearch);
   expect(new URL(url).searchParams.get("q")).toBe("country:Kenya");
   await page.goto(url);
@@ -37,12 +40,12 @@ test("shared search restores query, profiles, map and survives reload", async ({
   await expect(page.locator("article.program:not([hidden])")).toHaveCount(0);
   expect(new URL(page.url()).searchParams.has("search")).toBe(false);
   await page.locator("#share-search").click();
-  await expect(page.locator("#share-search-status")).toHaveText("Link copied");
+  await expect(page.locator("#share-search-status")).toHaveText("(Link copied)");
   await page.goto(await page.evaluate(() => window.copiedSearch));
   await expect(input).toHaveValue("umami");
   await expect(page.locator("article.program:not([hidden])")).toHaveCount(0);
 });
-test("shared location subset and manual clipboard fallback", async ({
+test("shared location subset and hidden-URL clipboard failure", async ({
   page,
   request,
 }) => {
@@ -69,9 +72,8 @@ test("shared location subset and manual clipboard fallback", async ({
     "bombo",
   );
   await page.locator("#share-search").click();
-  await expect(
-    page.getByRole("textbox", { name: "Search share URL — copy this link" }),
-  ).toHaveValue(/search=/);
+  await expect(page.locator("#share-search-status")).toContainText("Clipboard unavailable");
+  await expect(page.locator("#share-search-status input")).toHaveCount(0);
   await page.reload();
   await expect(page.locator("article.program:not([hidden])")).toHaveCount(1);
 });
