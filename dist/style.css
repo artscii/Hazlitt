@@ -523,3 +523,14 @@ main>.directory{border-top:0;padding-top:20px}
 #config-form .configuration-group{min-width:0;margin:0 0 24px;padding:16px;border:1px solid var(--atlas-border)}
 #config-form .configuration-group legend{padding:0 7px;font-size:16px;font-weight:600}
 #config-form .configuration-group p{font-size:14px;color:var(--atlas-muted);line-height:1.55}
+
+/* v4.13.20: stable shared footer; scoped to avoid altering project-card footers. */
+body>footer{position:static;display:grid;grid-template-columns:minmax(110px,.55fr) minmax(0,1.8fr) minmax(0,1fr);align-items:start;gap:20px 32px;width:100%;padding:24px 48px;margin:32px auto 0;background:color-mix(in srgb,var(--atlas-soft) 90%,var(--atlas-text));border-top:1px solid var(--atlas-border);color:var(--atlas-text);line-height:1.6}
+body>footer>*{min-width:0;overflow-wrap:anywhere}
+body>footer>span{margin:0}
+body>footer>span:last-child{text-align:right}
+body>footer small{display:block;font-size:12px;margin-top:4px}
+body>footer .site-navigation{display:flex;flex-wrap:wrap;gap:4px 16px;margin:0}
+body>footer .site-navigation a{display:inline-flex;align-items:center;min-height:44px;color:var(--atlas-text)}
+@media(max-width:900px){body>footer{grid-template-columns:minmax(0,1fr) minmax(0,1fr);padding:24px;gap:12px 24px}body>footer .site-navigation{grid-column:1/-1}}
+@media(max-width:600px){body>footer{grid-template-columns:minmax(0,1fr);padding:20px max(24px,env(safe-area-inset-right)) calc(20px + env(safe-area-inset-bottom)) max(24px,env(safe-area-inset-left));gap:12px}body>footer>span:last-child{text-align:left}}

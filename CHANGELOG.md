@@ -1,6 +1,6 @@
 # Changelog
 
-Current application release: **4.13.19**. This matches `package.json`, the Compose image tag, and generated page footers. A repository commit identifies source history; it does not prove that version has been deployed on a VPS.
+Current application release: **4.13.20**. This matches `package.json`, the Compose image tag, and generated page footers. A repository commit identifies source history; it does not prove that version has been deployed on a VPS.
 
 Entries are newest first and describe behavior at each release. Later entries supersede earlier behavior. Versions 4.12.1–4.13.7 have been checked against Git history; older entries are retained without a new historical audit. Version 4.13.1 groups several changes made without individual version increments.
 
@@ -9,6 +9,11 @@ Entries are newest first and describe behavior at each release. Later entries su
 - Backfilled releases 4.13.0–4.13.7 in [e1a0536](https://github.com/artscii/Hazlitt/commit/e1a0536); reviewed release/commit mapping and clarified deployment and historical behavior afterward.
 - Documentation-only corrections do not change the application version or require a container rebuild.
 - Future application releases should update this changelog in the release commit, with changes, validation and deployment notes. Use `npm run release:patch` to advance the package version and synchronize generated footer/Compose versions; write the corresponding changelog entry before committing.
+
+## 4.13.20 — 2026-09-22
+- Darken the shared site footer using the active palette and high-contrast text.
+- Use stable desktop columns, a two-column intermediate layout and a single-column mobile layout; keep the footer in normal document flow with touch-friendly navigation. Project-card footers are unaffected.
+- Validation: build and palette contrast checks; responsive layout verified in browser.
 
 ## 4.13.19 — 2026-09-22
 - Add public-page events for map selections, reference expansion, evidence/contact links, language changes, sharing outcomes, search failures, zero matches and list completion.
