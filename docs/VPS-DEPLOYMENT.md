@@ -456,7 +456,7 @@ Use the same four-overlay deployment command above. No new environment variables
 
 ## Reliability/refactoring update: 4.13.24
 
-Back up the database from Admin first. Check the GitHub Release checks workflow for this commit before deployment: local regression tests passed, but the local Chromium installation was incomplete and Docker was unavailable. Keep the existing Compose overlays, project name and volumes. Rebuild both Atlas and QMD:
+Back up the database from Admin first. The [Linux Release checks](https://github.com/artscii/Hazlitt/actions/runs/35904134995) passed regression tests, desktop/mobile browser workflows and both Docker builds. Native model readiness still needs VPS verification. Keep the existing Compose overlays, project name and volumes. Rebuild both Atlas and QMD:
 
 ```bash
 cd ~/apps/Hazlitt

@@ -18,7 +18,7 @@ Entries are newest first and describe behavior at each release. Later entries su
 - Safely terminate interrupted streaming responses without attempting a second HTTP header response.
 - Split Admin source by responsibility, centralize project field metadata, format maintained source, consolidate styles and remove obsolete fusion code and identical CSS blocks.
 - Add a unified regression command and Linux CI with desktop/mobile browser tests and both Docker builds. Tests use generated credentials rather than local secrets.
-- Validation: local regression suite passed. Local Chromium installation was incomplete, so browser execution and Docker builds remain Linux CI/VPS acceptance checks; native QMD still requires VPS verification.
+- Validation: local and Linux regression suites, desktop/mobile Chromium workflows, Atlas Docker build and QMD Docker build passed in [Release checks](https://github.com/artscii/Hazlitt/actions/runs/35904134995). Native model readiness and queries still require VPS verification.
 
 ## 4.13.23 — 2026-09-23
 - Give Search a dedicated Admin navigation section on desktop and mobile, grouping the QMD switch, readiness and thesaurus.
