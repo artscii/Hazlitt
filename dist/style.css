@@ -5041,6 +5041,20 @@ body > footer .site-navigation a {
   height: 15px;
 }
 
+/* v4.13.33: constrain desktop hover to the icon; retain the mobile touch target. */
+@media (hover: hover) and (pointer: fine) {
+  .search-icon-actions #share-search {
+    width: 24px;
+    min-width: 24px;
+    height: 24px;
+    min-height: 24px;
+    flex: 0 0 24px;
+    padding: 0;
+    justify-content: center;
+    align-self: center;
+  }
+}
+
 /* 4.13.22: focused Admin workspace; preserve field heights and square edges. */
 #admin-editor:not([hidden]) {
   display: grid;
