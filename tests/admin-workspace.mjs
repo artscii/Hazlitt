@@ -9,6 +9,6 @@ assert(d.querySelector('#workspace-data').hidden);d.querySelector('[data-workspa
 assert(d.querySelector('#workspace-data #file-transfers'));assert(d.querySelector('#workspace-data #db-backup'));
 assert(d.querySelector('#record-form .workspace-danger #admin-delete'));assert(!d.querySelector('.admin-actions #admin-delete'));
 assert.equal(d.querySelector('.workspace-history').open,false);assert(d.querySelector('#project-number-form').hidden);
-assert.equal(d.querySelector('#config-qmd-enabled').form.id,'config-form');assert(!d.querySelector('#vocabulary-host').closest('form'));
+assert.equal(d.querySelector('#config-qmd-enabled').form,null);d.querySelector('[data-workspace=search]').click();assert(!d.querySelector('#workspace-search').hidden);assert(d.querySelector('#workspace-search #search-fieldset'));assert(d.querySelector('#workspace-search #vocabulary-host'));assert(!d.querySelector('#vocabulary-host').closest('form'));
 const mobile=d.querySelector('.workspace-mobile');mobile.value='projects';mobile.dispatchEvent(new w.Event('change'));assert(!d.querySelector('#workspace-projects').hidden);
 console.log('PASS workspace navigation, independent settings/vocabulary, preserved forms, collapsed history and separate delete');dom.window.close();
