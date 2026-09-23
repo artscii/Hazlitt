@@ -6,9 +6,11 @@
  const cloud='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 18a5 5 0 0 1-.6-9.96A6 6 0 0 1 18 7a5.5 5.5 0 0 1 0 11Z"/><path class="cloud-slash" d="m3 3 18 18"/></svg>';
  function connection(active,label){status.classList.toggle('is-connected',active);status.title=label;status.setAttribute('aria-label',label);status.innerHTML=cloud;}
  connection(false,'QMD connection not yet verified');
+ let enabled=false;status.hidden=true;const divider=document.querySelector('.search-cloud-divider');if(divider)divider.hidden=true;
+ const configReady=fetch('/api/config',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Configuration unavailable');return r.json();}).then(config=>{enabled=config.qmdEnabled!==false;status.hidden=!enabled;if(divider)divider.hidden=!enabled;}).catch(()=>{});
  let generation=0,timer,controller,cooldown=0,checking=false;
  async function checkReady(){
-  if(checking||document.hidden||status.getAttribute('aria-busy')==='true')return;
+  if(!enabled||checking||document.hidden||status.getAttribute('aria-busy')==='true')return;
   checking=true;const epoch=generation;
   try{const response=await fetch('/api/search/status',{cache:'no-store',signal:AbortSignal.timeout(4000)});const data=await response.json();
    if(epoch!==generation)return;
@@ -17,11 +19,12 @@
    if(ready)cooldown=0;
   }catch{if(epoch===generation)connection(false,'QMD unavailable — keyword search available');}finally{checking=false;}
  }
- checkReady();setInterval(checkReady,15000);window.addEventListener('focus',checkReady);
+ configReady.then(checkReady);setInterval(checkReady,15000);window.addEventListener('focus',checkReady);
  function cancel(){generation++;clearTimeout(timer);controller?.abort();status.removeAttribute('aria-busy');}
  window.addEventListener('atlas-search-cancel',cancel);
- window.atlasPrimarySearch=(raw,fallback)=>{
+ window.atlasPrimarySearch=async(raw,fallback)=>{
   cancel();const token=generation,query=raw.trim();
+  await configReady;if(token!==generation)return;if(!enabled){fallback();return;}
   if(!query){fallback();return;}
   if(Date.now()<cooldown){fallback();connection(false,'QMD unavailable — keyword search active');return;}
   status.setAttribute('aria-busy','true');

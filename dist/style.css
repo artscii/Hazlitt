@@ -516,3 +516,5 @@ main>.directory{border-top:1px solid color-mix(in srgb,var(--atlas-border) 65%,t
 
 /* v4.13.8: keep count and heading text on a shared baseline. */
 .directory>.section-heading h2{font-variant-numeric:lining-nums}
+
+.qmd-cloud[hidden],.search-cloud-divider[hidden]{display:none}

@@ -1,6 +1,6 @@
 # Changelog
 
-Current application release: **4.13.8**. This matches `package.json`, the Compose image tag, and generated page footers. A repository commit identifies source history; it does not prove that version has been deployed on a VPS.
+Current application release: **4.13.9**. This matches `package.json`, the Compose image tag, and generated page footers. A repository commit identifies source history; it does not prove that version has been deployed on a VPS.
 
 Entries are newest first and describe behavior at each release. Later entries supersede earlier behavior. Versions 4.12.1–4.13.7 have been checked against Git history; older entries are retained without a new historical audit. Version 4.13.1 groups several changes made without individual version increments.
 
@@ -9,6 +9,12 @@ Entries are newest first and describe behavior at each release. Later entries su
 - Backfilled releases 4.13.0–4.13.7 in [e1a0536](https://github.com/artscii/Hazlitt/commit/e1a0536); reviewed release/commit mapping and clarified deployment and historical behavior afterward.
 - Documentation-only corrections do not change the application version or require a container rebuild.
 - Future application releases should update this changelog in the release commit, with changes, validation and deployment notes. Use `npm run release:patch` to advance the package version and synchronize generated footer/Compose versions; write the corresponding changelog entry before committing.
+
+## 4.13.9 — 2026-09-22
+- Add a persistent Admin configuration switch for QMD semantic search, enabled by default for existing installations.
+- When disabled, use browser keyword search, hide the cloud and divider, stop browser readiness requests and reject semantic queries at the Atlas gateway. Apply saved settings on page reload.
+- QMD container stays running; this setting suppresses Atlas use, not container resources.
+- Deployment: rebuild Atlas only. The separate pending layout preview is not included.
 
 ## 4.13.8 — 2026-09-22
 - Show “All X Results”, “X Results” or “1 Result” above each project list, retaining the existing heading typography and using lining numerals for baseline alignment.

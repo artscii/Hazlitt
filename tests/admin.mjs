@@ -12,12 +12,17 @@ assert.equal((await call('/api/login','POST',{password:'Bombo'})).status,200);
 assert.equal((await call('/api/login','POST',{password:'wrong'})).status,401);
 assert.equal((await call('/api/session')).data.authenticated,true);
 // Configuration is public to read, Admin-only to change, validated, and persistent.
-assert.deepEqual((await call('/api/config')).data,{editFlipEnabled:true,editFlipDuration:400,palette:'coastal'});
+assert.deepEqual((await call('/api/config')).data,{editFlipEnabled:true,editFlipDuration:400,palette:'coastal',qmdEnabled:true});
 assert.equal((await call('/api/config','PUT',{editFlipEnabled:true,editFlipDuration:50})).status,400);
 assert.equal((await call('/api/config','PUT',{editFlipEnabled:true,editFlipDuration:800},'https://evil.test')).status,403);
 assert.equal((await call('/api/config','PUT',{editFlipEnabled:false,editFlipDuration:1000})).status,200);
-assert.deepEqual((await call('/api/config')).data,{editFlipEnabled:false,editFlipDuration:1000,palette:'coastal'});
+assert.deepEqual((await call('/api/config')).data,{editFlipEnabled:false,editFlipDuration:1000,palette:'coastal',qmdEnabled:true});
 assert.equal((await call('/api/catalog')).data.config.editFlipEnabled,false);
+assert.equal((await call('/api/config','PUT',{editFlipEnabled:false,editFlipDuration:1000,qmdEnabled:false})).status,200);
+assert.equal((await call('/api/config')).data.qmdEnabled,false);
+assert.equal((await call('/api/search/status')).data.disabled,true);
+assert.equal((await call('/api/search/query','POST',{query:'Kenya'})).status,503);
+await call('/api/config','PUT',{editFlipEnabled:false,editFlipDuration:1000,qmdEnabled:true});
 for(const palette of ['coastal','ocean','forest','plum','slate']){assert.equal((await call('/api/config','PUT',{editFlipEnabled:false,editFlipDuration:1000,palette})).status,200);assert.equal((await call('/api/catalog')).data.config.palette,palette);}
 assert.equal((await call('/api/config','PUT',{editFlipEnabled:false,editFlipDuration:1000,palette:'untrusted'})).status,400);
 assert.equal((await call('/api/config')).data.palette,'slate');
