@@ -168,7 +168,7 @@ function filterProfiles(){
  const query=input.value.trim();
  const matches=matchingProjectIds(query);
  document.querySelectorAll('article.program').forEach(card=>{const hidden=!matches.has(card.id);if(card.hidden!==hidden)card.hidden=hidden;});
- document.querySelectorAll('.directory').forEach(section=>{const count=[...section.querySelectorAll('article.program')].filter(card=>!card.hidden).length;section.hidden=count===0&&section.id==='selected-projects-section';const heading=section.querySelector('.section-heading h2');if(heading){const label=count===programs.length&&count>0?`All ${count} ${count===1?'Project':'Projects'}`:`${count} ${count===1?'Project':'Projects'}`;if(heading.textContent!==label)heading.textContent=label;}});
+ document.querySelectorAll('.directory').forEach(section=>{const count=[...section.querySelectorAll('article.program')].filter(card=>!card.hidden).length;section.hidden=count===0;const heading=section.querySelector('.section-heading h2');if(heading){const label=count===programs.length&&count>0?`All ${count} ${count===1?'Project':'Projects'}`:`${count} ${count===1?'Project':'Projects'}`;if(heading.textContent!==label)heading.textContent=label;}});
  numberSelectedRows();
  highlightProfileMatches(query);
  document.querySelector('#clear-search').hidden=!input.value;
