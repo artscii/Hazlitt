@@ -489,7 +489,7 @@ html.screen-flipping,html.editor-flip-pending{background:var(--atlas-soft);overf
 /* v4.10.6: quiet rules separate the primary reading sections. */
 main>.intro{border-bottom:1px solid color-mix(in srgb,var(--atlas-border) 65%,transparent);margin-bottom:24px}
 main>.project-search{border-top:1px solid color-mix(in srgb,var(--atlas-border) 65%,transparent);padding-top:24px}
-main>.directory{border-top:1px solid color-mix(in srgb,var(--atlas-border) 65%,transparent);padding-top:20px}
+main>.directory{border-top:0;padding-top:20px}
 @media(max-width:740px){main>.intro{margin-bottom:18px}main>.project-search{padding-top:18px}main>.directory{padding-top:16px}}
 
 /* v4.10.7: draft URL testing preserves existing field height. */

@@ -93,6 +93,6 @@ const semanticContinent=w.AtlasSearch.continentsOf(catalog.programs[0])[0];regio
 assert.equal(d.querySelector('#pilot-map-notice'),null,'Map filters never show legacy comparison controls');
 assert.deepEqual([...d.querySelectorAll('article.program:not([hidden])')].map(c=>c.id),[pilotId],'Continent selection stays inside semantic subset');
 await search('');assert.equal(d.querySelectorAll('article.program:not([hidden])').length,catalog.programs.length);assert.equal(d.querySelector('#pilot-map-notice'),null);
-assert.equal(d.querySelector('#programs').closest('.directory').querySelector('h2').textContent,`All ${catalog.programs.length} Results`);
+assert.equal(d.querySelector('#programs').closest('.directory').querySelector('h2').textContent,`All ${catalog.programs.length} Projects`);
 console.log('PASS: applying pilot subset and returning to ordinary search.');
 dom.window.close();
