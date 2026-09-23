@@ -1,0 +1,75 @@
+[
+  {
+    "id": "search",
+    "title": "Search and map",
+    "nodes": [
+      ["input", "Search input", "dist/semantic-search.js"],
+      ["lexical", "BM25 and thesaurus", "src/search.js"],
+      ["gateway", "Search gateway", "server/worker.js"],
+      ["queue", "Bounded queue", "pilot/work-queue.mjs"],
+      ["qmd", "Grounded QMD ranking", "pilot/service.mjs"],
+      ["view", "Project list and map", "dist/app.js"]
+    ],
+    "edges": [
+      ["input", "lexical"],
+      ["lexical", "view", "Immediate matches"],
+      ["lexical", "gateway", "Related candidates"],
+      ["gateway", "queue"],
+      ["queue", "qmd"],
+      ["qmd", "view", "Ranked IDs"],
+      ["gateway", "view", "Fallback"]
+    ],
+    "routes": ["/api/search/query"]
+  },
+  {
+    "id": "editing",
+    "title": "Editing and version restoration",
+    "nodes": [
+      ["editor", "Project draft", "src/admin/projects.js"],
+      ["api", "Validate and authorize", "server/worker.js"],
+      ["db", "SQLite and audit history", "server/local.mjs"],
+      ["history", "Review versions", "src/admin/history.js"]
+    ],
+    "edges": [
+      ["editor", "api", "Save with revision"],
+      ["api", "db", "Atomic record and audit update"],
+      ["db", "history"],
+      ["history", "api", "Restore as new revision"]
+    ],
+    "routes": ["/api/records"]
+  },
+  {
+    "id": "transfers",
+    "title": "Imports and backups",
+    "nodes": [
+      ["excel", "Excel parsing worker", "dist/spreadsheet-worker.js"],
+      ["review", "Preview duplicates and changes", "server/transfers.js"],
+      ["commit", "Reviewed import / undo", "dist/transfers.js"],
+      ["db", "Persistent SQLite", "server/local.mjs"],
+      ["backup", "Consistent SQL snapshot", "server/sqlite-backup.mjs"]
+    ],
+    "edges": [
+      ["excel", "review"],
+      ["review", "commit"],
+      ["commit", "db"],
+      ["db", "backup"]
+    ],
+    "routes": ["/api/db-backup"]
+  },
+  {
+    "id": "settings",
+    "title": "Search configuration",
+    "nodes": [
+      ["settings", "Admin Search", "src/admin/workspace.js"],
+      ["config", "Revision-checked settings", "server/configuration.js"],
+      ["vocabulary", "Vocabulary history", "server/search-settings.js"],
+      ["index", "Background index refresh", "pilot/service.mjs"]
+    ],
+    "edges": [
+      ["settings", "config"],
+      ["settings", "vocabulary"],
+      ["vocabulary", "index"]
+    ],
+    "routes": ["/api/config", "/api/search/thesaurus"]
+  }
+]

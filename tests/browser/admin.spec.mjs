@@ -28,6 +28,19 @@ test("Admin workspaces preserve drafts and separate search settings", async ({
   await expect(
     page.getByText("Search settings saved.", { exact: false }),
   ).toBeVisible();
+  await navigate("system");
+  await expect(page.locator("[data-graph] svg")).toBeVisible();
+  for (const id of ["search", "editing", "transfers", "settings", "code"]) {
+    await page.locator("[data-diagram]").selectOption(id);
+    await expect(page.locator("[data-graph]")).toHaveAttribute(
+      "data-rendered",
+      id,
+    );
+    await expect(page.locator("[data-graph] svg")).toBeVisible();
+    await expect(page.getByText("Diagram could not be rendered.")).toHaveCount(
+      0,
+    );
+  }
   await navigate("projects");
   await expect(name).toHaveValue(original + " draft");
   await expect(

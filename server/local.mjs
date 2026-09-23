@@ -111,6 +111,7 @@ http
       );
       const env = {
         DB,
+        MONITOR_SERVICE_TOKEN: process.env.MONITOR_SERVICE_TOKEN,
         UMAMI_WEBSITE_ID: process.env.UMAMI_WEBSITE_ID,
         UMAMI_DASHBOARD_URL: process.env.UMAMI_DASHBOARD_URL,
         ADMIN_PASSWORD_HASH: process.env.ADMIN_PASSWORD_HASH,

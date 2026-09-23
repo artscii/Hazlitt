@@ -1,0 +1,31 @@
+# Only this narrowly scoped read-only API can access the Docker socket.
+services:
+  atlas:
+    environment:
+      MONITOR_SERVICE_TOKEN: ${MONITOR_SERVICE_TOKEN:?Set a random monitor token in .env}
+    networks: [default, monitoring]
+  monitor:
+    build:
+      context: .
+      dockerfile: monitor/Dockerfile
+    environment:
+      MONITOR_SERVICE_TOKEN: ${MONITOR_SERVICE_TOKEN:?Set a random monitor token in .env}
+      MONITOR_PROJECT: ${COMPOSE_PROJECT_NAME:-hazlitt}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks: [monitoring]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 128m
+    cpus: 0.25
+    restart: unless-stopped
+    logging:
+      options: {max-size: "5m", max-file: "2"}
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+networks:
+  monitoring:
+    internal: true

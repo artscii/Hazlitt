@@ -5129,3 +5129,35 @@ body > footer .site-navigation a {
     min-width: 0;
   }
 }
+/* System diagrams are loaded only on demand. */
+.system-canvas {
+  max-width: 100%;
+  overflow: auto;
+  border: 1px solid var(--atlas-border);
+  padding: 16px;
+  max-height: 65vh;
+  background: white;
+}
+.system-canvas svg {
+  max-width: none !important;
+}
+.system-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+}
+.system-table {
+  overflow-x: auto;
+}
+.system-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.system-table th,
+.system-table td {
+  text-align: left;
+  padding: 10px;
+  border-bottom: 1px solid var(--atlas-border);
+}

@@ -13,6 +13,7 @@ for (const [key, title] of [
   ["data", "Data management"],
   ["search", "Search"],
   ["settings", "Configuration"],
+  ["system", "System"],
 ]) {
   const panel = $("#workspace-" + key);
   panels[key] = panel;
@@ -45,6 +46,32 @@ new MutationObserver(
   attributeFilter: ["href"],
 });
 nav.append($("#admin-logout"));
+let systemUI, systemLoading;
+async function openSystem() {
+  try {
+    if (systemUI) {
+      await systemUI.refresh();
+      return;
+    }
+    if (!systemLoading)
+      systemLoading = (async () => {
+        if (!window.mountAtlasSystem)
+          await new Promise((resolve, reject) => {
+            const script = document.createElement("script");
+            script.src = "/admin-system.js";
+            script.onload = resolve;
+            script.onerror = () =>
+              reject(Error("System interface unavailable"));
+            document.head.append(script);
+          });
+        systemUI = await window.mountAtlasSystem(panels.system, api);
+      })();
+    await systemLoading;
+  } catch (error) {
+    panels.system.textContent = error.message;
+    systemLoading = null;
+  }
+}
 function showWorkspace(key) {
   for (const [name, panel] of Object.entries(panels))
     panel.hidden = name !== key;
@@ -55,6 +82,7 @@ function showWorkspace(key) {
     );
   mobile.value = key;
   if (key === "search") refreshSearchStatus();
+  if (key === "system") void openSystem();
 }
 nav.addEventListener("click", (event) => {
   const key = event.target.dataset.workspace;

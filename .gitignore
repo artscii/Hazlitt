@@ -14,3 +14,5 @@ pilot/.data/
 
 playwright-report/
 test-results/
+
+dist/admin-system.js

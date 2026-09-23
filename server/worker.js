@@ -478,6 +478,24 @@ export default {
         if (path === "/api/session" && request.method === "GET")
           return json({ authenticated: !!auth });
         if (!auth) return json({ error: "Sign in to edit records" }, 401);
+        if (path === "/api/system/diagrams" && request.method === "GET")
+          return json(SYSTEM_DIAGRAMS);
+        if (path === "/api/system/status" && request.method === "GET") {
+          if (!env.MONITOR_SERVICE_TOKEN)
+            return json({ error: "Live monitoring is not configured" }, 503);
+          try {
+            const upstream = await fetch("http://monitor:8080/status", {
+              headers: { Authorization: "Bearer " + env.MONITOR_SERVICE_TOKEN },
+              signal: AbortSignal.timeout(7000),
+              redirect: "error",
+            });
+            if (!upstream.ok) throw Error("Unavailable");
+            return json(await upstream.json());
+          } catch {
+            return json({ error: "Container status unavailable" }, 503);
+          }
+        }
+
         if (path === "/api/search/thesaurus")
           return await vocabularyRoute(request, env);
         if (path === "/api/db-backup" && request.method === "GET")

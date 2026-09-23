@@ -471,3 +471,29 @@ curl -fsS https://vps-f8d31735.vps.ovh.ca/api/search/status
 Wait for QMD readiness, then run the warm/query smoke test from the preceding section. Confirm footer 4.13.24; verify zero results for unrelated noise, map/list agreement and preserved Admin drafts on desktop/mobile. Open Admin in two tabs: after saving settings in one, saving an older settings draft in the other must report a conflict rather than overwrite it. Check that vocabulary versions load in pages and historical restoration remains reviewable. Download and restore a backup into a separate temporary SQLite database; never test restoration over the live database.
 
 For development/CI-equivalent regression testing on a checkout with Node 24 installed, run `npm ci && npm test`. Browser tests additionally require `npx playwright install --with-deps chromium` followed by `npm run test:browser`. These are test tools; the runtime container does not need them.
+
+## System dashboard and Docker socket monitor: 4.13.25
+
+Back up the database before updating. In the existing VPS checkout:
+
+```bash
+cd ~/apps/Hazlitt
+git pull --ff-only
+bash scripts/deploy-system.sh
+```
+
+The script preserves `.env`, creates a dedicated random monitoring token when absent, and rebuilds Atlas plus the new monitor. It keeps the existing QMD/DNS/Umami overlays and database volumes, and stamps the image with the checked-out Git commit. It does not rebuild or restart QMD. If you have a custom Compose project name, retain `COMPOSE_PROJECT_NAME` in `.env`; the monitor filters by that exact label (default `hazlitt`). Future deploy commands must include `-f compose.system.yaml` to retain live monitoring configuration.
+
+No new public port or Caddy route is needed. The monitor reaches the local Docker Unix socket and is accessible to Atlas only through an internal Docker network. It intentionally runs with access to the root-owned socket, a read-only root filesystem, no added capabilities and no new privileges. The socket mount being `:ro` is not an API authorization boundary: the service implements a fixed read-only API. It never returns raw inspect data, environment values, credentials or logs, and it cannot accept container restart/create/exec requests through its HTTP interface. Host administrators remain able to control Docker normally.
+
+Verification:
+
+```bash
+sudo docker compose -f compose.yaml -f compose.qmd.yaml -f compose.qmd-dns.yaml -f compose.umami.yaml -f compose.system.yaml ps
+curl -fsS http://127.0.0.1:8081/healthz
+sudo docker compose -f compose.yaml -f compose.qmd.yaml -f compose.qmd-dns.yaml -f compose.umami.yaml -f compose.system.yaml logs --tail=30 monitor
+```
+
+Unlock Admin and choose System. Confirm footer 4.13.25, the release/commit stamp, all six diagrams, zoom and SVG download, and live service rows. Diagram deployment edges include optional overlays and host Caddy; they describe configured architecture rather than detected health. Live rows reflect only the Docker containers (host Caddy is not a container). The monitor collects on demand and caches samples for 30 seconds. Admin polls only while System is visible; use Refresh status to check availability. An unavailable monitor does not affect search, editing or the public Atlas.
+
+Keep tokens and resolved Compose environments out of Git. Diagram generation reads allowlisted structural fields from checked-in Compose files, never `.env`. Renderers run locally; diagrams are not sent to external services. Runtime data inspection is limited to this Compose project and twenty containers per sample.

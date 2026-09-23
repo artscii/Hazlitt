@@ -17,3 +17,4 @@ jobs:
       - run: npx playwright test
       - run: docker build -t atlas-ci .
       - run: docker build -f pilot/Dockerfile -t atlas-qmd-ci .
+      - run: docker build -f monitor/Dockerfile -t atlas-monitor-ci .

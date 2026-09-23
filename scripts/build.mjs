@@ -1,3 +1,5 @@
+import { build as bundle } from "esbuild";
+import { generateSystemDiagrams } from "./system-diagrams.mjs";
 import { createHash } from "node:crypto";
 import fs from "node:fs";
 // Readable source fragments compile to dependency-free browser assets.
@@ -80,6 +82,15 @@ fs.copyFileSync(
   "dist/exceljs.min.js",
 );
 fs.copyFileSync("node_modules/exceljs/LICENSE", "dist/exceljs-LICENSE.txt");
+await bundle({
+  entryPoints: ["src/system/admin-system.js"],
+  bundle: true,
+  minify: true,
+  format: "iife",
+  outfile: "dist/admin-system.js",
+  logLevel: "warning",
+});
+const systemDiagrams = await generateSystemDiagrams();
 const assets = {};
 for (const name of [
   "index.html",
@@ -94,6 +105,7 @@ for (const name of [
   "analytics-interactions.js",
   "theme.js",
   "admin.js",
+  "admin-system.js",
   "thesaurus-admin.js",
   "style.css",
   "map.svg",
@@ -134,7 +146,10 @@ fs.mkdirSync("dist/server", { recursive: true });
 fs.mkdirSync("dist/.openai", { recursive: true });
 fs.writeFileSync(
   "dist/server/index.js",
-  "const ASSETS=" +
+  "const SYSTEM_DIAGRAMS=" +
+    JSON.stringify(systemDiagrams) +
+    ";\n" +
+    "const ASSETS=" +
     JSON.stringify(assets) +
     ";\nconst SEED=" +
     fs.readFileSync("data/seed.json") +

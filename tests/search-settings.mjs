@@ -133,6 +133,10 @@ assert.equal(
 const backup = await (await call("/api/db-backup")).text();
 assert(backup.includes("search_thesaurus"));
 assert(backup.includes("approved phrase"));
+assert.equal((await call('/api/system/diagrams','GET',null,false)).status,401);
+assert.equal((await call('/api/system/status','GET',null,false)).status,401);
+assert.equal((await call('/api/system/status')).status,503);
+assert.equal((await (await call('/api/system/diagrams')).json()).diagrams.length,6);
 const configuration = await (await call("/api/config")).json();
 assert.equal(
   (

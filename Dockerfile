@@ -5,6 +5,11 @@ COPY package.json package-lock.json ./
 RUN npm ci
 COPY scripts ./scripts
 COPY src ./src
+COPY pilot ./pilot
+COPY monitor ./monitor
+COPY compose*.yaml ./
+ARG ATLAS_SOURCE_REVISION
+ENV ATLAS_SOURCE_REVISION=$ATLAS_SOURCE_REVISION
 COPY server ./server
 COPY data ./data
 COPY drizzle ./drizzle
