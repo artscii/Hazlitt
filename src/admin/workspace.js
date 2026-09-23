@@ -12,7 +12,7 @@ for (const [key, title] of [
   ["projects", "Projects"],
   ["data", "Data management"],
   ["search", "Search"],
-  ["settings", "Configuration"],
+  ["settings", "Visual"],
   ["system", "System"],
 ]) {
   const panel = $("#workspace-" + key);

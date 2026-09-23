@@ -2,7 +2,7 @@
 const configuration = document.createElement("section");
 configuration.className = "atlas-configuration";
 configuration.id = "atlas-configuration";
-configuration.innerHTML = `<h2>Configuration</h2><p>Site-wide appearance and page transitions.</p><form id="config-form"><fieldset id="palette-fieldset"><legend>Site colour palette</legend><p class="palette-note">Choose a palette to preview it here. Save configuration to apply it across the site.</p><div class="palette-options" id="palette-options"></div><div class="palette-actions"><button type="button" id="palette-reset">Restore saved palette</button><span class="palette-note">Red delete controls and yellow version differences keep their meaning.</span></div></fieldset><fieldset class="configuration-group" id="transitions-fieldset"><legend>Page transitions</legend><label class="check-label"><input id="config-flip-enabled" type="checkbox"> Flip the screen between the Atlas and editor</label><div class="config-duration-row"><label for="config-flip-duration">Flip duration <output id="config-duration-value" for="config-flip-duration">0.40 seconds</output></label><input id="config-flip-duration" type="range" min="300" max="1600" step="10" value="400" aria-describedby="config-motion-note"><div class="config-range-labels"><span>Quicker · 0.3s</span><span>Slower · 1.6s</span></div></div><p id="config-motion-note">Includes both halves of the card flip. Visitors who prefer reduced motion will always see an instant transition.</p></fieldset><button type="submit">Save configuration</button><p id="config-status" role="status" aria-live="polite"></p></form>`;
+configuration.innerHTML = `<h2>Visual</h2><p>Site-wide appearance and page transitions.</p><form id="config-form"><fieldset id="palette-fieldset"><legend>Site colour palette</legend><p class="palette-note">Choose a palette to preview it here. Save visual settings to apply it across the site.</p><div class="palette-options" id="palette-options"></div><div class="palette-actions"><button type="button" id="palette-reset">Restore saved palette</button><span class="palette-note">Red delete controls and yellow version differences keep their meaning.</span></div></fieldset><fieldset class="configuration-group" id="transitions-fieldset"><legend>Page transitions</legend><label class="check-label"><input id="config-flip-enabled" type="checkbox"> Flip the screen between the Atlas and editor</label><div class="config-duration-row"><label for="config-flip-duration">Flip duration <output id="config-duration-value" for="config-flip-duration">0.40 seconds</output></label><input id="config-flip-duration" type="range" min="300" max="1600" step="10" value="400" aria-describedby="config-motion-note"><div class="config-range-labels"><span>Quicker · 0.3s</span><span>Slower · 1.6s</span></div></div><p id="config-motion-note">Includes both halves of the card flip. Visitors who prefer reduced motion will always see an instant transition.</p></fieldset><button type="submit">Save visual settings</button><p id="config-status" role="status" aria-live="polite"></p></form>`;
 $("#admin-editor").append(configuration);
 // v4.11.0: full SQL backup, separate from catalogue-only Excel exports.
 const backupSection = document.createElement("section");
@@ -105,7 +105,7 @@ paletteOptions.onchange = (event) => {
   document.documentElement.dataset.palettePreview = "true";
   AtlasTheme.apply(event.target.value);
   $("#config-status").textContent =
-    "Preview only. Save configuration to apply this palette for visitors.";
+    "Preview only. Save visual settings to apply this palette for visitors.";
 };
 $("#palette-reset").onclick = () => {
   const palette = AtlasTheme.apply(catalog.config?.palette);
@@ -150,7 +150,7 @@ configForm.onsubmit = async (event) => {
   event.preventDefault();
   const button = configForm.querySelector("button[type=submit]");
   for (const control of configForm.elements) control.disabled = true;
-  $("#config-status").textContent = "Saving configuration…";
+  $("#config-status").textContent = "Saving visual settings…";
   try {
     catalog.config = await api("/api/config", {
       method: "PATCH",
@@ -164,7 +164,7 @@ configForm.onsubmit = async (event) => {
     delete document.documentElement.dataset.palettePreview;
     AtlasTheme.apply(catalog.config.palette);
     $("#config-status").textContent =
-      "Configuration saved. Applies the next time visitors load the Atlas.";
+      "Visual settings saved. Applies the next time visitors load the Atlas.";
   } catch (error) {
     $("#config-status").textContent = error.message;
   } finally {
