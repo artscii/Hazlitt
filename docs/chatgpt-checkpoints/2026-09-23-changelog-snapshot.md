@@ -5,7 +5,6 @@ Current application release: **4.13.34**. This matches `package.json`, the Compo
 Entries are newest first and describe behavior at each release. Later entries supersede earlier behavior. Versions 4.12.1–4.13.7 have been checked against Git history; older entries are retained without a new historical audit. Version 4.13.1 groups several changes made without individual version increments.
 
 ### Documentation maintenance
-- Save the reviewed September 23 session checkpoint and a complete 4.13.34 changelog snapshot in `docs/chatgpt-checkpoints/`, including architecture, decisions, verification limits and VPS handover context. No application changes.
 - Refresh VPS/QMD deployment guidance for 4.13.7: automatic startup warm-up, resident models, lightweight readiness, single-result API, profiling, and coordinated rebuilds. No application behavior changes.
 - Backfilled releases 4.13.0–4.13.7 in [e1a0536](https://github.com/artscii/Hazlitt/commit/e1a0536); reviewed release/commit mapping and clarified deployment and historical behavior afterward.
 - Documentation-only corrections do not change the application version or require a container rebuild.
