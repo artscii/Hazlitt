@@ -12,8 +12,8 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - run: npm test
       - run: npx playwright install --with-deps chromium
+      - run: npm test
       - run: npx playwright test
       - run: docker build -t atlas-ci .
       - run: docker build -f pilot/Dockerfile -t atlas-qmd-ci .

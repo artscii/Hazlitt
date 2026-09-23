@@ -356,11 +356,42 @@
     return searchResult(query).ids;
   }
   const highlightedCards = new WeakMap();
+  const visibleHighlightCards = new Set();
+  const highlightObserver =
+    typeof IntersectionObserver === "function"
+      ? new IntersectionObserver(
+          (entries) => {
+            let entered = false;
+            for (const entry of entries) {
+              if (entry.isIntersecting) {
+                visibleHighlightCards.add(entry.target);
+                entered = true;
+              } else visibleHighlightCards.delete(entry.target);
+            }
+            if (entered)
+              highlightProfileMatches(
+                document.querySelector("#project-search").value.trim(),
+              );
+          },
+          { rootMargin: "120px 0px" },
+        )
+      : null;
+  if (highlightObserver)
+    for (const card of projectCards.values()) highlightObserver.observe(card);
   // v1.3.11: mark matches in text nodes only, preserving links and profile markup.
   function highlightProfileMatches(query) {
-    const cards = document.querySelectorAll("article.program");
-    const terms = searchResult(query)
-      .terms.filter((t) => t.length > 1)
+    const cards = highlightObserver
+      ? [...visibleHighlightCards]
+      : [...projectCards.values()];
+    const result = searchResult(query);
+    const matchesById = new Map(
+      [...result.results, ...result.candidates].map((match) => [
+        match.id,
+        match,
+      ]),
+    );
+    const terms = result.terms
+      .filter((t) => t.length > 1)
       .sort((a, b) => b.length - a.length);
     const signature = terms.join("|");
     cards.forEach((card) => {
@@ -391,9 +422,7 @@
         (term) => !normalizeSearch(visibleText).includes(term),
       );
       const record = programsById.get(card.id);
-      const match =
-        searchResult(query).results.find((r) => r.id === card.id) ||
-        searchResult(query).candidates.find((r) => r.id === card.id);
+      const match = matchesById.get(card.id);
       if (match && match.kind !== "bm25" && match.kind !== "filter") {
         const explanation = document.createElement("aside");
         explanation.className = "search-match-context";
@@ -486,44 +515,52 @@
   // v4.2.0: size each scroll panel to its first three visible projects; stripe visible rows.
   const evidenceMeasurements = new WeakMap();
   let evidenceLayoutFrame = 0;
+  const visibleEvidenceRows = new WeakMap();
   function updateEvidencePanels() {
     cancelAnimationFrame(evidenceLayoutFrame);
     evidenceLayoutFrame = requestAnimationFrame(() => {
-      for (const panel of document.querySelectorAll(".evidence-scroll")) {
-        const rows = [...panel.querySelectorAll("article.program")].filter(
-          (row) => !row.hidden,
-        );
+      // Read all geometry before writes to avoid repeated forced layout.
+      const layouts = [...document.querySelectorAll(".evidence-scroll")].map(
+        (panel) => {
+          const rows = [...panel.querySelectorAll("article.program")].filter(
+            (row) => !row.hidden,
+          );
+          const top = panel.getBoundingClientRect().top + panel.clientTop;
+          const rects = rows.map((row) => row.getBoundingClientRect());
+          return {
+            panel,
+            rows,
+            height: Math.ceil(
+              rects
+                .slice(0, 3)
+                .reduce((sum, rect) => sum + rect.height + 8, 0) + 2,
+            ),
+            measurements: rows.map((row, i) => ({
+              row,
+              bottom: rects[i].bottom - top + panel.scrollTop,
+            })),
+          };
+        },
+      );
+      for (const { panel, rows, height, measurements } of layouts) {
         rows.forEach((row, index) =>
           row.classList.toggle("evidence-alternate", index % 2 === 1),
         );
-        const height = rows
-          .slice(0, 3)
-          .reduce(
-            (sum, row) => sum + row.getBoundingClientRect().height + 8,
-            0,
-          );
-        panel.style.setProperty(
-          "--three-project-height",
-          Math.ceil(height + 2) + "px",
-        );
-        panel.tabIndex = panel.scrollHeight > panel.clientHeight + 2 ? 0 : -1;
-        const top = panel.getBoundingClientRect().top + panel.clientTop;
-        evidenceMeasurements.set(
-          panel,
-          rows.map((row) => ({
-            row,
-            bottom: row.getBoundingClientRect().bottom - top + panel.scrollTop,
-          })),
-        );
-        updateScrollHint(panel);
+        panel.style.setProperty("--three-project-height", height + "px");
+        evidenceMeasurements.set(panel, measurements);
+        visibleEvidenceRows.set(panel, rows);
       }
+      evidenceLayoutFrame = requestAnimationFrame(() => {
+        for (const { panel } of layouts) {
+          panel.tabIndex = panel.scrollHeight > panel.clientHeight + 2 ? 0 : -1;
+          updateScrollHint(panel);
+        }
+      });
     });
   }
   // v4.9.0: scroll affordance reflects actual remaining content.
   function updateScrollHint(panel) {
-    const rows = [...panel.querySelectorAll("article.program")].filter(
-      (row) => !row.hidden,
-    );
+    const rows = visibleEvidenceRows.get(panel) || [];
     const more =
       panel.scrollHeight > panel.clientHeight + 2 &&
       panel.scrollTop + panel.clientHeight < panel.scrollHeight - 3;

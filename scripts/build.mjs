@@ -1,4 +1,5 @@
 import { build as bundle } from "esbuild";
+import { renderSystemDiagrams } from "./render-system-diagrams.mjs";
 import { generateSystemDiagrams } from "./system-diagrams.mjs";
 import { createHash } from "node:crypto";
 import fs from "node:fs";
@@ -90,7 +91,9 @@ await bundle({
   outfile: "dist/admin-system.js",
   logLevel: "warning",
 });
-const systemDiagrams = await generateSystemDiagrams();
+const systemDiagrams = await renderSystemDiagrams(
+  await generateSystemDiagrams(),
+);
 const assets = {};
 for (const name of [
   "index.html",
@@ -174,6 +177,8 @@ fs.writeFileSync(
     ) +
     ";\n" +
     fs.readFileSync("server/backup.js", "utf8") +
+    "\n" +
+    fs.readFileSync("server/response-cache.js", "utf8") +
     "\n" +
     fs.readFileSync("server/worker.js", "utf8"),
 );

@@ -1,5 +1,10 @@
 // Coalesce identical jobs while giving queued callers an actual deadline.
-export function createWorkQueue({ limit = 3, waitMs = 2000 } = {}) {
+export function createWorkQueue({
+  limit = 3,
+  waitMs = 2000,
+  activeMs = 30000,
+  onStall = () => {},
+} = {}) {
   const jobs = new Map();
   let active = false;
   function rejectQueued(job, error) {
@@ -18,12 +23,25 @@ export function createWorkQueue({ limit = 3, waitMs = 2000 } = {}) {
     job.started = true;
     clearTimeout(job.timer);
     active = true;
+    // Do not release the native runtime while its promise is still running.
+    // QMD 2.8.3 searchVector has no AbortSignal option. A stuck runtime is
+    // recovered by restarting the isolated service, never concurrent inference.
+    const watchdog = setTimeout(() => {
+      for (const listener of job.listeners) {
+        listener.cleanup();
+        listener.reject(Error("Search stalled"));
+      }
+      job.listeners.clear();
+      onStall();
+    }, activeMs);
+    watchdog.unref?.();
     try {
       const result = await job.run();
       for (const listener of job.listeners) listener.resolve(result);
     } catch (error) {
       for (const listener of job.listeners) listener.reject(error);
     } finally {
+      clearTimeout(watchdog);
       for (const listener of job.listeners) listener.cleanup();
       jobs.delete(job.key);
       active = false;

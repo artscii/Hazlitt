@@ -43,6 +43,7 @@ const getCatalog = async () => catalog;
 const svc = createSearchService({
   rootDir: fs.mkdtempSync("/tmp/qmd-mock-"),
   refreshMs: 0,
+  inferenceBudget: { capacity: 1, refillMs: 60000 },
   openStore: async () => fake,
 });
 svc.readiness(getCatalog);
@@ -70,6 +71,17 @@ assert.deepEqual(b.results, a.results);
 assert.equal(vectors, 1);
 assert.equal((await call("Pap smear")).cached, true);
 assert.equal(vectors, 1);
+for (let i = 0; i < 20; i++)
+  assert.equal((await call("Pap smear")).cached, true);
+assert.equal((await call("PAP SMEAR")).cached, true);
+const limited = await call("pap smear country:Kenya");
+assert.equal(limited.lexicalOnly, true);
+assert.equal(limited.results[0].id, "a");
+assert.equal(
+  vectors,
+  1,
+  "cached requests bypass inference budget; new work stays bounded",
+);
 let release;
 block = new Promise((r) => (release = r));
 catalog = {

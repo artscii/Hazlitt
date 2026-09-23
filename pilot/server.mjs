@@ -29,8 +29,6 @@ async function getCatalog() {
   expires = Date.now() + 30000;
   return catalog;
 }
-let tokens = 12,
-  last = Date.now();
 const server = http.createServer(async (req, res) => {
   const reply = (code, data) => {
     res.writeHead(code, {
@@ -49,10 +47,6 @@ const server = http.createServer(async (req, res) => {
     return reply(200, readiness(getCatalog));
   if (req.url !== "/api/search/query" || req.method !== "POST")
     return reply(404, { error: "Not found" });
-  tokens = Math.min(12, tokens + (Date.now() - last) / 5000);
-  last = Date.now();
-  if (tokens < 1) return reply(429, { error: "Search busy" });
-  tokens--;
   try {
     let size = 0;
     const chunks = [];

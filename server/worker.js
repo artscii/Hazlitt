@@ -121,6 +121,11 @@ async function checkDuplicate(env, record, ignoreId) {
     );
 }
 async function records(env) {
+  return structuredClone(
+    await cachedRead(env, "records", () => readRecords(env)),
+  );
+}
+async function readRecords(env) {
   const rows = (
     await database(env)
       .prepare("SELECT id,payload,deleted,revision FROM records")
@@ -288,7 +293,7 @@ function auditStatement(env, request, action, record, before, deleted = false) {
       record.id,
     );
 }
-export default {
+const atlasWorker = {
   async fetch(request, env) {
     const url = new URL(request.url),
       path = url.pathname;
@@ -309,13 +314,20 @@ export default {
             )
           )
             throw Error("Invalid upstream");
-          const response = await fetch(endpoint, {
-            headers: { Authorization: "Bearer " + env.QMD_SERVICE_TOKEN },
-            signal: AbortSignal.timeout(3000),
-            redirect: "error",
-          });
-          if (!response.ok) throw Error("Unavailable");
-          const state = await response.json();
+          const state = await cachedRead(
+            env,
+            "qmd-status:" + endpoint.origin,
+            async () => {
+              const response = await fetch(endpoint, {
+                headers: { Authorization: "Bearer " + env.QMD_SERVICE_TOKEN },
+                signal: AbortSignal.timeout(3000),
+                redirect: "error",
+              });
+              if (!response.ok) throw Error("Unavailable");
+              return response.json();
+            },
+            2000,
+          );
           return json({
             ready: state.ready === true,
             warming: state.warming === true,
@@ -379,26 +391,53 @@ export default {
           },
         });
       if (path === "/api/search/catalog" && request.method === "GET") {
-        const programs = (await records(env)).map((p) =>
-          Object.fromEntries(
-            ["id", "revision", ...AtlasSearch.publicFields]
-              .filter((k) => p[k] !== undefined)
-              .map((k) => [k, p[k]]),
-          ),
-        );
-        const data = { programs, thesaurus: await searchVocabulary(env) };
-        const etag = '"' + (await hash(JSON.stringify(data))) + '"';
-        if (request.headers.get("If-None-Match") === etag)
-          return new Response(null, { status: 304, headers: { ETag: etag } });
-        return json(data, 200, { ETag: etag, "Cache-Control": "no-cache" });
-      }
-      if (path === "/api/catalog" && request.method === "GET")
-        return json({
-          programs: await records(env),
-          ...(url.searchParams.has("compact") ? {} : { countries: COUNTRIES }),
-          config: await siteConfig(env),
-          thesaurus: await searchVocabulary(env),
+        const cached = await cachedRead(env, "search-catalog", async () => {
+          const programs = (await records(env)).map((p) =>
+            Object.fromEntries(
+              ["id", "revision", ...AtlasSearch.publicFields]
+                .filter((k) => p[k] !== undefined)
+                .map((k) => [k, p[k]]),
+            ),
+          );
+          const body = JSON.stringify({
+            programs,
+            thesaurus: await searchVocabulary(env),
+          });
+          return { body, etag: '"' + (await hash(body)) + '"' };
         });
+        const headers = {
+          ETag: cached.etag,
+          "Cache-Control": "no-cache",
+          "Content-Type": "application/json",
+        };
+        return new Response(
+          request.headers.get("If-None-Match") === cached.etag
+            ? null
+            : cached.body,
+          {
+            status:
+              request.headers.get("If-None-Match") === cached.etag ? 304 : 200,
+            headers,
+          },
+        );
+      }
+      if (path === "/api/catalog" && request.method === "GET") {
+        const compact = url.searchParams.has("compact");
+        const body = await cachedRead(env, "catalog:" + compact, async () =>
+          JSON.stringify({
+            programs: await records(env),
+            ...(compact ? {} : { countries: COUNTRIES }),
+            config: await siteConfig(env),
+            thesaurus: await searchVocabulary(env),
+          }),
+        );
+        return new Response(body, {
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "no-cache",
+          },
+        });
+      }
       if (path === "/api/config" && request.method === "GET")
         return json(await siteConfig(env));
       if (path.startsWith("/api/")) {
@@ -774,6 +813,22 @@ export default {
         },
         400,
       );
+    }
+  },
+};
+
+export default {
+  async fetch(request, env) {
+    try {
+      return await atlasWorker.fetch(request, env);
+    } finally {
+      if (
+        !["GET", "HEAD"].includes(request.method) &&
+        !/^\/api\/(search\/(query|status)|login|logout|analytics)(?:\/|$)/.test(
+          new URL(request.url).pathname,
+        )
+      )
+        invalidateResponses(env);
     }
   },
 };

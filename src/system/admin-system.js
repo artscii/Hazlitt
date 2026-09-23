@@ -1,11 +1,3 @@
-import mermaid from "mermaid";
-mermaid.initialize({
-  startOnLoad: false,
-  securityLevel: "strict",
-  theme: "neutral",
-  flowchart: { useMaxWidth: false },
-  maxTextSize: 150000,
-});
 window.mountAtlasSystem = async function (panel, api) {
   panel.innerHTML =
     '<h2>System</h2><p data-stamp></p><label>Release architecture<select data-diagram></select></label><p data-kind></p><div class="system-actions"><button type="button" data-zoom="-" aria-label="Zoom out">−</button><button type="button" data-zoom="+" aria-label="Zoom in">+</button><button type="button" data-fit>Reset zoom</button><button type="button" data-download>Download SVG</button></div><div class="system-canvas" tabindex="0" aria-label="Architecture diagram"><div data-graph></div></div><details><summary>Source references</summary><ul data-files></ul></details><h3>Live services</h3><p>Docker status is sampled separately from the release diagrams.</p><button type="button" data-refresh>Refresh status</button><p data-status role="status"></p><div class="system-table"></div>';
@@ -20,12 +12,10 @@ window.mountAtlasSystem = async function (panel, api) {
       diagram = data.diagrams.find((d) => d.id === $("[data-diagram]").value);
     $("[data-kind]").textContent = diagram.kind;
     try {
-      const result = await mermaid.render(
-        "systemDiagram" + token,
-        diagram.source,
-      );
+      if (!diagram.svg?.startsWith("<svg"))
+        throw Error("Missing release diagram");
       if (token !== renderToken) return;
-      svg = result.svg;
+      svg = diagram.svg;
       $("[data-graph]").innerHTML = svg;
       $("[data-graph]").dataset.rendered = diagram.id;
       scale = 1;

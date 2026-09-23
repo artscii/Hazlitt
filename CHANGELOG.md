@@ -1,6 +1,6 @@
 # Changelog
 
-Current application release: **4.13.26**. This matches `package.json`, the Compose image tag, and generated page footers. A repository commit identifies source history; it does not prove that version has been deployed on a VPS.
+Current application release: **4.13.27**. This matches `package.json`, the Compose image tag, and generated page footers. A repository commit identifies source history; it does not prove that version has been deployed on a VPS.
 
 Entries are newest first and describe behavior at each release. Later entries supersede earlier behavior. Versions 4.12.1–4.13.7 have been checked against Git history; older entries are retained without a new historical audit. Version 4.13.1 groups several changes made without individual version increments.
 
@@ -9,6 +9,16 @@ Entries are newest first and describe behavior at each release. Later entries su
 - Backfilled releases 4.13.0–4.13.7 in [e1a0536](https://github.com/artscii/Hazlitt/commit/e1a0536); reviewed release/commit mapping and clarified deployment and historical behavior afterward.
 - Documentation-only corrections do not change the application version or require a container rebuild.
 - Future application releases should update this changelog in the release commit, with changes, validation and deployment notes. Use `npm run release:patch` to advance the package version and synchronize generated footer/Compose versions; write the corresponding changelog entry before committing.
+
+## 4.13.27 — 2026-09-23
+- Highlight project text near the visible viewport; share per-query match lookups and batch evidence-panel geometry reads before writes.
+- Apply the QMD rate budget only to new inference work, preserving cached/coalesced requests and immediate lexical fallback.
+- Add a 30-second stalled-inference watchdog for the isolated QMD process without overlapping native model operations; retain safe cancellation of queued requests.
+- Cache catalogue serialization, record reads and readiness briefly; invalidate data caches after mutation requests and guard against stale in-flight fills.
+- Pre-render release architecture diagrams to SVG during builds, removing Mermaid from the browser bundle. Chromium is build-only.
+- Add `--with-qmd` deployment, startup health retries and a read-only VPS performance verification script; update README and deployment guidance.
+- Validation: queue, search-service and response-cache regression tests; full build/browser/release checks recorded before release completion.
+- Deployment: rebuild Atlas and QMD using the five existing overlays; persistent data volumes remain unchanged.
 
 ## 4.13.26 — 2026-09-23
 - Rename Admin Configuration to Visual in desktop navigation, the mobile selector and the section heading; align save and status labels.

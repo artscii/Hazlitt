@@ -55,3 +55,30 @@ await running;
 console.log(
   "PASS queued deadline expires while active inference remains stalled",
 );
+// Active native work must not overlap even after a caller leaves or watchdog fires.
+let stalled = 0,
+  finishNative,
+  secondRan = false;
+const guarded = createWorkQueue({
+  activeMs: 20,
+  waitMs: 1000,
+  onStall: () => stalled++,
+});
+const activeJob = guarded
+  .run("native", () => new Promise((resolve) => (finishNative = resolve)))
+  .catch((e) => e.message);
+await new Promise((resolve) => setTimeout(resolve, 35));
+assert.match(await activeJob, /stalled/);
+assert.equal(stalled, 1);
+assert.equal(guarded.busy, true);
+const next = guarded.run("next", () => {
+  secondRan = true;
+  return 7;
+});
+await new Promise((resolve) => setTimeout(resolve, 0));
+assert.equal(secondRan, false);
+finishNative();
+assert.equal(await next, 7);
+console.log(
+  "PASS stalled inference recovery callback without overlapping native operations",
+);

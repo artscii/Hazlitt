@@ -1,5 +1,7 @@
 # Atlas 2.0.0: shared editor, persistent SQLite and version history.
 FROM node:24-alpine AS build
+RUN apk add --no-cache chromium
+ENV CHROMIUM_PATH=/usr/bin/chromium
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci

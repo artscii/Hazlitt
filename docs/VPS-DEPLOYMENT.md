@@ -499,3 +499,30 @@ sudo docker compose -f compose.yaml -f compose.qmd.yaml -f compose.qmd-dns.yaml 
 Unlock Admin and choose System. Confirm footer 4.13.25, the release/commit stamp, all six diagrams, zoom and SVG download, and live service rows. Diagram deployment edges include optional overlays and host Caddy; they describe configured architecture rather than detected health. Live rows reflect only the Docker containers (host Caddy is not a container). The monitor collects on demand and caches samples for 30 seconds. Admin polls only while System is visible; use Refresh status to check availability. An unavailable monitor does not affect search, editing or the public Atlas.
 
 Keep tokens and resolved Compose environments out of Git. Diagram generation reads allowlisted structural fields from checked-in Compose files, never `.env`. Renderers run locally; diagrams are not sent to external services. Runtime data inspection is limited to this Compose project and twenty containers per sample.
+
+## Performance release 4.13.27
+
+This release changes Atlas **and QMD**. Preserve the existing `.env`, database volumes and all five Compose overlays. From the VPS repository:
+
+```bash
+cd ~/apps/Hazlitt
+git pull --ff-only
+bash scripts/deploy-system.sh --with-qmd
+bash scripts/verify-performance.sh https://vps-f8d31735.vps.ovh.ca
+```
+
+The helper rebuilds Atlas, monitor and QMD, retries the Atlas health check during startup, and leaves Umami/PostgreSQL running. Do not use `down -v`. Future Atlas-only releases can omit `--with-qmd`.
+
+QMD warms automatically after restart. The verification script waits up to roughly two minutes plus request time for readiness, then prints end-to-end and server timings for noise, country and related-concept searches. Run it again after warming to compare cached timings. If Search is disabled in Admin, the script explains that rather than reporting a QMD failure.
+
+```bash
+sudo docker compose -f compose.yaml -f compose.qmd.yaml -f compose.qmd-dns.yaml -f compose.umami.yaml -f compose.system.yaml logs --since=10m qmd
+```
+
+Look for `QMD_PROFILE`, `QMD_REQUEST`, or the stalled-inference restart message. Cached and coalesced requests no longer consume inference tokens; the CPU budget applies only to new model work. The 30-second active-inference watchdog restarts only QMD under Docker's `unless-stopped` policy. The current QMD API cannot interrupt an already-started embedding safely, so cancelled callers detach while normal inference finishes and fills the cache. No second native operation starts concurrently. A fully blocked JavaScript event loop cannot run this timer; Docker status and external monitoring remain necessary.
+
+Catalogue responses are cached for five seconds and invalidated after mutation requests; readiness is shared for two seconds. Changes through another process become visible within the short catalogue TTL. Models and embeddings remain on the existing persistent QMD volume.
+
+Architecture diagrams now render to SVG during the build. Chromium is installed **only in the Docker build stage**, not the running Atlas image. Local development needs `npx playwright install chromium` or `CHROMIUM_PATH` pointing to Chromium; CI installs it before building. The resulting System panel loads no Mermaid runtime. SVG cache keys include diagram source and renderer version.
+
+Browser checks: type quickly, clear a search, change continent, and scroll to the last project. Highlights should appear as cards enter view and the remaining-project count should remain correct. Open Admin → System and verify all diagrams, zoom and SVG download. Use real iPhone/desktop measurements before claiming a specific interaction-time improvement.

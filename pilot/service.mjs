@@ -56,6 +56,8 @@ export function createSearchService({
   openStore,
   rootDir = root,
   refreshMs = 30000,
+  onStall = () => {},
+  inferenceBudget = { capacity: 12, refillMs: 5000 },
 } = {}) {
   const root = path.resolve(rootDir);
   let store,
@@ -66,7 +68,19 @@ export function createSearchService({
     refreshing = false,
     refreshAt = 0,
     ready = false;
-  const queue = createWorkQueue();
+  const queue = createWorkQueue({ onStall });
+  let tokens = inferenceBudget.capacity,
+    tokenTime = Date.now();
+  function acquireInference() {
+    const now = Date.now();
+    tokens = Math.min(
+      inferenceBudget.capacity,
+      tokens + (now - tokenTime) / inferenceBudget.refillMs,
+    );
+    tokenTime = now;
+    if (tokens < 1) throw Error("Search busy");
+    tokens--;
+  }
   const cache = new Map();
   async function sync(programs) {
     const docs = programs.map((p) => ({
@@ -161,7 +175,11 @@ export function createSearchService({
     const lexical = active.index.search(parsed.query),
       base = lexical.results.filter((r) => allowed.has(r.id)),
       candidates = lexical.candidates.filter((r) => allowed.has(r.id));
-    const key = JSON.stringify([active.revision, input.query, parsed.scope]);
+    const key = JSON.stringify([
+      active.revision,
+      AtlasSearch.normalize(parsed.query).trim(),
+      parsed.scope,
+    ]);
     const respond = (results, extra = {}) =>
       reply({
         query: input.query,
@@ -188,6 +206,7 @@ export function createSearchService({
       const results = await queue.run(
         key,
         async () => {
+          acquireInference(); // Cached and coalesced queries never consume inference tokens.
           // Background indexing cannot start while this queue is active.
           const timings = {},
             profile = await startProfile(store.internal?.llm),
@@ -298,6 +317,13 @@ export function createSearchService({
 
   return { searchRoute, readiness };
 }
-const service = createSearchService();
+const service = createSearchService({
+  onStall: () => {
+    console.error(
+      "QMD inference exceeded 30 seconds; restarting isolated service",
+    );
+    process.exit(1);
+  },
+});
 export const searchRoute = service.searchRoute,
   readiness = service.readiness;

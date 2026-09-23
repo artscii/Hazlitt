@@ -214,3 +214,11 @@ Admin settings use partial revision-checked writes. A conflict asks the editor t
 Admin → System includes deployment, code dependencies and reviewed application-flow diagrams, stamped with release version, source hash and build commit. Mermaid is bundled locally and loaded on demand; dependency-cruiser extracts imports during the build. Explicit flow definitions in `src/system/flows.json` cover event/API boundaries and validate referenced source files/routes. These are architectural views, not exhaustive execution traces. Source links and SVG downloads are provided.
 
 The optional `compose.system.yaml` overlay adds an isolated monitor with Docker socket access. Its authenticated API exposes only filtered status/health/uptime/CPU/memory fields for this Compose project, cached for 30 seconds. It has no raw proxy or management endpoints. The socket mount itself is powerful: `:ro` does not make Docker's API read-only; the monitor's allowlisted GET requests enforce the restriction. A compromised monitor would still be a privileged risk. Never publish its port or mount the socket into Atlas. See the VPS guide for installation.
+
+### Performance and deployment (4.13.27)
+
+Keyword search stays immediate; QMD adds only approved related concepts. Cached/coalesced requests bypass the model-work budget, active inference has a 30-second recovery watchdog, and catalogue/readiness responses use short invalidated caches. Project highlights are calculated near the visible viewport and layout reads are batched before writes.
+
+System diagrams are built as SVG, keeping Mermaid out of the Admin browser bundle. For local builds install Chromium with `npx playwright install chromium` (or set `CHROMIUM_PATH`). Docker supplies Chromium only in its build stage.
+
+Deploy both services with `bash scripts/deploy-system.sh --with-qmd`, then run `bash scripts/verify-performance.sh https://YOUR_HOST`. See [VPS deployment guide](docs/VPS-DEPLOYMENT.md#performance-release-41327) for checks and operational limits.
