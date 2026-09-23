@@ -1,6 +1,6 @@
 # Changelog
 
-Current application release: **4.13.27**. This matches `package.json`, the Compose image tag, and generated page footers. A repository commit identifies source history; it does not prove that version has been deployed on a VPS.
+Current application release: **4.13.28**. This matches `package.json`, the Compose image tag, and generated page footers. A repository commit identifies source history; it does not prove that version has been deployed on a VPS.
 
 Entries are newest first and describe behavior at each release. Later entries supersede earlier behavior. Versions 4.12.1–4.13.7 have been checked against Git history; older entries are retained without a new historical audit. Version 4.13.1 groups several changes made without individual version increments.
 
@@ -9,6 +9,13 @@ Entries are newest first and describe behavior at each release. Later entries su
 - Backfilled releases 4.13.0–4.13.7 in [e1a0536](https://github.com/artscii/Hazlitt/commit/e1a0536); reviewed release/commit mapping and clarified deployment and historical behavior afterward.
 - Documentation-only corrections do not change the application version or require a container rebuild.
 - Future application releases should update this changelog in the release commit, with changes, validation and deployment notes. Use `npm run release:patch` to advance the package version and synchronize generated footer/Compose versions; write the corresponding changelog entry before committing.
+
+## 4.13.28 — 2026-09-23
+- Make unsaved thesaurus changes explicit beside Save thesaurus, distinct from the QMD configuration save. Clarify server-database storage and draft search previews.
+- Prevent edits while vocabulary saves are in flight and retain a successful save's revision if the follow-up read fails, avoiding discarded edits and false retry conflicts.
+- Add VIA/acetic persistence coverage across SQLite close/reopen, fresh runtime, case-insensitive bidirectional matching, noise rejection and stale-save conflicts; cover save feedback and editor reload.
+- The live VPS alias is database configuration (vocabulary v1), not a hardcoded default; existing installations retain their own curated vocabulary.
+- Deployment: rebuild Atlas only. Existing vocabulary and database volumes are preserved.
 
 ## 4.13.27 — 2026-09-23
 - Highlight project text near the visible viewport; share per-query match lookups and batch evidence-panel geometry reads before writes.

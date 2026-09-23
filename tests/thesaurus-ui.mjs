@@ -14,8 +14,15 @@ let state = {
   entries: w.AtlasSearch.defaultThesaurus,
   history: [],
 };
+let saveGate = null,
+  failConfirmation = false;
 const api = async (path, options) => {
+  if (!options && failConfirmation) {
+    failConfirmation = false;
+    throw Error("Confirmation unavailable");
+  }
   if (options) {
+    if (saveGate) await saveGate;
     const data = JSON.parse(options.body);
     state = {
       revision: state.revision + 1,
@@ -36,6 +43,10 @@ try {
   term.value = "pap examination";
   term.dispatchEvent(new w.Event("input", { bubbles: true }));
   assert(!save.disabled);
+  assert.match(
+    w.document.querySelector("[data-draft-status]").textContent,
+    /Unsaved vocabulary/,
+  );
   save.click();
   await new Promise((r) => setTimeout(r, 0));
   assert.equal(state.revision, 1);
@@ -54,6 +65,40 @@ try {
   save.click();
   await new Promise((r) => setTimeout(r, 0));
   assert.equal(state.revision, 2);
+  let release;
+  saveGate = new Promise((resolve) => (release = resolve));
+  const via = [...w.document.querySelectorAll(".thesaurus-row")].find(
+    (row) => row.querySelector("[data-term]").value === "via",
+  );
+  const equivalents = via.querySelector("[data-equivalents]");
+  equivalents.value += "; acetic";
+  equivalents.dispatchEvent(new w.Event("input", { bubbles: true }));
+  save.click();
+  assert(equivalents.disabled, "editing is locked while save is in flight");
+  failConfirmation = true;
+  release();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(state.revision, 3);
+  assert(
+    save.disabled,
+    "successful PUT remains saved even if confirmation GET fails",
+  );
+  assert.match(
+    w.document.querySelector("[data-status]").textContent,
+    /Saved vocabulary v3/,
+  );
+  assert(
+    state.entries.find((e) => e.term === "via").equivalents.includes("acetic"),
+  );
+  saveGate = null;
+  const reopened = w.document.createElement("div");
+  w.document.body.append(reopened);
+  await w.mountAtlasThesaurus(reopened, api);
+  assert(
+    [...reopened.querySelectorAll("[data-equivalents]")].some((input) =>
+      input.value.includes("acetic"),
+    ),
+  );
   console.log(
     "PASS thesaurus form editing, disabled save, local query test and restore-as-new-version flow",
   );

@@ -3,8 +3,15 @@ window.mountAtlasThesaurus = async function (parent, api) {
   const section = document.createElement("div");
   section.className = "thesaurus-editor";
   section.innerHTML =
-    '<h3>Local search thesaurus</h3><p>Equivalent terms broaden BM25 matches. Related terms are suggestions considered only by QMD. All other query concepts must still match.</p><label>Find a term<input type="search" data-filter placeholder="Filter vocabulary…"></label><div class="thesaurus-rows"></div><div class="thesaurus-actions"><button type="button" data-add>Add term</button><button type="button" data-save disabled>Save thesaurus</button></div><label>Saved vocabulary versions<select data-history aria-label="Saved vocabulary version"></select></label><button type="button" data-more hidden>Load earlier versions</button><button type="button" data-restore>Review selected version</button><label>Test a search<input data-test type="search" placeholder="Try umami, Pap smear or colposcopy"></label><p data-test-results aria-live="polite"></p><p data-status role="status"></p>';
+    '<h3>Local search thesaurus</h3><p>Equivalent terms broaden BM25 matches. Related terms are suggestions considered only by QMD. All other query concepts must still match.</p><label>Find a term<input type="search" data-filter placeholder="Filter vocabulary…"></label><div class="thesaurus-rows"></div><div class="thesaurus-actions"><button type="button" data-add>Add term</button><button type="button" data-save disabled>Save thesaurus</button></div><label>Saved vocabulary versions<select data-history aria-label="Saved vocabulary version"></select></label><button type="button" data-more hidden>Load earlier versions</button><button type="button" data-restore>Review selected version</button><p data-draft-status role="status"></p><label>Preview search with current vocabulary<input data-test type="search" placeholder="Try umami, Pap smear or colposcopy"></label><p data-test-results aria-live="polite"></p><p data-status role="status"></p>';
   parent.append(section);
+  // Keep persistence feedback beside the save action, not below the preview.
+  section
+    .querySelector(".thesaurus-actions")
+    .after(
+      section.querySelector("[data-status]"),
+      section.querySelector("[data-draft-status]"),
+    );
   const $ = (q) => section.querySelector(q),
     rows = $(".thesaurus-rows"),
     status = $("[data-status]");
@@ -28,7 +35,20 @@ window.mountAtlasThesaurus = async function (parent, api) {
     return saved && JSON.stringify(values()) !== JSON.stringify(saved.entries);
   }
   function update() {
-    $("[data-save]").disabled = busy || !dirty();
+    const changed = dirty();
+    $("[data-save]").disabled = busy || !changed;
+    $("[data-draft-status]").textContent = busy
+      ? "Saving thesaurus to the database…"
+      : changed
+        ? "Unsaved vocabulary changes. Click Save thesaurus to keep them; Save search settings applies only to the QMD switch."
+        : "";
+    section
+      .querySelectorAll(
+        "[data-term], [data-equivalents], [data-related], [data-enabled], [data-add], [data-remove], [data-restore], [data-history]",
+      )
+      .forEach((control) => {
+        control.disabled = busy;
+      });
   }
   function draw(entries) {
     rows.replaceChildren();
@@ -82,7 +102,7 @@ window.mountAtlasThesaurus = async function (parent, api) {
     status.textContent =
       "Vocabulary v" +
       saved.revision +
-      " · stored locally and included in database backups.";
+      " · saved in the server database and included in database backups.";
   }
   section.addEventListener("input", update);
   $("[data-filter]").oninput = () => {
@@ -141,11 +161,31 @@ window.mountAtlasThesaurus = async function (parent, api) {
     busy = true;
     update();
     try {
+      const submitted = values();
       const result = await api("/api/search/thesaurus", {
         method: "PUT",
-        body: JSON.stringify({ revision: saved.revision, entries: values() }),
+        body: JSON.stringify({ revision: saved.revision, entries: submitted }),
       });
-      await load();
+      // The returned revision is authoritative even if the confirmation GET fails.
+      saved = { revision: result.revision, entries: result.entries };
+      draw(result.entries);
+      try {
+        await load();
+      } catch {
+        status.textContent =
+          "Saved vocabulary v" +
+          result.revision +
+          ". Database confirmation could not be refreshed; reload to verify.";
+        return;
+      }
+      if (
+        saved.revision !== result.revision ||
+        JSON.stringify(saved.entries) !== JSON.stringify(result.entries)
+      ) {
+        status.textContent =
+          "Your save completed, but another editor has since changed the vocabulary. The latest saved version is displayed.";
+        return;
+      }
       status.textContent =
         "Saved vocabulary v" +
         result.revision +

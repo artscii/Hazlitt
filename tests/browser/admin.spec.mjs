@@ -52,3 +52,55 @@ test("Admin workspaces preserve drafts and separate search settings", async ({
     ),
   ).toBe(true);
 });
+
+test("VIA/acetic vocabulary survives editor reload and reaches public search", async ({
+  page,
+  request,
+}) => {
+  await page.goto("/admin");
+  await page
+    .locator("#admin-login input")
+    .fill(process.env.ATLAS_TEST_PASSWORD);
+  await page.getByRole("button", { name: "Unlock editor" }).click();
+  await expect(page.locator("#admin-editor")).toBeVisible();
+  const search = async () => {
+    if (await page.locator(".workspace-mobile").isVisible())
+      await page.locator(".workspace-mobile").selectOption("search");
+    else await page.locator("[data-workspace=search]").click();
+  };
+  await search();
+  const via = page
+    .locator(".thesaurus-row")
+    .filter({ has: page.locator("summary", { hasText: /^via$/ }) });
+  await via.locator("summary").click();
+  const aliases = via.locator("[data-equivalents]");
+  if (!(await aliases.inputValue()).includes("acetic;")) {
+    const existing = await aliases.inputValue();
+    // Keep the full phrase; add an exact single-word search alias once.
+    if (
+      !existing
+        .split(";")
+        .map((x) => x.trim())
+        .includes("acetic")
+    )
+      await aliases.fill(existing + "; acetic");
+  }
+  if (await page.locator("[data-save]").isEnabled()) {
+    await expect(page.locator("[data-draft-status]")).toContainText(
+      "Unsaved vocabulary",
+    );
+    await page.locator("[data-save]").click();
+    await expect(page.locator(".thesaurus-editor [data-status]")).toContainText(
+      "Saved vocabulary",
+    );
+  }
+  await page.reload();
+  await expect(page.locator("#admin-editor")).toBeVisible();
+  await search();
+  await via.locator("summary").click();
+  await expect(aliases).toHaveValue(/; acetic$/);
+  const catalog = await (await request.get("/api/catalog?compact=1")).json();
+  expect(
+    catalog.thesaurus.entries.find((e) => e.term === "via").equivalents,
+  ).toContain("acetic");
+});
