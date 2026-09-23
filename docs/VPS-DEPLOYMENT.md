@@ -137,7 +137,7 @@ sudo docker compose start atlas
 
 Stop on any error. Removing sidecars is appropriate here only because Atlas is stopped and its complete previous data directory has been archived. Verify catalogue count, public login and a known version history. The restored database determines the administrator password; the bootstrap hash does not overwrite an existing credential.
 
-## Enable QMD
+## Enable QMD (current: 4.13.7)
 
 Generate a service secret without displaying it or replacing other settings:
 
@@ -168,15 +168,17 @@ Keep the mapping updated if the IP changes. It preserves HTTPS verification. Use
 
 ```bash
 dc() { sudo docker compose -f compose.yaml -f compose.qmd.yaml -f compose.qmd-dns.yaml "$@"; }
-dc up -d --build qmd
-dc exec qmd node pilot/warm.mjs
+dc up -d --build atlas qmd
+dc ps
 ```
 
-Initial downloads and indexing can take several minutes. The CPU-only warning is expected. A healthy QMD container proves HTTP availability, not search readiness. Warmup must complete successfully. For the verified catalogue, `screening country:Kenya` returns one project. Do not require that fixture if your catalogue differs.
+Initial downloads and indexing can take several minutes. The CPU-only warning is expected. A healthy QMD container proves HTTP availability, not search readiness. Since 4.13.5, the service warms automatically on startup and retries failed warm-up at roughly 30-second intervals. Do not launch the manual warm command during startup: it competes for the same search slot. Wait for readiness first. For the verified catalogue, `screening country:Kenya` returns one project. Do not require that fixture if your catalogue differs.
 
 ```bash
-dc up -d --build --no-deps atlas
-dc ps
+# Repeat until ready is true; warming can take minutes on the first install.
+curl -fsS https://vps-f8d31735.vps.ovh.ca/api/search/status
+
+# Once ready, verify a real query:
 curl -sS --max-time 20 https://vps-f8d31735.vps.ovh.ca/api/search/query \
   -H 'Origin: https://vps-f8d31735.vps.ovh.ca' \
   -H 'Content-Type: application/json' \
@@ -184,7 +186,7 @@ curl -sS --max-time 20 https://vps-f8d31735.vps.ovh.ca/api/search/query \
   -w '\nHTTP status: %{http_code}\n'
 ```
 
-Expect HTTP 200 and `kinondo` in `b`. In the browser, verify Semantic search, the matching profile and Kenya marker. Cached responses retain original retrieval timing; `totalMs` describes the current server request, excluding browser/network overhead.
+Expect HTTP 200 and `kinondo` in `results`. In the browser, verify the green cloud, matching profile and Kenya marker. There is no A/B mode or semantic status text line. Refresh older browser tabs after upgrading from pre-4.13.7 endpoints. Cached responses retain original retrieval timing; `totalMs` describes the current server request, excluding browser/network overhead.
 
 ## Fallback and recovery test
 
@@ -194,14 +196,15 @@ During a short maintenance test:
 dc stop qmd
 ```
 
-Search plain `Kinondo` in the browser. Verify keyword fallback status and correct profile/map results. Restart even if the test fails:
+Search plain `Kinondo` in the browser. Verify the crossed-out cloud and correct keyword profile/map results. Restart even if the test fails:
 
 ```bash
 dc start qmd
-dc exec qmd node pilot/warm.mjs
+# Automatic warm-up runs on startup. Repeat this check until ready is true.
+curl -fsS https://vps-f8d31735.vps.ovh.ca/api/search/status
 ```
 
-Refresh the browser and retest semantic search. Browser timeout is eight seconds; the server's QMD timeout is 7.5 seconds. Immediate errors can trigger fallback sooner. The browser uses keyword search for a 30-second cooldown after failure. Current fallback does not fully interpret QMD inline filter syntax. Cold or uncached CPU searches may exceed the timeout; investigate before promising consistent semantic performance. QMD also serializes searches and limits requests; concurrent callers may fall back.
+Refresh the browser and retest semantic search. Browser timeout is eight seconds; the server's QMD timeout is 7.5 seconds. Immediate errors can trigger fallback sooner. The browser uses keyword search for a 30-second cooldown after failure; a successful readiness poll clears it earlier. Visible pages check readiness every 15 seconds and on focus. Current fallback does not fully interpret QMD inline filter syntax. Cold or uncached CPU searches may exceed the timeout; investigate before promising consistent semantic performance. QMD also serializes searches and limits requests; concurrent callers may fall back.
 
 ## Updates and rollback
 
@@ -210,14 +213,11 @@ Before updating, make a verified database backup and record `git rev-parse HEAD`
 ```bash
 git status --short
 git pull --ff-only
-dc build
-dc up -d qmd
-dc exec qmd node pilot/warm.mjs
-dc up -d --no-deps atlas
+dc up -d --build atlas qmd
 dc ps
 ```
 
-Repeat health, catalogue, login and search tests. A GitHub push alone does not update the VPS. To roll back code, check out the recorded known-good commit only after resolving local changes, rebuild and recreate the services with the same volumes. Check database migration compatibility first: a code rollback does not undo migrations.
+Wait for `/api/search/status` to report `ready: true`, then repeat health, catalogue, login and search tests. For a confirmed Atlas-only UI change, `dc up -d --build --no-deps atlas` preserves the warmed QMD process. API or QMD changes require rebuilding both services. A GitHub push alone does not update the VPS. To roll back code, check out the recorded known-good commit only after resolving local changes, rebuild and recreate the services with the same volumes. Check database migration compatibility first: a code rollback does not undo migrations.
 
 For database rollback, stop Atlas, preserve the failed/current data directory separately, and restore the complete pre-change archive into the same volume with its original ownership. Do not merge old WAL/SHM files with a different database. Restart the compatible app version and verify integrity, catalogue and login.
 
@@ -249,7 +249,7 @@ sudo docker stats --no-stream
 
 Do not share `.env`, raw SQL backups, authorization headers or full rendered Compose configuration containing secrets.
 
-### QMD performance operations (4.13.5)
+## Keeping QMD warm and measuring performance
 
 QMD warms automatically on startup and retries failed warm-up every 30 seconds.
 The pinned QMD 2.8.3 per-store runtime keeps its embedding weights and context
@@ -265,3 +265,29 @@ After deploying, inspect `docker stats --no-stream` alongside Compose logs.
 Logs do not include query text. Compare first-start and warm searches, then repeat
 a query for a cache hit. Persistent high memory, restarts/OOM or repeated 429/503
 responses warrant capacity review. These logs are diagnostics, not an alerting service.
+
+
+### Practical performance checks
+
+Keep the VPS and QMD container running; avoid scale-to-zero and scheduled QMD restarts. The pinned runtime disables model/context idle unloading, so periodic synthetic searches are unnecessary. Persist `qmd-data`: it retains downloaded models and the index across rebuilds, but process memory still has to warm after a restart. A green cloud confirms sampled readiness, not a guarantee that every query meets the timeout.
+
+Use these commands from `~/apps/Hazlitt` after defining `dc` above:
+
+```bash
+curl -fsS https://vps-f8d31735.vps.ovh.ca/api/search/status
+dc logs --since=10m qmd | grep -E 'QMD_PROFILE|QMD_REQUEST|QMD readiness'
+sudo docker stats --no-stream
+dc ps
+```
+
+Try two different natural-language searches, then repeat one. A unique query exercises inference; a repeat may use the result cache. Country-only filters and exact names/IDs bypass inference and are not useful model benchmarks. `dc exec qmd node pilot/warm.mjs` remains an optional diagnostic **after** startup readiness, not a recurring warm-up job.
+
+- `modelLoadMs` and `contextSetupMs`: startup work; expect near zero on warm requests.
+- `embeddingMs`: query inference; `vectorLookupAndOverheadMs`: the remaining vector retrieval work.
+- `catalogMs`, `indexMs`, `queueMs`: catalogue refresh, index synchronization and contention.
+- `QMD_REQUEST.totalMs`, HTTP status, `cpuMs`, `rssMB`: overall service request and process resource diagnostics. CPU is process-wide, not a per-query isolated measurement.
+- `cached: true`: no new query inference; use current total time rather than retained original retrieval timings.
+
+The observed VPS cold readiness was about 10 seconds, versus 0.25–1.23 seconds for warm query processing. These are observations, not a service guarantee. Current QMD limits are 5 GB RAM and 3 CPUs; leave room for Atlas, Caddy and Debian. Check for OOM/restarts before increasing memory limits. Repeated 429s indicate queue/rate pressure; 503s/timeouts require log inspection. Do not simply raise timeouts to conceal a cold-start or capacity problem.
+
+Operational logging is provided; automatic alerts and offsite backups still need separate configuration. Keep logs access-controlled and use Docker log rotation to bound disk usage.
