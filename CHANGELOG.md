@@ -15,7 +15,7 @@ Entries are newest first and describe behavior at each release. Later entries su
 - Generate diagrams during each build from structural Compose fields, dependency-cruiser imports and validated flow definitions. No external rendering or environment-secret export.
 - Add an optional isolated Docker socket monitor with authenticated read-only status, project-label filtering, sanitized fields and 30-second caching; no published port or management API.
 - Add the five-overlay VPS deployment helper and monitoring deployment/test documentation.
-- Validation: automated monitoring authorization/redaction/cache tests and diagram reference checks added; browser/three-image Linux release checks required.
+- Validation: regression tests, all six diagrams in desktop/mobile browsers, three Docker builds, and a real Docker socket authorization/filtering smoke test passed in [Linux release checks](https://github.com/artscii/Hazlitt/actions/runs/35907484984).
 
 ## 4.13.24 — 2026-09-23
 - Enforce actual queued-search deadlines even while a native inference job is stalled.

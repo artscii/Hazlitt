@@ -474,6 +474,8 @@ For development/CI-equivalent regression testing on a checkout with Node 24 inst
 
 ## System dashboard and Docker socket monitor: 4.13.25
 
+[Linux release checks](https://github.com/artscii/Hazlitt/actions/runs/35907484984) passed browser diagram rendering, all three images and live socket monitoring.
+
 Back up the database before updating. In the existing VPS checkout:
 
 ```bash
