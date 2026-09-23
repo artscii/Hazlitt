@@ -1,3 +1,73 @@
+# Changelog
+
+Release history below is reconstructed from repository commits. Releases 4.13.0–4.13.7 were committed on 2026-09-22. Version 4.13.1 spans several fixes committed without individual version increments; the temporary Results counter was subsequently removed.
+
+## 4.13.7 — 2026-09-22
+- Remove remaining A/B result calculation, comparison styling and optional local pilot routing. Preserve semantic retrieval, keyword fallback, readiness and profiling.
+- Rename the browser search controller to `semantic-search.js`. Return one `results` list instead of separate A/B lists.
+- Replace `/api/search-pilot/compare` and `/api/search-pilot/status` with `/api/search/query` and `/api/search/status`.
+- Deployment: rebuild **both Atlas and QMD**, then refresh browsers. Old endpoint clients must update; the `pilot/` service directory remains for deployment compatibility.
+- Validation: build, primary-search, map/search integration, public-field/filter and retrieval tests passed.
+- Commit: `624e169`.
+
+## 4.13.6 — 2026-09-22
+- Remove the obsolete comparison banner and reset/exit controls that reappeared when choosing map filters.
+- Preserve semantic subsets through marker and continent selection.
+- Deployment: rebuild Atlas; QMD can remain running.
+- Validation: build, map/search integration and primary-search tests passed.
+- Commit: `1ffe26a`.
+
+## 4.13.5 — 2026-09-22
+- Warm QMD at service startup and retry failed warm-up without requiring a visitor.
+- Keep the pinned QMD 2.8.3 store's embedding model and context resident. Readiness checks inspect state rather than repeatedly generating embeddings.
+- Permit up to three waiting requests, with a two-second wait limit; overloaded requests return 429 for keyword fallback.
+- Bypass semantic inference for exact project names/IDs; retain metadata-only filtering and cached results.
+- Add `QMD_REQUEST` status, elapsed time, CPU and RSS memory diagnostics alongside `QMD_PROFILE`. Query text is not logged.
+- Deployment: rebuild Atlas and QMD. Monitor memory and restart counts on the VPS; resident models retain memory while idle.
+- Validation: build, syntax, retrieval and primary-search tests passed. VPS capacity still requires operational observation.
+- Commit: `0ff5f37`.
+
+## 4.13.4 — 2026-09-22
+- Add an authenticated readiness endpoint through Atlas. Browser checks readiness on opening, focus and every 15 seconds while visible; successful checks clear fallback cooldown.
+- Warm and verify the actual QMD store before displaying the green cloud.
+- Correct profiling to instrument the per-store model used for searches, rather than QMD's unused default singleton.
+- Deployment: rebuild Atlas and QMD together.
+- Validation: build, syntax, primary-search and retrieval tests passed. Subsequent VPS logs measured approximately 6.82 seconds model loading, 1.50 seconds context setup, and 0.25–1.23 seconds for warm queries.
+- Commit: `eb70ee8`.
+
+## 4.13.3 — 2026-09-22
+- Introduce timing fields and `QMD_PROFILE` logs for catalogue/index work, lexical retrieval, vector processing, embedding and startup resources.
+- Separate cached-response timings from the original query's timings.
+- Known issue: initial model instrumentation watched the wrong model instance and could report misleading zero loading/embedding times; corrected in 4.13.4.
+- Deployment: rebuild QMD for instrumentation and Atlas for the matching footer version.
+- Commit: `af9e306`.
+
+## 4.13.2 — 2026-09-22
+- Replace Search tips and the semantic status line with a cloud beside the search guidance, separated by a muted hyphen.
+- Use an emerald outline and pale green fill after successful QMD search; use a grey crossed-out cloud before verification or on fallback. Titles and accessible labels describe the state.
+- Add `npm run release:patch` to increment the package version and build. Synchronize the footer and Compose image tag from the package version.
+- Known limitation: the initial icon reflected search success, not independent readiness; addressed in 4.13.4.
+- Deployment: rebuild Atlas and refresh browsers.
+- Validation: build, primary-search and map/search integration tests passed.
+- Commit: `e235fdd`.
+
+## 4.13.1 — 2026-09-22
+- Support configured public HTTPS origins behind Caddy while preserving localhost/tunnel access; pass private QMD connection settings through Docker Compose.
+- Add Python/native build tooling for QMD's SQLite dependency and normalize image file permissions. Validate scripts as the non-root runtime user to prevent startup EACCES failures.
+- Retrieve candidates across the catalogue before applying metadata filters, fixing missing country-constrained semantic matches.
+- Add Debian/OVH VPS deployment documentation covering HTTPS, database migration, QMD, verification and troubleshooting.
+- Add a Results count temporarily, then remove it at user request while retaining the Results heading.
+- Fix the stale 4.12.1 footer by deriving page footer versions from the package during build.
+- Deployment: rebuild affected images; retain database/model volumes and the VPS-specific DNS override where required. See [VPS deployment](docs/VPS-DEPLOYMENT.md).
+- Commits: `9fd6d39`, `78940e7`, `2b8c654`, `78cfd14`, `4f59727`, `4aa1e03`, `fd1236a`, `60c6b22`, `4a7374d`, `ca1252b`.
+
+## 4.13.0 — 2026-09-22
+- Make QMD the primary search engine with browser keyword fallback on failure, an eight-second browser deadline and a temporary fallback cooldown.
+- Apply semantic results to the same project list and map filtering flow.
+- Add the authenticated QMD gateway and dedicated service deployment support; keep service credentials out of the browser.
+- Deployment: configure the QMD service and Atlas gateway together; keyword fallback remains available when QMD is unavailable.
+- Commit: `c169d12`.
+
 ## 4.12.1
 - Preserve applied QMD result scope through map markers, continent navigation and profile previews; add reset/exit comparison controls.
 
