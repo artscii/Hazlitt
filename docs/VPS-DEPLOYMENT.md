@@ -526,3 +526,21 @@ Catalogue responses are cached for five seconds and invalidated after mutation r
 Architecture diagrams now render to SVG during the build. Chromium is installed **only in the Docker build stage**, not the running Atlas image. Local development needs `npx playwright install chromium` or `CHROMIUM_PATH` pointing to Chromium; CI installs it before building. The resulting System panel loads no Mermaid runtime. SVG cache keys include diagram source and renderer version.
 
 Browser checks: type quickly, clear a search, change continent, and scroll to the last project. Highlights should appear as cards enter view and the remaining-project count should remain correct. Open Admin → System and verify all diagrams, zoom and SVG download. Use real iPhone/desktop measurements before claiming a specific interaction-time improvement.
+
+## Thesaurus persistence (4.13.28)
+
+Vocabulary is stored in the `search_thesaurus` SQLite table on the existing `atlas-data` volume. Each save creates a version; deployments do not replace it. It is included in complete database backups.
+
+In Admin → Search, edit the existing term's **Equivalents** field (semicolon-separated), then click **Save thesaurus**. **Save search settings** controls the QMD switch only. The preview search can test unsaved drafts; it does not save them. Wait for the saved vocabulary version confirmation before leaving the page. Public pages read the saved vocabulary on reload; QMD refreshes it in the background.
+
+For example, adding `acetic` to the existing `via` entry preserves `visual inspection with acetic acid` and makes the three expressions searchable equivalents. This is an editorial search alias, not a change to the projects' medical classification. Do not create a separate conflicting VIA entry.
+
+Deploy the editor safeguards without restarting QMD:
+
+```bash
+cd ~/apps/Hazlitt
+git pull --ff-only
+bash scripts/deploy-system.sh
+```
+
+Verify footer 4.13.28. Reload Admin → Search and confirm the saved alias and vocabulary version remain. Do not use `docker compose down -v`, which would remove persistent volumes. The VIA/acetic regression also closes/reopens SQLite in an isolated temporary database and checks a fresh search runtime; it never restarts or restores over production.

@@ -15,6 +15,7 @@ Entries are newest first and describe behavior at each release. Later entries su
 - Prevent edits while vocabulary saves are in flight and retain a successful save's revision if the follow-up read fails, avoiding discarded edits and false retry conflicts.
 - Add VIA/acetic persistence coverage across SQLite close/reopen, fresh runtime, case-insensitive bidirectional matching, noise rejection and stale-save conflicts; cover save feedback and editor reload.
 - The live VPS alias is database configuration (vocabulary v1), not a hardcoded default; existing installations retain their own curated vocabulary.
+- Validation: regression suite, desktop/mobile thesaurus save-and-reload tests, all three Docker builds and live socket monitor passed in [Linux release checks](https://github.com/artscii/Hazlitt/actions/runs/35920121099).
 - Deployment: rebuild Atlas only. Existing vocabulary and database volumes are preserved.
 
 ## 4.13.27 — 2026-09-23
