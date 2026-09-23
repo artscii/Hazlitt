@@ -150,7 +150,9 @@ function updateEvidencePanels(){
 function updateScrollHint(panel){
  const more=panel.scrollHeight>panel.clientHeight+2&&panel.scrollTop+panel.clientHeight<panel.scrollHeight-3;
  panel.parentElement.classList.toggle('has-more-projects',more);
- const hint=panel.nextElementSibling;if(hint?.classList.contains('more-projects-hint'))hint.hidden=!more;
+ const bottom=panel.getBoundingClientRect().top+panel.clientTop+panel.clientHeight;
+ const remaining=more?[...panel.querySelectorAll('article.program')].filter(row=>!row.hidden&&row.getBoundingClientRect().top>=bottom-1).length:0;
+ const hint=panel.nextElementSibling;if(hint?.classList.contains('more-projects-hint')){hint.hidden=!remaining;hint.textContent=`${remaining} more ${remaining===1?'project':'projects'} below`;}
 }
 for(const panel of document.querySelectorAll('.evidence-scroll')){
  const hint=document.createElement('p');hint.className='more-projects-hint';hint.textContent='More projects below ↓';hint.hidden=true;panel.after(hint);
@@ -166,7 +168,7 @@ function filterProfiles(){
  const query=input.value.trim();
  const matches=matchingProjectIds(query);
  document.querySelectorAll('article.program').forEach(card=>{const hidden=!matches.has(card.id);if(card.hidden!==hidden)card.hidden=hidden;});
- document.querySelectorAll('.directory').forEach(section=>{section.hidden=![...section.querySelectorAll('article.program')].some(card=>!card.hidden)});
+ document.querySelectorAll('.directory').forEach(section=>{const count=[...section.querySelectorAll('article.program')].filter(card=>!card.hidden).length;section.hidden=count===0&&section.id==='selected-projects-section';const heading=section.querySelector('.section-heading h2');if(heading){const label=`${count===programs.length&&count>0?'All ':''}${count} ${count===1?'Result':'Results'}`;if(heading.textContent!==label)heading.textContent=label;}});
  numberSelectedRows();
  highlightProfileMatches(query);
  document.querySelector('#clear-search').hidden=!input.value;

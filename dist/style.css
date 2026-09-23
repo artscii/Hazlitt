@@ -513,3 +513,6 @@ main>.directory{border-top:1px solid color-mix(in srgb,var(--atlas-border) 65%,t
 .qmd-cloud.is-connected svg{fill:#def2e6;stroke-width:2}
 .qmd-cloud.is-connected .cloud-slash{display:none}
 .search-guidance .qmd-cloud{align-self:center}
+
+/* v4.13.8: keep count and heading text on a shared baseline. */
+.directory>.section-heading h2{font-variant-numeric:lining-nums}
