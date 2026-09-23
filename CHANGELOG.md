@@ -1,6 +1,13 @@
 # Changelog
 
-Release history below is reconstructed from repository commits. Releases 4.13.0–4.13.7 were committed on 2026-09-22. Version 4.13.1 spans several fixes committed without individual version increments; the temporary Results counter was subsequently removed.
+Current application release: **4.13.7**. This matches `package.json`, the Compose image tag, and generated page footers. A repository commit identifies source history; it does not prove that version has been deployed on a VPS.
+
+Entries are newest first and describe behavior at each release. Later entries supersede earlier behavior. Versions 4.12.1–4.13.7 have been checked against Git history; older entries are retained without a new historical audit. Version 4.13.1 groups several changes made without individual version increments.
+
+### Documentation maintenance
+- Backfilled releases 4.13.0–4.13.7 in [e1a0536](https://github.com/artscii/Hazlitt/commit/e1a0536); reviewed release/commit mapping and clarified deployment and historical behavior afterward.
+- Documentation-only corrections do not change the application version or require a container rebuild.
+- Future application releases should update this changelog in the release commit, with changes, validation and deployment notes. Use `npm run release:patch` to advance the package version and synchronize generated footer/Compose versions; write the corresponding changelog entry before committing.
 
 ## 4.13.7 — 2026-09-22
 - Remove remaining A/B result calculation, comparison styling and optional local pilot routing. Preserve semantic retrieval, keyword fallback, readiness and profiling.
@@ -8,14 +15,14 @@ Release history below is reconstructed from repository commits. Releases 4.13.0�
 - Replace `/api/search-pilot/compare` and `/api/search-pilot/status` with `/api/search/query` and `/api/search/status`.
 - Deployment: rebuild **both Atlas and QMD**, then refresh browsers. Old endpoint clients must update; the `pilot/` service directory remains for deployment compatibility.
 - Validation: build, primary-search, map/search integration, public-field/filter and retrieval tests passed.
-- Commit: `624e169`.
+- Commit: [624e169](https://github.com/artscii/Hazlitt/commit/624e169).
 
 ## 4.13.6 — 2026-09-22
 - Remove the obsolete comparison banner and reset/exit controls that reappeared when choosing map filters.
 - Preserve semantic subsets through marker and continent selection.
 - Deployment: rebuild Atlas; QMD can remain running.
 - Validation: build, map/search integration and primary-search tests passed.
-- Commit: `1ffe26a`.
+- Commit: [1ffe26a](https://github.com/artscii/Hazlitt/commit/1ffe26a).
 
 ## 4.13.5 — 2026-09-22
 - Warm QMD at service startup and retry failed warm-up without requiring a visitor.
@@ -25,22 +32,22 @@ Release history below is reconstructed from repository commits. Releases 4.13.0�
 - Add `QMD_REQUEST` status, elapsed time, CPU and RSS memory diagnostics alongside `QMD_PROFILE`. Query text is not logged.
 - Deployment: rebuild Atlas and QMD. Monitor memory and restart counts on the VPS; resident models retain memory while idle.
 - Validation: build, syntax, retrieval and primary-search tests passed. VPS capacity still requires operational observation.
-- Commit: `0ff5f37`.
+- Commit: [0ff5f37](https://github.com/artscii/Hazlitt/commit/0ff5f37).
 
 ## 4.13.4 — 2026-09-22
 - Add an authenticated readiness endpoint through Atlas. Browser checks readiness on opening, focus and every 15 seconds while visible; successful checks clear fallback cooldown.
-- Warm and verify the actual QMD store before displaying the green cloud.
+- Warm and verify the actual QMD store before displaying the green cloud. This release used periodic embedding probes; 4.13.5 replaced them with state checks after startup warm-up.
 - Correct profiling to instrument the per-store model used for searches, rather than QMD's unused default singleton.
 - Deployment: rebuild Atlas and QMD together.
 - Validation: build, syntax, primary-search and retrieval tests passed. Subsequent VPS logs measured approximately 6.82 seconds model loading, 1.50 seconds context setup, and 0.25–1.23 seconds for warm queries.
-- Commit: `eb70ee8`.
+- Commit: [eb70ee8](https://github.com/artscii/Hazlitt/commit/eb70ee8).
 
 ## 4.13.3 — 2026-09-22
 - Introduce timing fields and `QMD_PROFILE` logs for catalogue/index work, lexical retrieval, vector processing, embedding and startup resources.
 - Separate cached-response timings from the original query's timings.
 - Known issue: initial model instrumentation watched the wrong model instance and could report misleading zero loading/embedding times; corrected in 4.13.4.
 - Deployment: rebuild QMD for instrumentation and Atlas for the matching footer version.
-- Commit: `af9e306`.
+- Commit: [af9e306](https://github.com/artscii/Hazlitt/commit/af9e306).
 
 ## 4.13.2 — 2026-09-22
 - Replace Search tips and the semantic status line with a cloud beside the search guidance, separated by a muted hyphen.
@@ -49,27 +56,28 @@ Release history below is reconstructed from repository commits. Releases 4.13.0�
 - Known limitation: the initial icon reflected search success, not independent readiness; addressed in 4.13.4.
 - Deployment: rebuild Atlas and refresh browsers.
 - Validation: build, primary-search and map/search integration tests passed.
-- Commit: `e235fdd`.
+- Commit: [e235fdd](https://github.com/artscii/Hazlitt/commit/e235fdd).
 
 ## 4.13.1 — 2026-09-22
 - Support configured public HTTPS origins behind Caddy while preserving localhost/tunnel access; pass private QMD connection settings through Docker Compose.
 - Add Python/native build tooling for QMD's SQLite dependency and normalize image file permissions. Validate scripts as the non-root runtime user to prevent startup EACCES failures.
 - Retrieve candidates across the catalogue before applying metadata filters, fixing missing country-constrained semantic matches.
 - Add Debian/OVH VPS deployment documentation covering HTTPS, database migration, QMD, verification and troubleshooting.
-- Add a Results count temporarily, then remove it at user request while retaining the Results heading.
+- Add a Results count in [60c6b22](https://github.com/artscii/Hazlitt/commit/60c6b22), then remove it in [4a7374d](https://github.com/artscii/Hazlitt/commit/4a7374d) while retaining the Results heading. The final state of this version has no heading counter.
 - Fix the stale 4.12.1 footer by deriving page footer versions from the package during build.
 - Deployment: rebuild affected images; retain database/model volumes and the VPS-specific DNS override where required. See [VPS deployment](docs/VPS-DEPLOYMENT.md).
-- Commits: `9fd6d39`, `78940e7`, `2b8c654`, `78cfd14`, `4f59727`, `4aa1e03`, `fd1236a`, `60c6b22`, `4a7374d`, `ca1252b`.
+- Commits: [9fd6d39](https://github.com/artscii/Hazlitt/commit/9fd6d39), [78940e7](https://github.com/artscii/Hazlitt/commit/78940e7), [2b8c654](https://github.com/artscii/Hazlitt/commit/2b8c654), [78cfd14](https://github.com/artscii/Hazlitt/commit/78cfd14), [4f59727](https://github.com/artscii/Hazlitt/commit/4f59727), [4aa1e03](https://github.com/artscii/Hazlitt/commit/4aa1e03), [fd1236a](https://github.com/artscii/Hazlitt/commit/fd1236a), [60c6b22](https://github.com/artscii/Hazlitt/commit/60c6b22), [4a7374d](https://github.com/artscii/Hazlitt/commit/4a7374d), [ca1252b](https://github.com/artscii/Hazlitt/commit/ca1252b).
 
 ## 4.13.0 — 2026-09-22
 - Make QMD the primary search engine with browser keyword fallback on failure, an eight-second browser deadline and a temporary fallback cooldown.
 - Apply semantic results to the same project list and map filtering flow.
 - Add the authenticated QMD gateway and dedicated service deployment support; keep service credentials out of the browser.
 - Deployment: configure the QMD service and Atlas gateway together; keyword fallback remains available when QMD is unavailable.
-- Commit: `c169d12`.
+- Commit: [c169d12](https://github.com/artscii/Hazlitt/commit/c169d12).
 
-## 4.12.1
-- Preserve applied QMD result scope through map markers, continent navigation and profile previews; add reset/exit comparison controls.
+## 4.12.1 — 2026-09-22
+- Preserve applied QMD result scope through map markers, continent navigation and profile previews; add reset/exit comparison controls. These historical controls were removed in 4.13.6; the remaining A/B implementation was removed in 4.13.7.
+- Commit: [7e8b0d8](https://github.com/artscii/Hazlitt/commit/7e8b0d8).
 
 ## 4.12.0
 - Add optional local QMD paired search pilot with shared scope filters, result/map comparisons, timings and downloadable relevance evaluations. Hosted keyword search stays unchanged.
