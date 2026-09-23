@@ -5017,6 +5017,30 @@ body > footer .site-navigation a {
   font-size: 0.8rem;
 }
 
+/* v4.13.32: keep compact status/share glyphs together with a generous touch target. */
+.search-icon-actions {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 2px;
+  white-space: nowrap;
+  align-self: center;
+}
+.search-icon-actions #share-search {
+  width: 44px;
+  flex: 0 0 44px;
+  margin: 0;
+  justify-content: flex-start;
+  padding-left: 2px;
+}
+.search-icon-actions .qmd-cloud[hidden] + .search-share-divider {
+  display: none;
+}
+.search-icon-actions #share-search svg {
+  width: 15px;
+  height: 15px;
+}
+
 /* 4.13.22: focused Admin workspace; preserve field heights and square edges. */
 #admin-editor:not([hidden]) {
   display: grid;
