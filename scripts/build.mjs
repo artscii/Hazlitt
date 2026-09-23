@@ -75,7 +75,7 @@ for (const [name, title] of [["admin", "Admin"]]) {
     );
   fs.writeFileSync(
     `dist/${name}.html`,
-    `<!doctype html><html lang="en">${pageHead}<body>${header}<main class="management-page"><nav class="page-navigation" aria-label="Management navigation"><a href="/">Back to Atlas</a><a href="/admin" ${name === "admin" ? 'aria-current="page"' : ""}>Admin</a></nav><h1>${title}</h1><div id="${name}-page" class="${name === "log" ? "admin-section edit-log" : ""}"></div></main>${footer}</body></html>`,
+    `<!doctype html><html lang="en">${pageHead}<body>${header}<main class="management-page"><nav class="page-navigation" aria-label="Management navigation"><a href="/">Back to Atlas</a><a href="/admin" ${name === "admin" ? 'aria-current="page"' : ""}>Admin</a></nav><h1>${title} ( ${version} )</h1><div id="${name}-page" class="${name === "log" ? "admin-section edit-log" : ""}"></div></main>${footer}</body></html>`,
   );
 }
 fs.copyFileSync(
