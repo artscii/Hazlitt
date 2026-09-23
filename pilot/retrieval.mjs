@@ -1,7 +1,9 @@
 // Retrieve the catalogue before filtering; QMD's structured search caps branches at 20.
-export async function catalogSearch(store,query,count){
+export async function catalogSearch(store,query,count,timings={}){
  const options={collection:'atlas',limit:count};
- const lists=[await store.searchLex(query,options),await store.searchVector(query,options)];
+ const lexStart=performance.now();const lexical=await store.searchLex(query,options);timings.lexicalMs=performance.now()-lexStart;
+ const vectorStart=performance.now();const vector=await store.searchVector(query,options);timings.vectorTotalMs=performance.now()-vectorStart;
+ const lists=[lexical,vector];
  const fused=new Map();
  for(const list of lists)list.forEach((row,index)=>{
   const file=row.file||row.filepath;if(!file)return;

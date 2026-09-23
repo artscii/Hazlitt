@@ -4,6 +4,7 @@ import path from 'node:path';
 import {createHash} from 'node:crypto';
 import '../dist/search.js';
 import {parseParameters} from './parameters.mjs';
+import {startProfile} from './profiling.mjs';
 import {catalogSearch} from './retrieval.mjs';
 const root=path.resolve(process.env.QMD_DATA_DIR||'pilot/.data');
 process.env.XDG_CACHE_HOME ||= path.join(root,'cache');
@@ -35,16 +36,19 @@ export async function pilotRoute(request,getCatalog){
  let scope=input.scope||{};const deep=input.deep===true;const enteredQuery=query;
  if(Object.values(scope).some(v=>typeof v!=='string'||v.length>150))return reply({error:'Invalid filters'},400);
  try{({query,scope}=parseParameters(query,scope));}catch(error){return reply({error:error.message},400);}
- running=true;lastError='';const started=performance.now();
+ running=true;lastError='';const started=performance.now();let profiling;const timings={};
  try{
-  const {programs}=await getCatalog();const indexStart=performance.now();const indexing=await sync(programs),indexMs=performance.now()-indexStart;
-  const key=JSON.stringify([version,enteredQuery,scope,deep]);if(cache.has(key))return reply({...cache.get(key),cached:true,indexMs:Math.round(indexMs),indexChanged:false,totalMs:Math.round(performance.now()-started)});
+  const {programs}=await getCatalog();timings.catalogMs=performance.now()-started;const indexStart=performance.now();const indexing=await sync(programs),indexMs=performance.now()-indexStart;
+  const key=JSON.stringify([version,enteredQuery,scope,deep]);if(cache.has(key)){console.log('QMD_PROFILE '+JSON.stringify({cached:true,catalogMs:Math.round(timings.catalogMs),indexMs:Math.round(indexMs),totalMs:Math.round(performance.now()-started)}));return reply({...cache.get(key),timings:{cached:true,catalogMs:Math.round(timings.catalogMs),indexMs:Math.round(indexMs)},cached:true,indexMs:Math.round(indexMs),indexChanged:false,totalMs:Math.round(performance.now()-started)});}
   const allowed=new Set(programs.filter(p=>eligible(p,query,scope)).map(p=>p.id));
   const aStart=performance.now();const a=programs.filter((p,i)=>allowed.has(p.id)&&AtlasSearch.matches(p,query,'Project '+(i+1)+' '+String(i+1).padStart(2,'0'))).map(p=>({id:p.id}));const aMs=performance.now()-aStart;
-  const bStart=performance.now();const results=query?(deep?await store.search({query,collection:'atlas',limit:programs.length,candidateLimit:programs.length,rerank:true}):await catalogSearch(store,query,programs.length)):[];
+  profiling=await startProfile();const bStart=performance.now();const results=query?(deep?await store.search({query,collection:'atlas',limit:programs.length,candidateLimit:programs.length,rerank:true}):await catalogSearch(store,query,programs.length,timings)):[];
   const idsByFilename=new Map(programs.map(p=>[createHash('sha256').update(p.id).digest('hex')+'.md',p.id]));const seen=new Set();
   const b=query?results.flatMap(r=>{const id=idsByFilename.get(path.basename(r.file));if(!id||!allowed.has(id)||seen.has(id))return [];seen.add(id);return [{id,score:r.score,passage:(r.bestChunk||r.body||'').slice(0,600)}];}).slice(0,10):programs.filter(p=>allowed.has(p.id)).map(p=>({id:p.id}));
-  const result={query:enteredQuery,semanticQuery:query,scope,deep,a,b,aMs:+aMs.toFixed(2),bMs:Math.round(performance.now()-bStart),indexMs:Math.round(indexMs),indexChanged:indexing.changed,indexedAt,revision:version,engine:'QMD 2.8.3',cached:false,totalMs:Math.round(performance.now()-started)};
+  const model=profiling.finish();profiling=null;Object.assign(timings,model);timings.indexMs=indexMs;timings.queryMs=performance.now()-bStart;timings.vectorLookupAndOverheadMs=Math.max(0,(timings.vectorTotalMs||0)-model.modelLoadMs-model.contextSetupMs-model.embeddingMs);
+  for(const k of Object.keys(timings))if(k.endsWith('Ms'))timings[k]=+timings[k].toFixed(2);
+  console.log('QMD_PROFILE '+JSON.stringify({deep,...timings}));
+  const result={timings,query:enteredQuery,semanticQuery:query,scope,deep,a,b,aMs:+aMs.toFixed(2),bMs:Math.round(performance.now()-bStart),indexMs:Math.round(indexMs),indexChanged:indexing.changed,indexedAt,revision:version,engine:'QMD 2.8.3',cached:false,totalMs:Math.round(performance.now()-started)};
   cache.set(key,result);if(cache.size>50)cache.delete(cache.keys().next().value);return reply(result);
- }catch(error){lastError=error.message;console.error('QMD pilot:',error.message);return reply({error:'QMD could not complete this comparison. '+error.message},503);}finally{running=false;}
+ }catch(error){lastError=error.message;console.error('QMD pilot:',error.message);return reply({error:'QMD could not complete this comparison. '+error.message},503);}finally{profiling?.finish();running=false;}
 }
