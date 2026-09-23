@@ -7,7 +7,7 @@
  function connection(active,label){status.classList.toggle('is-connected',active);status.title=label;status.setAttribute('aria-label',label);status.innerHTML=cloud;}
  connection(false,'QMD connection not yet verified');
  let enabled=false;status.hidden=true;const divider=document.querySelector('.search-cloud-divider');if(divider)divider.hidden=true;
- const configReady=fetch('/api/config',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Configuration unavailable');return r.json();}).then(config=>{enabled=config.qmdEnabled!==false;status.hidden=!enabled;if(divider)divider.hidden=!enabled;}).catch(()=>{});
+ const configReady=AtlasBootstrap.config.then(config=>{enabled=config.qmdEnabled!==false;status.hidden=!enabled;if(divider)divider.hidden=!enabled;}).catch(()=>{});
  let generation=0,timer,controller,cooldown=0,checking=false;
  async function checkReady(){
   if(!enabled||checking||document.hidden||status.getAttribute('aria-busy')==='true')return;
@@ -24,9 +24,11 @@
  window.addEventListener('atlas-search-cancel',cancel);
  window.atlasPrimarySearch=async(raw,fallback)=>{
   cancel();const token=generation,query=raw.trim();
-  await configReady;if(token!==generation)return;if(!enabled){fallback();return;}
-  if(!query){fallback();return;}
-  if(Date.now()<cooldown){fallback();connection(false,'QMD unavailable — keyword search active');return;}
+  fallback(); // Lexical results are visible immediately, even when QMD is offline.
+  await configReady;if(token!==generation)return;if(!enabled)return;
+  const lexical=window.atlasSearchIndex?.search(query);if(!lexical?.candidates.length||window.atlasCatalog?.programs.some(p=>AtlasSearch.normalize(p.name)===AtlasSearch.normalize(query)))return;
+  if(!query)return;
+  if(Date.now()<cooldown){connection(false,'QMD unavailable — keyword search active');return;}
   status.setAttribute('aria-busy','true');
   timer=setTimeout(async()=>{
    controller=new AbortController();const deadline=setTimeout(()=>controller.abort(),8000);
@@ -36,8 +38,8 @@
     const data=await response.json();if(!Array.isArray(data.results)||data.results.some(x=>typeof x.id!=='string'))throw new Error('Invalid results');
     if(token!==generation||input.value.trim()!==query)return;
     window.dispatchEvent(new CustomEvent('atlas-semantic-results',{detail:{query,ids:data.results.map(x=>x.id),primary:true}}));
-    connection(true,'QMD connected — semantic search active');
-   }catch(error){if(token!==generation||input.value.trim()!==query)return;window.dispatchEvent(new CustomEvent('atlas-analytics',{detail:{name:'search-fallback',data:{reason:error.name==='AbortError'?'timeout':'unavailable'}}}));cooldown=Date.now()+30000;fallback();connection(false,'QMD unavailable — keyword search active');}
+    connection(data.semanticReady===true&&!data.semanticUnavailable,data.semanticReady===true&&!data.semanticUnavailable?'QMD ready — semantic search available':'QMD unavailable — lexical results shown');
+   }catch(error){if(token!==generation||input.value.trim()!==query)return;window.dispatchEvent(new CustomEvent('atlas-analytics',{detail:{name:'search-fallback',data:{reason:error.name==='AbortError'?'timeout':'unavailable'}}}));cooldown=Date.now()+30000;connection(false,'QMD unavailable — keyword search active');}
    finally{clearTimeout(deadline);if(token===generation)status.removeAttribute('aria-busy');}
   },300);
  };

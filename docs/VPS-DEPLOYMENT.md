@@ -14,7 +14,7 @@ Use an x86-64 Linux VPS with Docker Engine and Compose v2. The verified server h
 | QMD | Docker service `qmd`, internal port 8080 | No published port; shared secret authenticates requests |
 | Models and index | `/data` in QMD | Named volume `qmd-data` |
 
-Caddy forwards HTTPS requests to Atlas. `PUBLIC_ORIGIN` lets the Node adapter recognize HTTPS without trusting arbitrary forwarded headers. Atlas contacts `http://qmd:8080` only when the explicit private-network setting is enabled. QMD reads the public catalogue over HTTPS and refreshes its catalogue cache at most once per minute. Its index excludes editor notes, credentials and analytics.
+Caddy forwards HTTPS requests to Atlas. `PUBLIC_ORIGIN` lets the Node adapter recognize HTTPS without trusting arbitrary forwarded headers. Atlas contacts `http://qmd:8080` only when the explicit private-network setting is enabled. QMD reads the public catalogue over HTTPS and refreshes its catalogue cache at most once per 30 seconds. Its index excludes editor notes, credentials and analytics.
 
 ## Install prerequisites and obtain source
 
@@ -420,3 +420,33 @@ Keep both Umami sample rates at **1 (100%)**, as requested. Save under Replays &
 Deploy using the four-file Compose command above, rebuilding only Atlas (`up -d --build --no-deps atlas`). No additional proxy change is needed if the 4.13.16 recorder routes are already installed. QMD and Umami stay running.
 
 In a fresh non-Admin visitor session, perform a search and a zero-result search; choose a continent and marker; keep half a project card in view for a second; click its evidence/contact links; copy a share link; switch an available language; expand a reference group; and scroll the project list to the end. Umami Events should show the named events in the README, with project IDs where applicable. Repeat scrolling to the end and viewing a card: these should not inflate their counts within the same page/filter. Test a phone viewport as well as desktop. Confirm Admin pages and browser privacy opt-outs send no Atlas events. Search/failure events are reported only when their corresponding operations actually occur; do not intentionally interrupt production services merely to test fallback.
+
+## Upgrading to 4.13.21: relevance and performance
+
+Take a complete Admin DB backup first and retain the current image for rollback. This release adds a thesaurus table and indexes without replacing project records. Keep the existing Compose project name and volumes; never use `down -v`.
+
+Run on the VPS:
+
+```bash
+cd ~/apps/Hazlitt
+git pull --ff-only
+sudo docker compose -f compose.yaml -f compose.qmd.yaml -f compose.qmd-dns.yaml -f compose.umami.yaml up -d --build atlas qmd
+sudo docker compose -f compose.yaml -f compose.qmd.yaml -f compose.qmd-dns.yaml -f compose.umami.yaml ps
+curl -fsS http://127.0.0.1:8081/healthz
+curl -fsS https://vps-f8d31735.vps.ovh.ca/api/search/status
+```
+
+Use all existing overlays, especially the VPS DNS override and Umami settings. QMD automatically refreshes and warms its index/model in the background. A healthy HTTP container alone does not prove semantic readiness: wait for search status readiness and the green cloud. Do not restart QMD repeatedly while warming. The `warm.mjs` helper is a query smoke test, not a replacement for readiness; it can return 503 during initial indexing.
+
+Once ready:
+
+```bash
+sudo docker compose -f compose.yaml -f compose.qmd.yaml -f compose.qmd-dns.yaml -f compose.umami.yaml exec qmd node pilot/warm.mjs
+sudo docker compose -f compose.yaml -f compose.qmd.yaml -f compose.qmd-dns.yaml -f compose.umami.yaml logs --since=10m qmd
+```
+
+Confirm footer 4.13.21. Test `umami` and `unami` (zero), `Kinondo Kwetu` (one), `colposcopy` (seven for the 53-project review snapshot), and `screening country:Kenya` (Kinondo when the related-term QMD path is ready). Counts may change after editorial updates. Confirm the map shows only matching locations. Test a thesaurus edit, duplicate rejection and restoration in Admin; a restored vocabulary is saved as a new revision. Export a DB backup and validate its restore into a separate test database.
+
+Direct and equivalent matches remain available without QMD; related-only searches may return no results until readiness recovers. Keep model/index volumes persistent. Review QMD_PROFILE output for cold model loading versus warm inference. Queue coalescing and limits prevent uncontrolled concurrent inference; they do not guarantee low latency under CPU saturation.
+
+Release validation limitation: local functional tests passed, but the Mac model backend failed to initialize and Docker was unavailable. Treat the above Linux image, readiness and query tests as required deployment acceptance checks.

@@ -1,6 +1,6 @@
 # Changelog
 
-Current application release: **4.13.20**. This matches `package.json`, the Compose image tag, and generated page footers. A repository commit identifies source history; it does not prove that version has been deployed on a VPS.
+Current application release: **4.13.21**. This matches `package.json`, the Compose image tag, and generated page footers. A repository commit identifies source history; it does not prove that version has been deployed on a VPS.
 
 Entries are newest first and describe behavior at each release. Later entries supersede earlier behavior. Versions 4.12.1–4.13.7 have been checked against Git history; older entries are retained without a new historical audit. Version 4.13.1 groups several changes made without individual version increments.
 
@@ -9,6 +9,14 @@ Entries are newest first and describe behavior at each release. Later entries su
 - Backfilled releases 4.13.0–4.13.7 in [e1a0536](https://github.com/artscii/Hazlitt/commit/e1a0536); reviewed release/commit mapping and clarified deployment and historical behavior afterward.
 - Documentation-only corrections do not change the application version or require a container rebuild.
 - Future application releases should update this changelog in the release commit, with changes, validation and deployment notes. Use `npm run release:patch` to advance the package version and synchronize generated footer/Compose versions; write the corresponding changelog entry before committing.
+
+## 4.13.21 — 2026-09-23
+- Prioritize BM25 direct matches and approved equivalents; constrain QMD to grounded related concepts, rejecting unrelated noise and excluding private notes/URLs from public relevance.
+- Add an authenticated, editable thesaurus with revision conflicts, history, restoration and local query testing under Admin Search.
+- Share catalog/config loads, separate map geometry, add asset validators and hashed caching, reduce repeated card/map layout work, and page Admin history.
+- Refresh QMD snapshots in the background, retain warm models, cache results, coalesce duplicate work and bound queued inference.
+- Stream consistent SQLite backups, make local batches synchronous, trim Docker runtime dependencies and rotate container logs.
+- Validation: automated search, service/queue, Admin, transfer, backup, palette and UI tests passed; desktop/iPhone preview checked. Native QMD failed to initialize in the local Mac environment; Docker was unavailable. VPS image/model smoke tests remain required.
 
 ## 4.13.20 — 2026-09-22
 - Darken the shared site footer using the active palette and high-contrast text.

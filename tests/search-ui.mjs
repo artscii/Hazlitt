@@ -6,7 +6,7 @@ const dom=new JSDOM(fs.readFileSync('dist/index.html','utf8'),{url:'http://local
 const w=dom.window,d=w.document;const errors=[],mapScrolls=[];
 w.HTMLElement.prototype.scrollTo=function(options){mapScrolls.push(options);this.scrollLeft=options.left;};
 w.addEventListener('error',e=>errors.push(e.message));
-w.fetch=async()=>({ok:true,json:async()=>catalog});w.matchMedia=()=>({matches:false,addEventListener(){}});
+w.AtlasBootstrap={catalog:Promise.resolve(catalog)};w.fetch=async()=>({ok:true,json:async()=>catalog.countries});w.matchMedia=()=>({matches:false,addEventListener(){}});
 w.ResizeObserver=class{observe(){} disconnect(){}};d.fonts={ready:Promise.resolve()};w.scrollTo=()=>{};w.HTMLElement.prototype.scrollIntoView=()=>{};w.performance.measure=()=>{};
 for(const file of ['search.js','app.js'])w.eval(fs.readFileSync('dist/'+file,'utf8'));
 await new Promise(resolve=>w.addEventListener('atlas-ready',resolve,{once:true}));

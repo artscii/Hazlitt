@@ -1,13 +1,11 @@
 // Atlas v2.3.3 — Muted catalog record numbers remain consistent across filtered and reordered lists.
 // On release: update the footer and source version comments, then add a CHANGELOG.md entry.
 (async()=>{
-const response=await fetch('/api/catalog',{cache:'no-store'});
-if(!response.ok)throw new Error('Project records could not be loaded. Please refresh to retry.');
-const catalog=await response.json();window.atlasCatalog=catalog;
+const [catalog,countries]=await Promise.all([AtlasBootstrap.catalog,fetch('/api/map').then(r=>{if(!r.ok)throw Error('Map unavailable');return r.json();})]);catalog.countries=countries;window.atlasCatalog=catalog;
 const escapeHTML=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 // v4.8.9: placeholder uses the current catalog count, never a hard-coded total.
 document.querySelector('#project-search').placeholder=`All ${catalog.programs.length} projects`;
-const searchIndex=AtlasSearch.createIndex(catalog.programs);
+const searchIndex=AtlasSearch.createIndex(catalog.programs,catalog.thesaurus?.entries);window.atlasSearchIndex=searchIndex;
 let chosenMarkerName=null;
 const programs=catalog.programs.map(p=>Object.fromEntries(Object.entries(p).map(([key,value])=>[key,typeof value==='string'?escapeHTML(value):value])));
 // v4.8.18: constant-time lookups shared by marker and search rendering.
@@ -106,6 +104,9 @@ function highlightProfileMatches(query){
   while(visibleWalker.nextNode()){const node=visibleWalker.currentNode;if(!node.parentElement.closest('[hidden]'))visibleText+=' '+node.nodeValue;}
   const missing=terms.filter(term=>!normalizeSearch(visibleText).includes(term));
   const record=programsById.get(card.id);
+  const match=searchResult(query).results.find(r=>r.id===card.id)||searchResult(query).candidates.find(r=>r.id===card.id);
+  if(match&&match.kind!=='bm25'&&match.kind!=='filter'){const explanation=document.createElement('aside');explanation.className='search-match-context';explanation.textContent=(match.kind==='related'?'Related concept: ':'Approved equivalent: ')+match.matchedTerms.join(' · ');card.querySelector('.program-extra').append(explanation);}
+
   const fieldLabels={short:'short description',metric:'headline outcome',metricLabel:'headline outcome explanation',originalTitle:'original-language title',originalSummary:'original-language summary',originalOutcome:'original-language outcomes',source:'primary source URL',source2:'additional source URL',editNotes:'edit notes'};
   const explained=new Set();
   for(const [key,value] of Object.entries(record||{})){
@@ -122,7 +123,7 @@ function highlightProfileMatches(query){
   const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
   nodes.forEach(node=>{
    const raw=node.nodeValue,folded=normalizeSearch(raw),ranges=[];
-   for(const term of terms){let at=0;while((at=folded.indexOf(term,at))!==-1){ranges.push([at,at+term.length]);at+=term.length;}}
+   for(const term of [...new Set([...terms,...(match?.matchedTerms||[])])]){let at=0;while((at=folded.indexOf(term,at))!==-1){ranges.push([at,at+term.length]);at+=term.length;}}
    if(!ranges.length)return;
    ranges.sort((a,b)=>a[0]-b[0]);const merged=[];
    for(const range of ranges){const last=merged[merged.length-1];if(last&&range[0]<=last[1])last[1]=Math.max(last[1],range[1]);else merged.push(range);}
@@ -133,6 +134,7 @@ function highlightProfileMatches(query){
  });
 }
 // v4.2.0: size each scroll panel to its first three visible projects; stripe visible rows.
+const evidenceMeasurements=new WeakMap();
 let evidenceLayoutFrame=0;
 function updateEvidencePanels(){
  cancelAnimationFrame(evidenceLayoutFrame);
@@ -142,7 +144,8 @@ function updateEvidencePanels(){
    rows.forEach((row,index)=>row.classList.toggle('evidence-alternate',index%2===1));
    const height=rows.slice(0,3).reduce((sum,row)=>sum+row.getBoundingClientRect().height+8,0);
    panel.style.setProperty('--three-project-height',Math.ceil(height+2)+'px');
-   panel.tabIndex=panel.scrollHeight>panel.clientHeight+2?0:-1;updateScrollHint(panel);
+   panel.tabIndex=panel.scrollHeight>panel.clientHeight+2?0:-1;const top=panel.getBoundingClientRect().top+panel.clientTop;
+   evidenceMeasurements.set(panel,rows.map(row=>({row,bottom:row.getBoundingClientRect().bottom-top+panel.scrollTop})));updateScrollHint(panel);
   }
  });
 }
@@ -151,18 +154,18 @@ function updateScrollHint(panel){
  const rows=[...panel.querySelectorAll('article.program')].filter(row=>!row.hidden);
  const more=panel.scrollHeight>panel.clientHeight+2&&panel.scrollTop+panel.clientHeight<panel.scrollHeight-3;
  panel.parentElement.classList.toggle('has-more-projects',more);
- const bottom=panel.getBoundingClientRect().top+panel.clientTop+panel.clientHeight;
- const remaining=more?rows.filter(row=>row.getBoundingClientRect().bottom>bottom+3).length:0;
+ const bottom=panel.scrollTop+panel.clientHeight;
+ const remaining=more?(evidenceMeasurements.get(panel)||[]).filter(item=>!item.row.hidden&&item.bottom>bottom+3).length:0;
  const hint=panel.nextElementSibling;
  if(hint?.classList.contains('more-projects-hint')){
   hint.hidden=!rows.length||!panel.clientHeight;
-  hint.textContent=remaining?`${remaining} more ${remaining===1?'project':'projects'} below`:'No more projects to scroll';
+  const label=remaining?`${remaining} more ${remaining===1?'project':'projects'} below`:'No more projects to scroll';if(hint.textContent!==label)hint.textContent=label;
  }
 
 }
 for(const panel of document.querySelectorAll('.evidence-scroll')){
  const hint=document.createElement('p');hint.className='more-projects-hint';hint.textContent='More projects below ↓';hint.hidden=true;panel.after(hint);
- panel.addEventListener('scroll',()=>updateScrollHint(panel),{passive:true});
+ let hintFrame=0;panel.addEventListener('scroll',()=>{if(hintFrame)return;hintFrame=requestAnimationFrame(()=>{hintFrame=0;updateScrollHint(panel);});},{passive:true});
 }
 window.addEventListener('resize',updateEvidencePanels);
 document.fonts.ready.then(updateEvidencePanels);
@@ -190,8 +193,8 @@ function updateCountryOutlines(place){
 }
 function numberSelectedRows(){
  const rows=[...document.querySelectorAll('#selected-projects article.program')].filter(row=>!row.hidden);
- document.querySelectorAll('.result-number').forEach(b=>b.remove());
- rows.forEach((row,i)=>{const badge=document.createElement('span');badge.className='result-number';badge.textContent=`- (${i+1} of ${rows.length})`;badge.setAttribute('aria-label',`Selected project ${i+1} of ${rows.length}`);row.querySelector('.project-row-meta').append(badge);row.classList.add('selected-profile');});
+ document.querySelectorAll('.result-number').forEach(b=>{if(b.closest('article')?.hidden)b.remove();});
+ rows.forEach((row,i)=>{const badge=row.querySelector('.result-number')||document.createElement('span');badge.className='result-number';const label=`- (${i+1} of ${rows.length})`;if(badge.textContent!==label)badge.textContent=label;badge.setAttribute('aria-label',`Selected project ${i+1} of ${rows.length}`);if(!badge.isConnected)row.querySelector('.project-row-meta').append(badge);row.classList.add('selected-profile');});
 }
 // v4.8.0: move existing cards instead of rebuilding the full catalog on each keystroke.
 function arrangeProfiles(ids){
@@ -201,7 +204,7 @@ function arrangeProfiles(ids){
  for(const [id,card]of projectCards)card.classList.toggle('selected-profile',selected.has(id));
 }
 function prioritizeProfiles(place,{filter=true}={}){
- place=searchPlace(place);if(!place.ids.length)return;
+ place={...place,ids:place.ids.filter(id=>matchingProjectIds(document.querySelector('#project-search').value).has(id))};if(!place.ids.length)return;
  document.querySelector('#selected-projects-section').hidden=false;
  document.querySelector('#selected-projects-title').textContent=place.name;
  arrangeProfiles(place.ids);
@@ -434,7 +437,7 @@ function searchPlace(place){
 function syncSearchMap({preserveMapPosition=true,selectedPlace=null}={}){
  const started=performance.now();closeTip(true);
  const query=document.querySelector('#project-search').value.trim(),matches=matchingProjectIds(query);
- const filtered=!!(query||sharedProjectId),orderedIds=orderProjectIds([...matches]);
+ const filtered=!!(query||sharedProjectId),lexical=searchResult(query),orderedIds=(!markerProjectIds&&!sharedProjectId&&lexical.ranked)?[...matches]:orderProjectIds([...matches]);
  if(filtered&&orderedIds.length){
   prioritizeProfiles({name:selectedPlace?.name||(sharedProjectId?programsById.get(sharedProjectId).name:'Results'),ids:orderedIds},{filter:false});
  }else arrangeProfiles([]);
@@ -483,8 +486,10 @@ window.addEventListener('pageshow',()=>{if(document.querySelector('#project-sear
 
 // v2.2.0: deterministic water-only placement for every catalog country, including new records.
 // Rasterize the same geographic paths used by the map, then test the entire marker + halo.
+let lastPlacementSize="";
 function placeMarkersOffshore(){
  const width=Math.ceil(map.clientWidth),height=Math.ceil(map.clientHeight);if(!width||!height)return;
+ const size=width+"x"+height;if(size===lastPlacementSize)return;lastPlacementSize=size;
  const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;
  const context=canvas.getContext('2d',{willReadFrequently:true});
  context.setTransform(width/bounds.width,0,0,height/bounds.height,-bounds.west*width/bounds.width,bounds.north*height/bounds.height);
@@ -508,7 +513,7 @@ function placeMarkersOffshore(){
  }
 }
 placeMarkersOffshore();
-let placementFrame;new ResizeObserver(()=>{cancelAnimationFrame(placementFrame);placementFrame=requestAnimationFrame(placeMarkersOffshore);}).observe(map);
+let placementFrame;new ResizeObserver(()=>{clearTimeout(placementFrame);placementFrame=setTimeout(placeMarkersOffshore,140);}).observe(map);
 
 // v1.3.11: hover connectors use country centers, independent of fixed marker positions.
 const countryCenters={

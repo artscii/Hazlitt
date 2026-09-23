@@ -4,4 +4,4 @@ window.AtlasTheme=(()=>{
  function apply(id){const palette=palettes.find(p=>p.id===id)||palettes[0];document.documentElement.dataset.palette=palette.id;return palette;}
  return {palettes,apply};
 })();
-fetch('/api/config',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(config=>{if(config&&!document.documentElement.dataset.palettePreview)AtlasTheme.apply(config.palette);}).catch(()=>{});
+AtlasBootstrap.config.then(config=>{if(config&&!document.documentElement.dataset.palettePreview)AtlasTheme.apply(config.palette);}).catch(()=>{});

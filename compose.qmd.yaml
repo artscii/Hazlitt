@@ -11,9 +11,11 @@ services:
       dockerfile: pilot/Dockerfile
     environment:
       QMD_SERVICE_TOKEN: ${QMD_SERVICE_TOKEN:?Generate the QMD service secret in .env}
-      ATLAS_CATALOG_URL: ${PUBLIC_ORIGIN:?Set PUBLIC_ORIGIN}/api/catalog
+      ATLAS_CATALOG_URL: ${PUBLIC_ORIGIN:?Set PUBLIC_ORIGIN}/api/search/catalog
     volumes:
       - qmd-data:/data
+    logging:
+      options: {max-size: "10m", max-file: "3"}
     restart: unless-stopped
     mem_limit: 5g
     cpus: 3

@@ -5,13 +5,16 @@ import {createHash} from 'node:crypto';
 import '../dist/search.js';
 import {parseParameters} from './parameters.mjs';
 import {startProfile} from './profiling.mjs';
-import {catalogSearch} from './retrieval.mjs';
+import {createWorkQueue} from './work-queue.mjs';
 const root=path.resolve(process.env.QMD_DATA_DIR||'pilot/.data');
 process.env.XDG_CACHE_HOME ||= path.join(root,'cache');
 const publicFields=['name','short','outcome','status','geo','countries','publicationYear','evidenceBasis','sampleDetails','metric','metricLabel','partners','followUp','followUpDate','originalLanguage','originalTitle','originalSummary','originalOutcome','source','source2','originalSource'];
 export function projectDocument(p){return '# '+p.name+'\n\n'+publicFields.filter(k=>p[k]!==undefined).map(k=>'## '+k+'\n'+(Array.isArray(p[k])?p[k].join(', '):String(p[k]).replace(/<[^>]*>/g,' '))).join('\n\n');}
 export function eligible(p,query,scope={}){const parsed=AtlasSearch.parse(query);return (!scope.country||p.countries?.some(c=>c.toLowerCase()===scope.country.toLowerCase()))&&(!scope.basis||p.evidenceBasis?.toLowerCase()===scope.basis.toLowerCase())&&(!scope.year||Number(p.publicationYear)===Number(scope.year))&&(!scope.continent||AtlasSearch.continentsOf(p).some(c=>c.toLowerCase()===scope.continent.toLowerCase()))&&parsed.countries.every(c=>p.countries?.includes(c))&&parsed.continents.every(c=>AtlasSearch.continentsOf(p).some(x=>x.toLowerCase()===c))&&parsed.years.every(([a,b])=>Number(p.publicationYear)>=a&&Number(p.publicationYear)<=b);}
-let store,version='',running=false,lastError='',indexedAt=null,queued=0;
+export function createSearchService({openStore,rootDir=root,refreshMs=30000}={}){
+ const root=path.resolve(rootDir);
+let store,version='',lastError='',indexedAt=null;
+let snapshot=null,refreshing=false,refreshAt=0,ready=false;const queue=createWorkQueue();
 const cache=new Map();
 async function sync(programs){
  const docs=programs.map(p=>({id:p.id,text:projectDocument(p),revision:p.revision||0}));
@@ -20,60 +23,61 @@ async function sync(programs){
  const dir=path.join(root,'documents');await fs.mkdir(dir,{recursive:true});
  const files=new Set();for(const d of docs){const name=createHash('sha256').update(d.id).digest('hex')+'.md';files.add(name);const file=path.join(dir,name);let old;try{old=await fs.readFile(file,'utf8');}catch{}if(old!==d.text)await fs.writeFile(file,d.text);}
  for(const name of await fs.readdir(dir))if(name.endsWith('.md')&&!files.has(name))await fs.unlink(path.join(dir,name));
- if(!store){const {createStore}=await import('@tobilu/qmd');store=await createStore({dbPath:path.join(root,'index.sqlite'),config:{collections:{atlas:{path:dir,pattern:'**/*.md'}}}});}
+ if(!store){const createStore=openStore||(await import('@tobilu/qmd')).createStore;store=await createStore({dbPath:path.join(root,'index.sqlite'),config:{collections:{atlas:{path:dir,pattern:'**/*.md'}}}});}
  // QMD 2.8.3 exposes the per-store runtime; retain its weights and context.
  const llm=store.internal?.llm;if(llm){llm.inactivityTimeoutMs=0;llm.disposeModelsOnInactivity=false;llm.touchActivity();}
  await store.update();await store.embed({collection:'atlas'});version=digest;indexedAt=new Date().toISOString();cache.clear();return {changed:true};
 }
 const reply=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json','Cache-Control':'no-store'}});
-export async function searchRoute(request,getCatalog){
- const url=new URL(request.url);
- if(url.pathname==='/api/search/status')return reply({enabled:true,engine:'QMD 2.8.3',indexedAt,running,error:lastError});
- if(url.pathname!=='/api/search/query')return reply({error:'Not found'},404);
+
+async function searchRoute(request,getCatalog){
  if(request.method!=='POST')return reply({error:'Use POST'},405);
- if(request.headers.get('Origin')!==url.origin)return reply({error:'Invalid origin'},403);
-
+ if(request.headers.get('Origin')!==new URL(request.url).origin)return reply({error:'Invalid origin'},403);
  let input;try{input=await request.json();}catch{return reply({error:'Invalid request'},400);}
- let query=typeof input.query==='string'?input.query.trim():'';if(!query||query.length>500)return reply({error:'Enter a query of 1–500 characters.'},400);
- let scope=input.scope||{};const deep=input.deep===true;const enteredQuery=query;
- if(Object.values(scope).some(v=>typeof v!=='string'||v.length>150))return reply({error:'Invalid filters'},400);
- try{({query,scope}=parseParameters(query,scope));}catch(error){return reply({error:error.message},400);}
- const queueStart=performance.now();
- if(running){
-  if(queued>=3)return reply({error:'Search queue full'},429);
-  queued++;try{while(running&&performance.now()-queueStart<2000)await new Promise(resolve=>setTimeout(resolve,25));}finally{queued--;}
-  if(running)return reply({error:'Search queue wait exceeded'},429);
- }
- running=true;lastError='';const started=performance.now();let profiling;const timings={queueMs:Math.round(started-queueStart)};
+ if(typeof input.query!=='string'||!input.query.trim()||input.query.length>500)return reply({error:'Enter a query of 1–500 characters.'},400);
+ const started=performance.now();if(!snapshot){readiness(getCatalog);return reply({error:'Search warming up'},503);}
+ let parsed;try{parsed=parseParameters(input.query,input.scope||{});}catch(e){return reply({error:e.message},400);}
+ const active=snapshot,allowed=new Set(active.programs.filter(p=>eligible(p,parsed.query,parsed.scope)).map(p=>p.id));
+ const lexical=active.index.search(parsed.query),base=lexical.results.filter(r=>allowed.has(r.id)),candidates=lexical.candidates.filter(r=>allowed.has(r.id));
+ const key=JSON.stringify([active.revision,input.query,parsed.scope]);
+ const respond=(results,extra={})=>reply({query:input.query,results,engine:'BM25 + QMD',semanticReady:ready&&!refreshing,revision:active.revision,indexedAt,totalMs:Math.round(performance.now()-started),...extra});
+ if(!candidates.length||refreshing||!ready||active.programs.some(p=>AtlasSearch.normalize(p.name)===AtlasSearch.normalize(parsed.query)))return respond(base,{lexicalOnly:true});
+ if(cache.has(key))return respond(cache.get(key),{cached:true});
  try{
-  const {programs}=await getCatalog();timings.catalogMs=performance.now()-started;const indexStart=performance.now();const indexing=await sync(programs),indexMs=performance.now()-indexStart;
-  const key=JSON.stringify([version,enteredQuery,scope,deep]);if(cache.has(key)){console.log('QMD_PROFILE '+JSON.stringify({cached:true,catalogMs:Math.round(timings.catalogMs),indexMs:Math.round(indexMs),totalMs:Math.round(performance.now()-started)}));return reply({...cache.get(key),timings:{cached:true,catalogMs:Math.round(timings.catalogMs),indexMs:Math.round(indexMs)},cached:true,indexMs:Math.round(indexMs),indexChanged:false,totalMs:Math.round(performance.now()-started)});}
-  const allowed=new Set(programs.filter(p=>eligible(p,query,scope)).map(p=>p.id));
-  const exact=programs.filter(p=>allowed.has(p.id)&&[p.name,p.id].some(v=>v?.toLowerCase()===query.toLowerCase()));
-  profiling=await startProfile(store.internal?.llm);const bStart=performance.now();const results=query&&!exact.length?(deep?await store.search({query,collection:'atlas',limit:programs.length,candidateLimit:programs.length,rerank:true}):await catalogSearch(store,query,programs.length,timings)):[];
-  const idsByFilename=new Map(programs.map(p=>[createHash('sha256').update(p.id).digest('hex')+'.md',p.id]));const seen=new Set();
-  const b=exact.length?exact.map(p=>({id:p.id})):query?results.flatMap(r=>{const id=idsByFilename.get(path.basename(r.file));if(!id||!allowed.has(id)||seen.has(id))return [];seen.add(id);return [{id,score:r.score,passage:(r.bestChunk||r.body||'').slice(0,600)}];}).slice(0,10):programs.filter(p=>allowed.has(p.id)).map(p=>({id:p.id}));
-  const model=profiling.finish();profiling=null;Object.assign(timings,model);timings.indexMs=indexMs;timings.queryMs=performance.now()-bStart;timings.vectorLookupAndOverheadMs=Math.max(0,(timings.vectorTotalMs||0)-model.modelLoadMs-model.contextSetupMs-model.embeddingMs);
-  for(const k of Object.keys(timings))if(k.endsWith('Ms'))timings[k]=+timings[k].toFixed(2);
-  console.log('QMD_PROFILE '+JSON.stringify({deep,...timings}));
-  const result={timings,query:enteredQuery,semanticQuery:query,scope,deep,results:b,searchMs:Math.round(performance.now()-bStart),indexMs:Math.round(indexMs),indexChanged:indexing.changed,indexedAt,revision:version,engine:'QMD 2.8.3',cached:false,totalMs:Math.round(performance.now()-started)};
-  cache.set(key,result);if(cache.size>50)cache.delete(cache.keys().next().value);return reply(result);
- }catch(error){lastError=error.message;console.error('QMD search:',error.message);return reply({error:'QMD could not complete this search. '+error.message},503);}finally{profiling?.finish();running=false;}
+  const results=await queue.run(key,async()=>{
+   // Background indexing cannot start while this queue is active.
+   const timings={},profile=await startProfile(store.internal?.llm),t=performance.now();
+   try{const vector=await store.searchVector(parsed.query,{collection:'atlas',limit:active.programs.length});
+    const byFile=new Map(vector.map(r=>[path.basename(r.file||r.filepath),r.score]));
+    // Vector rank is used only for candidates supported by approved related concepts.
+    const related=candidates.filter(r=>byFile.has(active.files.get(r.id))).sort((a,b)=>byFile.get(active.files.get(b.id))-byFile.get(active.files.get(a.id)));
+    const results=[...base,...related];cache.set(key,results);if(cache.size>80)cache.delete(cache.keys().next().value);return results;
+   }finally{Object.assign(timings,profile.finish(),{queryMs:performance.now()-t});console.log('QMD_PROFILE '+JSON.stringify(timings));}
+  },request.signal);
+  return respond(results);
+ }catch(e){lastError=e.message;if(!/cancelled|busy|expired/.test(e.message))ready=false;return respond(base,{lexicalOnly:true,semanticUnavailable:true});}
 }
 
-// Authenticated readiness probe: warm the actual store, coalescing all browser polls.
-let probeAt=0,probeReady=false,probing=false;
-export function readiness(getCatalog){
- if(!probing&&!running&&!probeReady&&Date.now()-probeAt>30000){
-  probing=true;running=true;probeReady=false;
+// Refresh off the request path. The previous lexical snapshot remains usable during updates.
+function readiness(getCatalog){
+ if(!refreshing&&!queue.busy&&Date.now()-refreshAt>refreshMs){
+  refreshing=true;
   (async()=>{let profile;const t=performance.now();try{
-   const {programs}=await getCatalog();await sync(programs);
+   const catalog=await getCatalog(),revision=catalog.revision||createHash('sha256').update(JSON.stringify(catalog)).digest('hex');
+   if(snapshot?.revision===revision&&ready)return;
+   const programs=catalog.programs,index=AtlasSearch.createIndex(programs,catalog.thesaurus?.entries);
+   await sync(programs);
    profile=await startProfile(store.internal?.llm);
-   await store.internal.llm.embed('cervical screening readiness');
-   probeReady=true;
-   console.log('QMD_PROFILE '+JSON.stringify({phase:'readiness',...profile.finish(),totalMs:Math.round(performance.now()-t)}));profile=null;
-  }catch(error){console.error('QMD readiness:',error.message);probeReady=false;}
-  finally{profile?.finish();probeAt=Date.now();probing=false;running=false;}})();
+   if(!ready)await store.internal.llm.embed('cervical screening readiness');
+   snapshot={programs,index,revision,files:new Map(programs.map(p=>[p.id,createHash('sha256').update(p.id).digest('hex')+'.md']))};cache.clear();ready=true;
+   console.log('QMD_PROFILE '+JSON.stringify({phase:'background-index',...profile.finish(),totalMs:Math.round(performance.now()-t)}));profile=null;
+  }catch(e){lastError=e.message;ready=false;console.error('QMD background refresh:',e.message);}
+  finally{profile?.finish();refreshAt=Date.now();refreshing=false;}})();
  }
- return {ready:probeReady&&!!store?.internal?.llm?.embedContexts?.length,indexedAt,warming:probing,busy:running,queued};
+ return {ready:ready&&!refreshing,indexedAt,warming:refreshing,busy:queue.busy,queued:queue.size};
 }
+
+return {searchRoute,readiness};
+}
+const service=createSearchService();
+export const searchRoute=service.searchRoute,readiness=service.readiness;

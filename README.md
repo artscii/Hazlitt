@@ -20,7 +20,7 @@ The Atlas organizes reported evidence; inclusion does not itself establish clini
 
 ## Semantic search
 
-The [QMD service](pilot/README.md) provides primary semantic retrieval with geography/year filters, readiness checks and profiling. Keyword search is the browser fallback. There is no A/B testing mode.
+The [QMD service](pilot/README.md) adds controlled semantic ranking to immediate BM25 results, with geography/year filters, readiness checks and profiling. Direct matches precede approved equivalents; QMD only ranks grounded related-concept candidates. Unrelated nearest neighbours are not admitted. BM25 remains available when QMD is unavailable. There is no A/B testing mode.
 
 ## Tools and architecture
 
@@ -191,3 +191,11 @@ The recorder supports click/scroll heatmaps and session replay. Enable these sep
 Events now include `map-marker-selected`, `continent-selected`, `project-read`, `project-list-end`, `evidence-link-clicked`, `contact-clicked`, `back-to-map`, `references-opened`, `reference-expanded`, `language-switched`, `share-copied`, `share-copy-failed`, `search-cleared`, `search-no-matches`, `search-fallback` and `catalogue-failed`. Existing `project-search` and `project-view` remain. Search events include elapsed milliseconds from the latest user input to the result update. A `project-read` requires 50% visibility for one second and is deduplicated per page; it measures exposure, not comprehension. Contact clicks do not prove a completed call/email. Automatic defaults and hover are not counted as intentional clicks.
 
 Replay and heatmap sampling are **100% of eligible sessions**, configured in Umami rather than the Atlas repository. Admin and privacy exclusions still apply. Moderate masking and five-minute recording limits remain. Monitor PostgreSQL growth and maintain separate analytics backups.
+
+### Search relevance and performance (4.13.21)
+
+Admin → Configuration → Search includes an editable, versioned thesaurus. Equivalents expand lexical matching; related terms nominate candidates for QMD ranking. Review these mappings as editorial rules, not clinical assertions. Disabled entries have no effect. Restoring an older vocabulary creates a new revision when saved; concurrent edits are rejected. Public relevance excludes editor notes and source URLs.
+
+Text searches use relevance order; geographic browsing retains project-number order. The map and list share the returned subset. The browser shares configuration/catalog requests, separates reusable map geometry, and caches search work. Versioned assets use immutable caching. QMD refreshes its snapshot in the background, retains models, coalesces duplicate work and bounds its queue. VPS database backups stream from a consistent read transaction.
+
+Validation: automated relevance, service, queue, Admin, transfer, backup and responsive UI checks passed against the 53-project review snapshot. Noise queries `umami` and `unami` returned zero; `Kinondo Kwetu` returned one; `colposcopy` returned seven including an approved equivalent. Local native-model initialization failed and Docker was unavailable, so Linux container/model smoke tests remain required before production acceptance.

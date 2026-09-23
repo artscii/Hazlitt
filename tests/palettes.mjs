@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import fs from 'node:fs';
 const document={documentElement:{dataset:{}}},window={};
-vm.runInNewContext(fs.readFileSync('dist/theme.js','utf8'),{window,document,fetch:()=>Promise.resolve({ok:false})});
+vm.runInNewContext(fs.readFileSync('dist/theme.js','utf8'),{window,document,AtlasBootstrap:{config:Promise.resolve(null)},fetch:()=>Promise.resolve({ok:false})});
 const {palettes,apply}=window.AtlasTheme;assert.equal(palettes.length,5);assert.equal(apply('invalid').id,'coastal');
 const luminance=hex=>{const c=hex.slice(1).match(/../g).map(v=>parseInt(v,16)/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4);return c[0]*.2126+c[1]*.7152+c[2]*.0722};
 const contrast=(a,b)=>{const x=luminance(a),y=luminance(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05)};

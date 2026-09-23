@@ -534,3 +534,9 @@ body>footer .site-navigation{display:flex;flex-wrap:wrap;gap:4px 16px;margin:0}
 body>footer .site-navigation a{display:inline-flex;align-items:center;min-height:44px;color:var(--atlas-text)}
 @media(max-width:900px){body>footer{grid-template-columns:minmax(0,1fr) minmax(0,1fr);padding:24px;gap:12px 24px}body>footer .site-navigation{grid-column:1/-1}}
 @media(max-width:600px){body>footer{grid-template-columns:minmax(0,1fr);padding:20px max(24px,env(safe-area-inset-right)) calc(20px + env(safe-area-inset-bottom)) max(24px,env(safe-area-inset-left));gap:12px}body>footer>span:last-child{text-align:left}}
+
+/* Search vocabulary preview: compact desktop rows, stacked mobile fields. */
+.thesaurus-editor{margin-top:20px;padding-top:16px;border-top:1px solid var(--atlas-border)}
+.thesaurus-row{display:grid;grid-template-columns:1fr 1.5fr 1.5fr auto auto;gap:12px;align-items:end;padding:12px 0;border-bottom:1px solid var(--atlas-border)}
+.thesaurus-row label{min-width:0}.thesaurus-row input:not([type=checkbox]){width:100%}.thesaurus-enabled{display:flex;align-items:center;gap:6px}.thesaurus-actions{display:flex;gap:12px;margin:16px 0}.thesaurus-editor button{min-height:44px}.thesaurus-editor [data-remove]{color:#a32323}.thesaurus-editor [data-status]{min-height:24px}.thesaurus-editor>label{display:block;margin-top:16px}.thesaurus-editor>label input,.thesaurus-editor>label select{width:100%;max-width:540px}
+@media(max-width:800px){.thesaurus-row{grid-template-columns:1fr 1fr}.thesaurus-row label:nth-child(2),.thesaurus-row label:nth-child(3){grid-column:1/-1}}

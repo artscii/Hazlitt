@@ -89,13 +89,20 @@ export default {async fetch(request,env){
     const payload=await body(request,4096);
     const endpoint=new URL('/api/search/query',env.QMD_SERVICE_URL);
     if(endpoint.protocol!=='https:'&&!(env.QMD_PRIVATE_NETWORK==='1'&&endpoint.origin==='http://qmd:8080'))throw Error('HTTPS required');
-    const upstream=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+env.QMD_SERVICE_TOKEN},body:JSON.stringify(payload),signal:AbortSignal.timeout(7500),redirect:'error'});
+    const upstream=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+env.QMD_SERVICE_TOKEN},body:JSON.stringify(payload),signal:AbortSignal.any([request.signal,AbortSignal.timeout(7500)]),redirect:'error'});
     if(!upstream.ok)return json({error:'Semantic search unavailable'},upstream.status===429?429:503);
     const result=await upstream.json();if(!Array.isArray(result.results))throw Error('Invalid results');
     return json(result);
    }catch{return json({error:'Semantic search unavailable'},503);}
   }
-  if(path==='/api/catalog'&&request.method==='GET')return json({programs:await records(env),countries:COUNTRIES,config:await siteConfig(env)});
+  if(path==='/api/map'&&request.method==='GET')return new Response(JSON.stringify(COUNTRIES),{headers:{'Content-Type':'application/json','Cache-Control':'public, max-age=86400'}});
+  if(path==='/api/search/catalog'&&request.method==='GET'){
+   const programs=(await records(env)).map(p=>Object.fromEntries(['id','revision',...AtlasSearch.publicFields].filter(k=>p[k]!==undefined).map(k=>[k,p[k]])));
+   const data={programs,thesaurus:await searchVocabulary(env)};const etag='"'+await hash(JSON.stringify(data))+'"';
+   if(request.headers.get('If-None-Match')===etag)return new Response(null,{status:304,headers:{ETag:etag}});
+   return json(data,200,{ETag:etag,'Cache-Control':'no-cache'});
+  }
+  if(path==='/api/catalog'&&request.method==='GET')return json({programs:await records(env),...(url.searchParams.has('compact')?{}:{countries:COUNTRIES}),config:await siteConfig(env),thesaurus:await searchVocabulary(env)});
   if(path==='/api/config'&&request.method==='GET')return json(await siteConfig(env));
   if(path.startsWith('/api/')){
    if(!['GET','HEAD'].includes(request.method)&&request.headers.get('Origin')!==url.origin)return json({error:'Invalid request origin'},403);
@@ -118,6 +125,7 @@ export default {async fetch(request,env){
    }
    if(path==='/api/session'&&request.method==='GET')return json({authenticated:!!auth});
    if(!auth)return json({error:'Sign in to edit records'},401);
+   if(path==='/api/search/thesaurus')return await vocabularyRoute(request,env);
    if(path==='/api/db-backup'&&request.method==='GET')return await databaseBackup(env);
    const analytics=await analyticsRoute(request,env,path,url);if(analytics)return analytics;
    const transfer=await transferRoute(request,env,path,url);if(transfer)return transfer;
@@ -135,9 +143,11 @@ export default {async fetch(request,env){
    if(path==='/api/audit'&&request.method==='GET'){const result=await database(env).prepare('SELECT id,at,action,record_id,name,ip,revision FROM audit_log ORDER BY at DESC LIMIT 200').all();return json({entries:result.results});}
    const recordHistory=path.match(/^\/api\/records\/([a-zA-Z0-9-]+)\/history$/);
    if(recordHistory&&request.method==='GET'){
-    const entries=(await database(env).prepare('SELECT id,at,action,revision,before,after FROM audit_log WHERE record_id=? ORDER BY revision ASC').bind(recordHistory[1]).all()).results;
+    const limit=Math.max(1,Math.min(100,Number(url.searchParams.get('limit'))||50)),beforeRevision=Number(url.searchParams.get('before'))||2147483647,paged=url.searchParams.has('limit');
+    let entries=(await database(env).prepare(paged?'SELECT id,at,action,revision,before,after FROM audit_log WHERE record_id=? AND revision<? ORDER BY revision DESC LIMIT ?':'SELECT id,at,action,revision,before,after FROM audit_log WHERE record_id=? ORDER BY revision ASC').bind(...(paged?[recordHistory[1],beforeRevision,limit+1]:[recordHistory[1]])).all()).results;
+    const hasMore=paged&&entries.length>limit;if(paged)entries=entries.slice(0,limit).reverse();
     const row=await database(env).prepare('SELECT revision FROM records WHERE id=?').bind(recordHistory[1]).first();
-    return json({currentRevision:row?.revision??0,entries:entries.map(entry=>{const before=entry.before?JSON.parse(entry.before):null,after=entry.after?JSON.parse(entry.after):null;return {...entry,before,after,summary:summarizeVersion(entry.action,before,after)};})});
+    return json({hasMore,currentRevision:row?.revision??0,entries:entries.map(entry=>{const before=entry.before?JSON.parse(entry.before):null,after=entry.after?JSON.parse(entry.after):null;return {...entry,before,after,summary:summarizeVersion(entry.action,before,after)};})});
    }
    const historyMatch=path.match(/^\/api\/audit\/([a-zA-Z0-9-]+)$/);
    if(historyMatch&&request.method==='GET'){
@@ -182,6 +192,7 @@ export default {async fetch(request,env){
   if(['/log','/log/','/log.html'].includes(path))return Response.redirect(url.origin+'/admin#record-history',302);
   const asset=ASSETS[path==='/'?'/index.html':path==='/admin'||path==='/admin/'?'/admin.html':path];if(!asset)return new Response('Not found',{status:404});
   if(!['GET','HEAD'].includes(request.method))return new Response('Method not allowed',{status:405});
-  return new Response(request.method==='HEAD'?null:asset.body,{headers:{'Content-Type':asset.type,'Cache-Control':'no-cache','X-Content-Type-Options':'nosniff','Referrer-Policy':'strict-origin-when-cross-origin'}});
+  if(request.headers.get('If-None-Match')===asset.etag)return new Response(null,{status:304,headers:{ETag:asset.etag,'Cache-Control':'no-cache'}});
+  return new Response(request.method==='HEAD'?null:asset.body,{headers:{'Content-Type':asset.type,'ETag':asset.etag,'Cache-Control':url.searchParams.get('v')===asset.etag?.replaceAll('"','')?'public, max-age=31536000, immutable':'no-cache','X-Content-Type-Options':'nosniff','Referrer-Policy':'strict-origin-when-cross-origin'}});
  }catch(error){console.error('Atlas request failed',error.message);return json({error:path.startsWith('/api/')&&['POST','PUT'].includes(request.method)&&!(error.message||'').includes('SQL')?error.message:'The data service is unavailable. Please retry.'},400);}
 }};

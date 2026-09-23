@@ -1,5 +1,6 @@
 // v4.11.0: a portable logical snapshot; table data is read in one transactional batch (compatible with D1 query limits).
 async function databaseBackup(env){
+ if(database(env).streamBackup)return database(env).streamBackup(SEED,BACKUP_MIGRATIONS);
  const db=database(env),ident=value=>'"'+value.replaceAll('"','""')+'"',literal=value=>"'"+String(value).replaceAll("'","''")+"'";
  const schema=(await db.prepare("SELECT type,name,tbl_name,sql FROM sqlite_schema WHERE sql IS NOT NULL ORDER BY type,name").all()).results;
  const excluded=name=>name.startsWith('sqlite_')||name.startsWith('_cf_')||['d1_migrations','__drizzle_migrations'].includes(name);

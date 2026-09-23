@@ -9,10 +9,14 @@ COPY data ./data
 COPY drizzle ./drizzle
 COPY dist ./dist
 COPY .openai ./.openai
-RUN node scripts/build.mjs
+RUN node scripts/build.mjs && npm prune --omit=dev
 FROM node:24-alpine
 WORKDIR /app
-COPY --from=build /app /app
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/server ./server
+COPY --from=build /app/dist/server ./dist/server
+COPY --from=build /app/drizzle ./drizzle
+COPY --from=build /app/package.json ./package.json
 # Git checkouts with a restrictive umask must still be readable by the runtime user.
 RUN chmod -R a+rX /app && mkdir /data && chown node:node /data
 USER node
