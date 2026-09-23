@@ -26,8 +26,14 @@ const server=http.createServer(async(req,res)=>{
  try{
   let size=0;const chunks=[];for await(const chunk of req){size+=chunk.length;if(size>4096)return reply(413,{error:'Request too large'});chunks.push(chunk);}
   const request=new Request('http://qmd/api/search-pilot/compare',{method:'POST',headers:{Origin:'http://qmd','Content-Type':'application/json'},body:Buffer.concat(chunks)});
-  const response=await pilotRoute(request,getCatalog);res.writeHead(response.status,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(await response.text());
+  const started=performance.now(),cpu=process.cpuUsage();
+  const response=await pilotRoute(request,getCatalog);
+  const usage=process.cpuUsage(cpu);console.log('QMD_REQUEST '+JSON.stringify({status:response.status,totalMs:Math.round(performance.now()-started),cpuMs:Math.round((usage.user+usage.system)/1000),rssMB:Math.round(process.memoryUsage().rss/1048576)}));res.writeHead(response.status,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(await response.text());
  }catch{reply(503,{error:'Semantic search unavailable'});}
 });
 server.requestTimeout=15000;server.headersTimeout=10000;
 server.listen(Number(process.env.PORT||8080),'0.0.0.0');
+
+// Start warming without a visitor; retry failures without recurring inference.
+readiness(getCatalog);
+setInterval(()=>readiness(getCatalog),30000).unref();

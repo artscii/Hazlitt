@@ -11,7 +11,7 @@ process.env.XDG_CACHE_HOME ||= path.join(root,'cache');
 const publicFields=['name','short','outcome','status','geo','countries','publicationYear','evidenceBasis','sampleDetails','metric','metricLabel','partners','followUp','followUpDate','originalLanguage','originalTitle','originalSummary','originalOutcome','source','source2','originalSource'];
 export function projectDocument(p){return '# '+p.name+'\n\n'+publicFields.filter(k=>p[k]!==undefined).map(k=>'## '+k+'\n'+(Array.isArray(p[k])?p[k].join(', '):String(p[k]).replace(/<[^>]*>/g,' '))).join('\n\n');}
 export function eligible(p,query,scope={}){const parsed=AtlasSearch.parse(query);return (!scope.country||p.countries?.some(c=>c.toLowerCase()===scope.country.toLowerCase()))&&(!scope.basis||p.evidenceBasis?.toLowerCase()===scope.basis.toLowerCase())&&(!scope.year||Number(p.publicationYear)===Number(scope.year))&&(!scope.continent||AtlasSearch.continentsOf(p).some(c=>c.toLowerCase()===scope.continent.toLowerCase()))&&parsed.countries.every(c=>p.countries?.includes(c))&&parsed.continents.every(c=>AtlasSearch.continentsOf(p).some(x=>x.toLowerCase()===c))&&parsed.years.every(([a,b])=>Number(p.publicationYear)>=a&&Number(p.publicationYear)<=b);}
-let store,version='',running=false,lastError='',indexedAt=null;
+let store,version='',running=false,lastError='',indexedAt=null,queued=0;
 const cache=new Map();
 async function sync(programs){
  const docs=programs.map(p=>({id:p.id,text:projectDocument(p),revision:p.revision||0}));
@@ -21,6 +21,8 @@ async function sync(programs){
  const files=new Set();for(const d of docs){const name=createHash('sha256').update(d.id).digest('hex')+'.md';files.add(name);const file=path.join(dir,name);let old;try{old=await fs.readFile(file,'utf8');}catch{}if(old!==d.text)await fs.writeFile(file,d.text);}
  for(const name of await fs.readdir(dir))if(name.endsWith('.md')&&!files.has(name))await fs.unlink(path.join(dir,name));
  if(!store){const {createStore}=await import('@tobilu/qmd');store=await createStore({dbPath:path.join(root,'index.sqlite'),config:{collections:{atlas:{path:dir,pattern:'**/*.md'}}}});}
+ // QMD 2.8.3 exposes the per-store runtime; retain its weights and context.
+ const llm=store.internal?.llm;if(llm){llm.inactivityTimeoutMs=0;llm.disposeModelsOnInactivity=false;llm.touchActivity();}
  await store.update();await store.embed({collection:'atlas'});version=digest;indexedAt=new Date().toISOString();cache.clear();return {changed:true};
 }
 const reply=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json','Cache-Control':'no-store'}});
@@ -30,21 +32,28 @@ export async function pilotRoute(request,getCatalog){
  if(url.pathname!=='/api/search-pilot/compare')return reply({error:'Not found'},404);
  if(request.method!=='POST')return reply({error:'Use POST'},405);
  if(request.headers.get('Origin')!==url.origin)return reply({error:'Invalid origin'},403);
- if(running)return reply({error:'Another comparison is running. Try again shortly.'},429);
+
  let input;try{input=await request.json();}catch{return reply({error:'Invalid request'},400);}
  let query=typeof input.query==='string'?input.query.trim():'';if(!query||query.length>500)return reply({error:'Enter a query of 1–500 characters.'},400);
  let scope=input.scope||{};const deep=input.deep===true;const enteredQuery=query;
  if(Object.values(scope).some(v=>typeof v!=='string'||v.length>150))return reply({error:'Invalid filters'},400);
  try{({query,scope}=parseParameters(query,scope));}catch(error){return reply({error:error.message},400);}
- running=true;lastError='';const started=performance.now();let profiling;const timings={};
+ const queueStart=performance.now();
+ if(running){
+  if(queued>=3)return reply({error:'Search queue full'},429);
+  queued++;try{while(running&&performance.now()-queueStart<2000)await new Promise(resolve=>setTimeout(resolve,25));}finally{queued--;}
+  if(running)return reply({error:'Search queue wait exceeded'},429);
+ }
+ running=true;lastError='';const started=performance.now();let profiling;const timings={queueMs:Math.round(started-queueStart)};
  try{
   const {programs}=await getCatalog();timings.catalogMs=performance.now()-started;const indexStart=performance.now();const indexing=await sync(programs),indexMs=performance.now()-indexStart;
   const key=JSON.stringify([version,enteredQuery,scope,deep]);if(cache.has(key)){console.log('QMD_PROFILE '+JSON.stringify({cached:true,catalogMs:Math.round(timings.catalogMs),indexMs:Math.round(indexMs),totalMs:Math.round(performance.now()-started)}));return reply({...cache.get(key),timings:{cached:true,catalogMs:Math.round(timings.catalogMs),indexMs:Math.round(indexMs)},cached:true,indexMs:Math.round(indexMs),indexChanged:false,totalMs:Math.round(performance.now()-started)});}
   const allowed=new Set(programs.filter(p=>eligible(p,query,scope)).map(p=>p.id));
   const aStart=performance.now();const a=programs.filter((p,i)=>allowed.has(p.id)&&AtlasSearch.matches(p,query,'Project '+(i+1)+' '+String(i+1).padStart(2,'0'))).map(p=>({id:p.id}));const aMs=performance.now()-aStart;
-  profiling=await startProfile(store.internal?.llm);const bStart=performance.now();const results=query?(deep?await store.search({query,collection:'atlas',limit:programs.length,candidateLimit:programs.length,rerank:true}):await catalogSearch(store,query,programs.length,timings)):[];
+  const exact=programs.filter(p=>allowed.has(p.id)&&[p.name,p.id].some(v=>v?.toLowerCase()===query.toLowerCase()));
+  profiling=await startProfile(store.internal?.llm);const bStart=performance.now();const results=query&&!exact.length?(deep?await store.search({query,collection:'atlas',limit:programs.length,candidateLimit:programs.length,rerank:true}):await catalogSearch(store,query,programs.length,timings)):[];
   const idsByFilename=new Map(programs.map(p=>[createHash('sha256').update(p.id).digest('hex')+'.md',p.id]));const seen=new Set();
-  const b=query?results.flatMap(r=>{const id=idsByFilename.get(path.basename(r.file));if(!id||!allowed.has(id)||seen.has(id))return [];seen.add(id);return [{id,score:r.score,passage:(r.bestChunk||r.body||'').slice(0,600)}];}).slice(0,10):programs.filter(p=>allowed.has(p.id)).map(p=>({id:p.id}));
+  const b=exact.length?exact.map(p=>({id:p.id})):query?results.flatMap(r=>{const id=idsByFilename.get(path.basename(r.file));if(!id||!allowed.has(id)||seen.has(id))return [];seen.add(id);return [{id,score:r.score,passage:(r.bestChunk||r.body||'').slice(0,600)}];}).slice(0,10):programs.filter(p=>allowed.has(p.id)).map(p=>({id:p.id}));
   const model=profiling.finish();profiling=null;Object.assign(timings,model);timings.indexMs=indexMs;timings.queryMs=performance.now()-bStart;timings.vectorLookupAndOverheadMs=Math.max(0,(timings.vectorTotalMs||0)-model.modelLoadMs-model.contextSetupMs-model.embeddingMs);
   for(const k of Object.keys(timings))if(k.endsWith('Ms'))timings[k]=+timings[k].toFixed(2);
   console.log('QMD_PROFILE '+JSON.stringify({deep,...timings}));
@@ -56,7 +65,7 @@ export async function pilotRoute(request,getCatalog){
 // Authenticated readiness probe: warm the actual store, coalescing all browser polls.
 let probeAt=0,probeReady=false,probing=false;
 export function readiness(getCatalog){
- if(!probing&&!running&&Date.now()-probeAt>60000){
+ if(!probing&&!running&&!probeReady&&Date.now()-probeAt>30000){
   probing=true;running=true;probeReady=false;
   (async()=>{let profile;const t=performance.now();try{
    const {programs}=await getCatalog();await sync(programs);
@@ -67,5 +76,5 @@ export function readiness(getCatalog){
   }catch(error){console.error('QMD readiness:',error.message);probeReady=false;}
   finally{profile?.finish();probeAt=Date.now();probing=false;running=false;}})();
  }
- return {ready:probeReady&&!running&&!!store?.internal?.llm?.embedContexts?.length,indexedAt,warming:probing};
+ return {ready:probeReady&&!!store?.internal?.llm?.embedContexts?.length,indexedAt,warming:probing,busy:running,queued};
 }

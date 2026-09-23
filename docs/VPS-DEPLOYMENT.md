@@ -248,3 +248,20 @@ sudo docker stats --no-stream
 ```
 
 Do not share `.env`, raw SQL backups, authorization headers or full rendered Compose configuration containing secrets.
+
+### QMD performance operations (4.13.5)
+
+QMD warms automatically on startup and retries failed warm-up every 30 seconds.
+The pinned QMD 2.8.3 per-store runtime keeps its embedding weights and context
+resident; container memory limits still apply. Readiness polls inspect state
+without repeatedly embedding a probe. Metadata-only queries and exact project
+names/IDs avoid semantic inference. Other searches retain the bounded cache.
+Up to three requests may wait for the single search slot, for at most two seconds;
+overflow returns 429 so Atlas can use keyword fallback.
+
+After deploying, inspect `docker stats --no-stream` alongside Compose logs.
+`QMD_PROFILE` separates loading, context setup, embedding and retrieval;
+`QMD_REQUEST` reports HTTP status, elapsed time, process CPU time and RSS memory.
+Logs do not include query text. Compare first-start and warm searches, then repeat
+a query for a cache hit. Persistent high memory, restarts/OOM or repeated 429/503
+responses warrant capacity review. These logs are diagnostics, not an alerting service.
