@@ -1,6 +1,6 @@
 # Changelog
 
-Current application release: **4.13.15**. This matches `package.json`, the Compose image tag, and generated page footers. A repository commit identifies source history; it does not prove that version has been deployed on a VPS.
+Current application release: **4.13.16**. This matches `package.json`, the Compose image tag, and generated page footers. A repository commit identifies source history; it does not prove that version has been deployed on a VPS.
 
 Entries are newest first and describe behavior at each release. Later entries supersede earlier behavior. Versions 4.12.1–4.13.7 have been checked against Git history; older entries are retained without a new historical audit. Version 4.13.1 groups several changes made without individual version increments.
 
@@ -9,6 +9,12 @@ Entries are newest first and describe behavior at each release. Later entries su
 - Backfilled releases 4.13.0–4.13.7 in [e1a0536](https://github.com/artscii/Hazlitt/commit/e1a0536); reviewed release/commit mapping and clarified deployment and historical behavior afterward.
 - Documentation-only corrections do not change the application version or require a container rebuild.
 - Future application releases should update this changelog in the release commit, with changes, validation and deployment notes. Use `npm run release:patch` to advance the package version and synchronize generated footer/Compose versions; write the corresponding changelog entry before committing.
+
+## 4.13.16 — 2026-09-22
+- Add completed-search analytics with query text, result count, engine and typed/map origin; debounce and suppress consecutive duplicates without filtering search content.
+- Load Umami recorder for eligible visitors; add narrow Caddy routes for replay/heatmap collection and recorder settings. Sampling and masking are configured in Umami.
+- Preserve Admin and browser privacy exclusions; update visitor notice, README and VPS setup/testing guidance.
+- Validation: isolated JavaScript tests pass for zero results, raw query capture, duplicate suppression, map origin and recorder setup; build, syntax, backend and Caddy validation pass. The jsdom browser test stalled during module loading and was stopped; live playback remains a deployment check. Production heatmap/replay capture requires enabling the Umami controls and VPS verification.
 
 ## 4.13.15 — 2026-09-22
 - Suppress empty project-list sections after filtering, including their duplicate heading and scroll hint. Preserve existing scrolling styles and populated lists.

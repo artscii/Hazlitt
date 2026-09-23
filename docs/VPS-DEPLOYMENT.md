@@ -385,3 +385,30 @@ chmod 600 ~/hazlitt-backups/umami-*.dump
 Copy backups off the VPS securely and verify restores in a separate PostgreSQL instance. The former 365-day cleanup does not apply to Umami; establish a retention policy and monitor database size. To disable new tracking, clear `UMAMI_WEBSITE_ID` and recreate Atlas with all four Compose files. The site continues working if Umami is unavailable.
 
 Local validation uses an isolated disposable Compose project: `node tests/umami-ui.mjs`, `node tests/analytics.mjs` after building, and `node tests/umami-container.mjs` against loopback:8082 with the test stack's default credentials. Never run the container test against production. Official references: https://docs.umami.is/docs/install and https://docs.umami.is/docs/environment-variables.
+
+## Search events, heatmaps and replay (4.13.16)
+
+For an already configured Umami deployment, update the repository and Caddy routes, then rebuild only Atlas:
+
+```sh
+cd ~/apps/Hazlitt
+git pull --ff-only
+sudo cp /etc/caddy/Caddyfile "/etc/caddy/Caddyfile.backup-$(date +%Y%m%d-%H%M%S)"
+sudo cp deploy/Caddyfile.umami /etc/caddy/Caddyfile
+sudo caddy validate --config /etc/caddy/Caddyfile && sudo systemctl reload caddy
+sudo docker compose -f compose.yaml -f compose.qmd.yaml -f compose.qmd-dns.yaml -f compose.umami.yaml up -d --build --no-deps atlas
+```
+
+Merge rather than replace Caddy if you have added custom routes. The new routes expose only `/metrics/recorder.js`, `/metrics/api/record`, and UUID-specific recorder configuration in addition to the existing tracker routes. QMD, Umami and PostgreSQL do not need restarting.
+
+In Umami, edit the Atlas website and open **Replays & Heatmaps**. Enable both features. Set replay sample rate to **0.15**, mask level **moderate**, maximum duration **300000 ms**. Keep inputs masked. Heatmap sampling is independently configurable; begin at 15% and adjust to traffic/storage needs. Umami manages recorder settings; merely updating Atlas does not enable recording in Umami.
+
+Test:
+
+1. Confirm the Atlas footer reads 4.13.16. Check `curl -fsS https://vps-f8d31735.vps.ovh.ca/metrics/recorder.js -o /tmp/atlas-recorder.js` succeeds.
+2. In a fresh browser session without an Atlas Admin login or privacy opt-out, search `Kenya`, then a phrase with no matches. Pause after results settle. Umami should show `project-search` events with query, result_count, engine and origin. Search content is retained without email/phone filtering. URLs in standard event payloads still omit query strings.
+3. Click a map marker or continent button and confirm a search event with origin `map`. Initial default selection is not counted as an intentional search. Repeating the same completed search consecutively should not inflate counts.
+4. For deterministic replay testing, temporarily set replay and heatmap sample rates to **1**, save, and use a new browser session. Click, scroll and navigate to a project; leave the page to flush pending events. Check Replays and Heatmaps in Umami. Verify inputs are masked and no Admin form is recorded. Return both rates to **0.15** afterward.
+5. Check search remains responsive and the QMD readiness indicator still works. Run `sudo docker stats --no-stream` and monitor PostgreSQL disk usage as traffic grows. Replay data is materially larger than normal analytics.
+
+If recording is absent, check browser network requests to `/metrics/api/websites/<website-id>/recorder` and `/metrics/api/record`; configuration must be enabled and requests successful. Sampling, opt-outs and ad blockers can explain absent sessions. Umami documents 30-day replay storage; monitor your self-hosted storage and backups. Heatmaps combine page states, so use replay to interpret moving map markers and filtered cards. No old history is backfilled.

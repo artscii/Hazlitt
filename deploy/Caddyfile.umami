@@ -13,6 +13,25 @@ vps-f8d31735.vps.ovh.ca {
    header_up X-Atlas-Client-IP {remote_host}
   }
  }
+ handle /metrics/recorder.js {
+  rewrite * /recorder.js
+  reverse_proxy 127.0.0.1:8082 {
+   header_up X-Atlas-Client-IP {remote_host}
+  }
+ }
+ handle /metrics/api/record {
+  rewrite * /api/record
+  reverse_proxy 127.0.0.1:8082 {
+   header_up X-Atlas-Client-IP {remote_host}
+  }
+ }
+ @recorderConfig path_regexp recorderConfig ^/metrics/api/websites/([0-9a-fA-F-]{36})/recorder$
+ handle @recorderConfig {
+  rewrite * /api/websites/{re.recorderConfig.1}/recorder
+  reverse_proxy 127.0.0.1:8082 {
+   header_up X-Atlas-Client-IP {remote_host}
+  }
+ }
  handle {
   reverse_proxy 127.0.0.1:8081
  }

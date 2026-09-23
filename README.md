@@ -179,3 +179,9 @@ The local server is intended for development. Before exposing it beyond a truste
 ### Umami analytics
 
 Release 4.13.14 replaces the built-in visitor dashboard with an Admin link to optional, self-hosted Umami. Docker runs Umami and PostgreSQL separately from Atlas SQLite and QMD. New analytics start fresh; old visit history is not migrated. Follow [the VPS Umami setup guide](docs/VPS-DEPLOYMENT.md#umami-analytics-41314-onward) before enabling tracking. PostgreSQL requires its own backups.
+
+### Search, heatmaps and session replay (4.13.16)
+
+Umami receives `project-search` events after completed searches settle for 900 ms: `query`, `result_count`, `engine` (`qmd`/`keyword`) and `origin` (`typed`/`map`). Consecutive duplicate events are suppressed. Search text is not redacted; avoid entering personal information. Tracking excludes authenticated Admin visitors, Admin pages and browser privacy opt-outs.
+
+The recorder supports click/scroll heatmaps and session replay. Enable these separately in the website's Umami settings; recommended replay sampling is 15%, moderate input masking and a five-minute maximum. New Caddy collection routes must be deployed. See the VPS guide for activation and testing. This records the Atlas page, not other browser tabs.

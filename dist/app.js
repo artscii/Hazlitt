@@ -459,6 +459,7 @@ function syncSearchMap({preserveMapPosition=true,selectedPlace=null}={}){
   detail.scrollTop=0;
  }
  updateSelectionContext(matches.size);
+ window.dispatchEvent(new CustomEvent('atlas-search-complete',{detail:{query:document.querySelector('#project-search').value.trim(),result_count:matches.size,engine:semanticProjectIds?'qmd':'keyword'}}));
  performance.clearMeasures?.('atlas-search-update');
  performance.measure('atlas-search-update',{start:started,end:performance.now()});
 }
