@@ -291,3 +291,27 @@ Try two different natural-language searches, then repeat one. A unique query exe
 The observed VPS cold readiness was about 10 seconds, versus 0.25–1.23 seconds for warm query processing. These are observations, not a service guarantee. Current QMD limits are 5 GB RAM and 3 CPUs; leave room for Atlas, Caddy and Debian. Check for OOM/restarts before increasing memory limits. Repeated 429s indicate queue/rate pressure; 503s/timeouts require log inspection. Do not simply raise timeouts to conceal a cold-start or capacity problem.
 
 Operational logging is provided; automatic alerts and offsite backups still need separate configuration. Keep logs access-controlled and use Docker log rotation to bound disk usage.
+
+## Country geolocation for VPS visitor statistics (4.13.13)
+
+Atlas now looks up visitor countries locally with `geoip-country` (IPv4 and IPv6). No IP is sent to a third-party lookup API, and visitor analytics store only the resulting country code, not the raw IP. Country is approximate: VPNs, mobile networks and proxies can change it. Private/unmapped addresses return Unknown. Previous Unknown visits cannot be reconstructed; existing active sessions keep their original country.
+
+For the documented **host Caddy → loopback-published Atlas container** topology, add this line to `.env` (edit an existing value rather than adding duplicates):
+
+```dotenv
+CADDY_PROXY_MODE=1
+```
+
+Caddy normally supplies `X-Forwarded-For`. Atlas trusts only one immediate loopback/private proxy hop and takes the nearest forwarded client address, not an arbitrary leftmost value. It replaces any inbound `CF-IPCountry` with the local lookup. Leave proxy mode off for direct deployments. Do not enable it on an exposed container or untrusted shared private network. Keep `127.0.0.1:8081:8080`; additional upstream CDNs/proxies require a separate trust review. Administrator audit-IP behavior is unchanged.
+
+```bash
+cd ~/apps/Hazlitt
+git pull --ff-only
+# Edit .env and set CADDY_PROXY_MODE=1 for this Caddy topology.
+nano .env
+sudo docker compose -f compose.yaml -f compose.qmd.yaml -f compose.qmd-dns.yaml up -d --build --no-deps atlas
+```
+
+Verify with a new private-browser session on the public HTTPS URL, while logged out of Admin, then open a project. In a separate authenticated Admin session, inspect visitor statistics. Authenticated admins, bots, Do Not Track and Global Privacy Control requests are excluded. SSH-tunnel visits can remain Unknown. If public visits are still Unknown, check Caddy forwarding and proxy-mode configuration; do not reset analytics or trust arbitrary country headers to fix it.
+
+The dependency bundles a country database; rebuilding a pinned dependency does not guarantee fresh data. Periodically review and update the pinned `geoip-country` package in a tested repository release, then rebuild Atlas. No automatic database refresh has been configured. Preserve the package's data licensing and attribution: this product includes GeoLite2 data created by [MaxMind](https://www.maxmind.com/), distributed under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). See the dependency README for supported database update options.

@@ -1,10 +1,11 @@
 services:
   atlas:
     build: .
-    image: hazlitt-creek-evidence-atlas:4.13.12
+    image: hazlitt-creek-evidence-atlas:4.13.13
     ports:
       - "127.0.0.1:8081:8080"
     environment:
+      CADDY_PROXY_MODE: ${CADDY_PROXY_MODE:-0}
       PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:-}
       ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH:?Run node scripts/password.mjs first}
     volumes:
