@@ -23,12 +23,12 @@ for(const input of form.querySelectorAll('input[type=url]')){
 }
 // v3.3.0: group related fields in reading order without changing control heights.
 const editorGroups=[
- ['Project overview',['name','status','kind','geo','short']],
- ['Outcomes & sponsors',['metric','metricLabel','outcome','followUp','followUpDate','partners']],
+ ['Project details',['name','status','kind','geo','short']],
+ ['Evidence and outcomes',['metric','metricLabel','outcome','followUp','followUpDate','partners']],
  ['Evidence & sources',['publicationYear','evidenceBasis','sampleDetails','source','sourceLabel','source2','source2Label','date']],
  ['Contact details',['phone','tel','email','contactSource','contact']],
  ['Original-language material',['originalLanguage', 'originalTitle', 'originalSummary', 'originalOutcome', 'originalSource']],
- ['Editor observations',['editNotes']]
+ ['Editorial notes',['editNotes']]
 ];
 for(const [title,keys] of editorGroups){
  const group=document.createElement('section');group.className='editor-field-group';
@@ -36,7 +36,7 @@ for(const [title,keys] of editorGroups){
  const grid=document.createElement('div');grid.className='field-group-grid';
  for(const key of keys)grid.append(form.elements[key].closest('label'));
  // v4.8.10: place dated follow-up beside outcomes; preserve the existing control heights.
- if(title==='Outcomes & sponsors'){const follow=document.createElement('div');follow.className='outcome-follow-up-fields';const notes=grid.querySelector('[name=followUp]').closest('label');notes.before(follow);follow.append(notes,grid.querySelector('[name=followUpDate]').closest('label'));grid.querySelector('[name=partners]').closest('label').classList.add('outcome-partners-field');}
+ if(title==='Evidence and outcomes'){const follow=document.createElement('div');follow.className='outcome-follow-up-fields';const notes=grid.querySelector('[name=followUp]').closest('label');notes.before(follow);follow.append(notes,grid.querySelector('[name=followUpDate]').closest('label'));grid.querySelector('[name=partners]').closest('label').classList.add('outcome-partners-field');}
  if(title==='Original-language material'){const note=document.createElement('p');note.textContent='Optional. Keep the main fields in English. Preserve the published title and link here; summaries in the source language are editorial paraphrases, not quotations. These fields are versioned and included in Excel transfers.';group.append(note);}
  if(title==='Evidence & sources'){const note=document.createElement('p');note.textContent='Publication year refers to the primary report, not the date it was reviewed. Evidence basis describes what was evaluated: patient examinations, slides, individual images, or records. Slides can come from real patients; a slide count is not automatically a patient count. Use the sample field to state each denominator and the reference test. Leave the year blank if unverified.';group.append(note);}group.append(heading,grid);$('#admin-fields').append(group);
 }
@@ -84,7 +84,7 @@ function searchAdminProjects(){
  if(!catalog)return;
  const query=$('#admin-project-search').value.trim(),select=$('#admin-record');
  $('#admin-search-results').replaceChildren();$('#admin-search-results').hidden=true;
- const matches=catalog.programs.filter(project=>{const number=numberedIds.indexOf(project.id)+1;return AtlasSearch.matches(project,query,'Project '+number+' '+String(number).padStart(2,'0'));}).sort((a,b)=>numberedIds.indexOf(a.id)-numberedIds.indexOf(b.id));
+ const matches=catalog.programs.filter(project=>{const number=numberedIds.indexOf(project.id)+1;return /^#?\d+$/.test(query)?number===Number(query.replace('#','')):AtlasSearch.matches(project,query,'Project '+number+' '+String(number).padStart(2,'0'));}).sort((a,b)=>numberedIds.indexOf(a.id)-numberedIds.indexOf(b.id));
  select.replaceChildren(new Option(query?(matches.length?'Choose a matching project':'No matching projects'):'Choose a project',''));
  for(const project of matches)select.add(new Option('Project '+String(numberedIds.indexOf(project.id)+1).padStart(2,'0')+' · '+project.name,project.id));
  select.disabled=!matches.length;
@@ -331,6 +331,37 @@ document.addEventListener('click',async event=>{
  }
  location.assign(link.href);
 });
+// v4.13.22: task-based workspace; moving nodes preserves existing form handlers and drafts.
+const editor=$('#admin-editor'),nav=$('.admin-section-nav');
+nav.replaceChildren();nav.classList.add('workspace-nav');
+const mobile=document.createElement('select');mobile.className='workspace-mobile';mobile.setAttribute('aria-label','Admin section');editor.prepend(mobile);
+const panels={};
+for(const [key,title] of [['projects','Projects'],['data','Data management'],['settings','Configuration']]){
+ const panel=document.createElement('div');panel.id='workspace-'+key;panel.className='workspace-panel';panels[key]=panel;editor.append(panel);
+ const button=document.createElement('button');button.type='button';button.textContent=title;button.dataset.workspace=key;button.setAttribute('aria-controls',panel.id);nav.append(button);mobile.add(new Option(title,key));
+}
+for(const selector of ['#project-editor-top','.admin-toolbar','.project-navigation','#record-form','#record-history'])panels.projects.append($(selector));
+for(const selector of ['#file-transfers','#db-backup']){const node=$(selector);if(node)panels.data.append(node);}
+panels.settings.append(configuration);
+const analytics=$('#atlas-analytics');analytics.hidden=true;const analyticsLink=document.createElement('a');analyticsLink.textContent='Analytics ↗';analyticsLink.target='_blank';analyticsLink.rel='noopener noreferrer';analyticsLink.href=analytics.querySelector('a').href;nav.append(analyticsLink);new MutationObserver(()=>analyticsLink.href=analytics.querySelector('a').href).observe(analytics.querySelector('a'),{attributes:true,attributeFilter:['href']});
+nav.append($('#admin-logout'));
+function showWorkspace(key){for(const [name,panel] of Object.entries(panels))panel.hidden=name!==key;for(const button of nav.querySelectorAll('button[data-workspace]'))button.setAttribute('aria-current',button.dataset.workspace===key?'page':'false');mobile.value=key;}
+nav.addEventListener('click',event=>{const key=event.target.dataset.workspace;if(key)showWorkspace(key);});mobile.onchange=()=>showWorkspace(mobile.value);showWorkspace('projects');
+$('#project-number-form').hidden=true;$('#admin-project-search').placeholder='Project number, name, country or keyword…';
+const projectHeader=document.createElement('div');projectHeader.className='workspace-project-header';form.prepend(projectHeader);projectHeader.append($('.admin-project-reference'),projectNavigation);
+const selectedTitle=document.createElement('strong');selectedTitle.className='workspace-project-title';projectHeader.append(selectedTitle);const syncTitle=()=>selectedTitle.textContent=form.elements.name.value||'New project';form.addEventListener('input',syncTitle);new MutationObserver(syncTitle).observe($('#project-position'),{childList:true});
+const danger=document.createElement('div');danger.className='workspace-danger';form.append(danger);danger.append($('#admin-delete'));
+const historyDetails=document.createElement('details');historyDetails.className='workspace-history';const historySummary=document.createElement('summary');historySummary.textContent='Version history · review changes and restore';historyDetails.append(historySummary);$('#record-history').before(historyDetails);historyDetails.append($('#record-history'));
+const historyNote=document.createElement('p');historyNote.textContent='The form contains your editable draft. Historical previews below are not saved until you explicitly restore or save changes.';$('#record-history').prepend(historyNote);
+// Keep the independent thesaurus save outside the site-settings form.
+const vocabularyHost=document.createElement('div');vocabularyHost.id='vocabulary-host';searchSetting.after(vocabularyHost);
+new MutationObserver(()=>{const vocabulary=searchSetting.querySelector('.thesaurus-editor');if(vocabulary)vocabularyHost.append(vocabulary);}).observe(searchSetting,{childList:true});
+// Host is outside the configuration form, directly below its search controls.
+configForm.before(searchSetting,vocabularyHost);
+qmdEnabled.setAttribute('form','config-form');
+const searchSave=document.createElement('button');searchSave.type='submit';searchSave.setAttribute('form','config-form');searchSave.textContent='Save site settings';searchSetting.append(searchSave);
+const readyStatus=document.createElement('p');readyStatus.setAttribute('role','status');readyStatus.textContent='QMD readiness not yet checked.';searchSetting.append(readyStatus);
+api('/api/search/status').then(state=>{readyStatus.textContent=state.ready?'QMD is ready.':'QMD is warming up or unavailable. BM25 search remains available.';}).catch(()=>readyStatus.textContent='QMD status unavailable. BM25 search remains available.');
 $('#admin-open').click();
 })();
 

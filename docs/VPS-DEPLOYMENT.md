@@ -450,3 +450,6 @@ Confirm footer 4.13.21. Test `umami` and `unami` (zero), `Kinondo Kwetu` (one), 
 Direct and equivalent matches remain available without QMD; related-only searches may return no results until readiness recovers. Keep model/index volumes persistent. Review QMD_PROFILE output for cold model loading versus warm inference. Queue coalescing and limits prevent uncontrolled concurrent inference; they do not guarantee low latency under CPU saturation.
 
 Release validation limitation: local functional tests passed, but the Mac model backend failed to initialize and Docker was unavailable. Treat the above Linux image, readiness and query tests as required deployment acceptance checks.
+
+## Admin workspace update: 4.13.22
+Use the same four-overlay deployment command above. No new environment variables or database migration are required for this UI release. Confirm footer 4.13.22, unlock Admin and verify Projects/Data management/Configuration navigation. Search by a project number, edit a field, switch sections and return: the draft must remain and Save must enable only for changes. Verify Cancel clears selection, Delete retains confirmation, version history opens on demand, and thesaurus saves independently. Check the mobile section selector and keyboard focus. Local DOM/API tests passed; complete these browser checks on the VPS before acceptance.

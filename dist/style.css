@@ -540,3 +540,18 @@ body>footer .site-navigation a{display:inline-flex;align-items:center;min-height
 .thesaurus-row{display:grid;grid-template-columns:1fr 1.5fr 1.5fr auto auto;gap:12px;align-items:end;padding:12px 0;border-bottom:1px solid var(--atlas-border)}
 .thesaurus-row label{min-width:0}.thesaurus-row input:not([type=checkbox]){width:100%}.thesaurus-enabled{display:flex;align-items:center;gap:6px}.thesaurus-actions{display:flex;gap:12px;margin:16px 0}.thesaurus-editor button{min-height:44px}.thesaurus-editor [data-remove]{color:#a32323}.thesaurus-editor [data-status]{min-height:24px}.thesaurus-editor>label{display:block;margin-top:16px}.thesaurus-editor>label input,.thesaurus-editor>label select{width:100%;max-width:540px}
 @media(max-width:800px){.thesaurus-row{grid-template-columns:1fr 1fr}.thesaurus-row label:nth-child(2),.thesaurus-row label:nth-child(3){grid-column:1/-1}}
+/* 4.13.22: focused Admin workspace; preserve field heights and square edges. */
+#admin-editor:not([hidden]){display:grid;grid-template-columns:180px minmax(0,1fr);gap:24px;align-items:start}
+#admin-editor .workspace-nav{grid-column:1;grid-row:1;position:sticky;top:16px;display:flex;flex-direction:column;align-items:stretch;gap:6px;margin:0}
+.workspace-nav button,.workspace-nav a{text-align:left;padding:12px;background:transparent;color:var(--atlas-text);border:1px solid transparent;text-decoration:none;border-radius:0}
+.workspace-nav button[aria-current=page]{background:var(--atlas-soft);border-color:var(--atlas-accent);font-weight:600}
+.workspace-panel{grid-column:2;grid-row:1;min-width:0}.workspace-panel[hidden],.workspace-mobile{display:none!important}
+.workspace-panel .admin-lookup-row{display:block}.workspace-panel .admin-toolbar{margin-bottom:18px}
+.workspace-project-header{display:flex;flex-wrap:wrap;align-items:center;gap:12px;border-bottom:1px solid var(--atlas-soft,#dce2e2);padding-bottom:14px;margin-bottom:20px}
+.workspace-project-header .admin-project-reference{flex:1;margin:0}.workspace-project-title{width:100%;font-size:1.1rem}.workspace-project-header .project-navigation{margin:0}
+.workspace-panel .admin-actions{position:sticky;bottom:12px;z-index:5;background:var(--atlas-paper,#fff);border:1px solid var(--atlas-soft,#dce2e2);box-shadow:0 3px 12px #00000012;padding:12px;gap:10px}
+.workspace-panel .admin-actions #edit-action-message:empty{display:none}.workspace-danger{display:flex;justify-content:flex-end;padding:16px 0}
+.workspace-history{border-top:1px solid var(--atlas-soft,#dce2e2);padding:18px 0}.workspace-history>summary{cursor:pointer;font-weight:500;padding:8px 0}
+.workspace-panel .editor-field-group{border:0;padding:12px 0}.workspace-panel .field-group-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.workspace-panel .thesaurus-row{display:block;border-bottom:1px solid var(--atlas-soft,#dce2e2);padding:10px 0}.thesaurus-row>summary{cursor:pointer;padding:8px 0}.thesaurus-row[open]>label{display:block;margin:10px 0}
+@media(max-width:760px){#admin-editor:not([hidden]){display:block}.workspace-mobile{display:block!important;width:100%;margin-bottom:18px}#admin-editor .workspace-nav{position:static;flex-direction:row;flex-wrap:wrap;margin-bottom:16px}.workspace-nav button[data-workspace]{display:none}.workspace-panel .field-group-grid{grid-template-columns:1fr}.workspace-panel .admin-actions{bottom:0;flex-wrap:wrap}.workspace-project-header{display:block}.workspace-project-header .project-navigation{margin:12px 0}.workspace-panel{min-width:0}}
