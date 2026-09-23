@@ -177,7 +177,7 @@ Initial downloads and indexing can take several minutes. The CPU-only warning is
 ```bash
 dc up -d --build --no-deps atlas
 dc ps
-curl -sS --max-time 20 https://vps-f8d31735.vps.ovh.ca/api/search-pilot/compare \
+curl -sS --max-time 20 https://vps-f8d31735.vps.ovh.ca/api/search/query \
   -H 'Origin: https://vps-f8d31735.vps.ovh.ca' \
   -H 'Content-Type: application/json' \
   --data '{"query":"screening country:Kenya","scope":{},"deep":false}' \

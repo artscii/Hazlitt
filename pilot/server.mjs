@@ -1,7 +1,7 @@
 // Dedicated read-only model service. No Atlas database or administrator credentials.
 import http from 'node:http';
 import {timingSafeEqual} from 'node:crypto';
-import {pilotRoute,readiness} from './service.mjs';
+import {searchRoute,readiness} from './service.mjs';
 const secret=process.env.QMD_SERVICE_TOKEN;
 if(!secret||secret.length<32)throw Error('QMD_SERVICE_TOKEN must contain at least 32 characters');
 const catalogURL=new URL(process.env.ATLAS_CATALOG_URL);
@@ -20,14 +20,14 @@ const server=http.createServer(async(req,res)=>{
  if(req.url==='/health'&&req.method==='GET')return reply(200,{ok:true});
  const actual=Buffer.from(req.headers.authorization||''),expected=Buffer.from('Bearer '+secret);
  if(actual.length!==expected.length||!timingSafeEqual(actual,expected))return reply(401,{error:'Unauthorized'});
- if(req.url==='/api/search-pilot/status'&&req.method==='GET')return reply(200,readiness(getCatalog));
- if(req.url!=='/api/search-pilot/compare'||req.method!=='POST')return reply(404,{error:'Not found'});
+ if(req.url==='/api/search/status'&&req.method==='GET')return reply(200,readiness(getCatalog));
+ if(req.url!=='/api/search/query'||req.method!=='POST')return reply(404,{error:'Not found'});
  tokens=Math.min(12,tokens+(Date.now()-last)/5000);last=Date.now();if(tokens<1)return reply(429,{error:'Search busy'});tokens--;
  try{
   let size=0;const chunks=[];for await(const chunk of req){size+=chunk.length;if(size>4096)return reply(413,{error:'Request too large'});chunks.push(chunk);}
-  const request=new Request('http://qmd/api/search-pilot/compare',{method:'POST',headers:{Origin:'http://qmd','Content-Type':'application/json'},body:Buffer.concat(chunks)});
+  const request=new Request('http://qmd/api/search/query',{method:'POST',headers:{Origin:'http://qmd','Content-Type':'application/json'},body:Buffer.concat(chunks)});
   const started=performance.now(),cpu=process.cpuUsage();
-  const response=await pilotRoute(request,getCatalog);
+  const response=await searchRoute(request,getCatalog);
   const usage=process.cpuUsage(cpu);console.log('QMD_REQUEST '+JSON.stringify({status:response.status,totalMs:Math.round(performance.now()-started),cpuMs:Math.round((usage.user+usage.system)/1000),rssMB:Math.round(process.memoryUsage().rss/1048576)}));res.writeHead(response.status,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(await response.text());
  }catch{reply(503,{error:'Semantic search unavailable'});}
 });

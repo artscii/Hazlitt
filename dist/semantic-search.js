@@ -10,7 +10,7 @@
  async function checkReady(){
   if(checking||document.hidden||status.getAttribute('aria-busy')==='true')return;
   checking=true;const epoch=generation;
-  try{const response=await fetch('/api/search-pilot/status',{cache:'no-store',signal:AbortSignal.timeout(4000)});const data=await response.json();
+  try{const response=await fetch('/api/search/status',{cache:'no-store',signal:AbortSignal.timeout(4000)});const data=await response.json();
    if(epoch!==generation)return;
    const ready=response.ok&&data.ready===true;
    connection(ready,ready?'QMD ready — semantic search available':data.warming?'QMD warming up':'QMD unavailable — keyword search available');
@@ -28,11 +28,11 @@
   timer=setTimeout(async()=>{
    controller=new AbortController();const deadline=setTimeout(()=>controller.abort(),8000);
    try{
-    const response=await fetch('/api/search-pilot/compare',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query,scope:{},deep:false}),signal:controller.signal});
+    const response=await fetch('/api/search/query',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query,scope:{},deep:false}),signal:controller.signal});
     if(!response.ok)throw new Error('Search unavailable');
-    const data=await response.json();if(!Array.isArray(data.b)||data.b.some(x=>typeof x.id!=='string'))throw new Error('Invalid results');
+    const data=await response.json();if(!Array.isArray(data.results)||data.results.some(x=>typeof x.id!=='string'))throw new Error('Invalid results');
     if(token!==generation||input.value.trim()!==query)return;
-    window.dispatchEvent(new CustomEvent('atlas-pilot-results',{detail:{query,ids:data.b.map(x=>x.id),primary:true}}));
+    window.dispatchEvent(new CustomEvent('atlas-semantic-results',{detail:{query,ids:data.results.map(x=>x.id),primary:true}}));
     connection(true,'QMD connected — semantic search active');
    }catch(error){if(token!==generation||input.value.trim()!==query)return;cooldown=Date.now()+30000;fallback();connection(false,'QMD unavailable — keyword search active');}
    finally{clearTimeout(deadline);if(token===generation)status.removeAttribute('aria-busy');}

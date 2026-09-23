@@ -1,4 +1,4 @@
-// Local-only QMD comparison pilot. Main application and hosted Worker need no QMD dependency.
+// QMD semantic search service. Main application and hosted Worker need no QMD dependency.
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
@@ -26,10 +26,10 @@ async function sync(programs){
  await store.update();await store.embed({collection:'atlas'});version=digest;indexedAt=new Date().toISOString();cache.clear();return {changed:true};
 }
 const reply=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json','Cache-Control':'no-store'}});
-export async function pilotRoute(request,getCatalog){
+export async function searchRoute(request,getCatalog){
  const url=new URL(request.url);
- if(url.pathname==='/api/search-pilot/status')return reply({enabled:true,engine:'QMD 2.8.3',indexedAt,running,error:lastError});
- if(url.pathname!=='/api/search-pilot/compare')return reply({error:'Not found'},404);
+ if(url.pathname==='/api/search/status')return reply({enabled:true,engine:'QMD 2.8.3',indexedAt,running,error:lastError});
+ if(url.pathname!=='/api/search/query')return reply({error:'Not found'},404);
  if(request.method!=='POST')return reply({error:'Use POST'},405);
  if(request.headers.get('Origin')!==url.origin)return reply({error:'Invalid origin'},403);
 
@@ -49,7 +49,6 @@ export async function pilotRoute(request,getCatalog){
   const {programs}=await getCatalog();timings.catalogMs=performance.now()-started;const indexStart=performance.now();const indexing=await sync(programs),indexMs=performance.now()-indexStart;
   const key=JSON.stringify([version,enteredQuery,scope,deep]);if(cache.has(key)){console.log('QMD_PROFILE '+JSON.stringify({cached:true,catalogMs:Math.round(timings.catalogMs),indexMs:Math.round(indexMs),totalMs:Math.round(performance.now()-started)}));return reply({...cache.get(key),timings:{cached:true,catalogMs:Math.round(timings.catalogMs),indexMs:Math.round(indexMs)},cached:true,indexMs:Math.round(indexMs),indexChanged:false,totalMs:Math.round(performance.now()-started)});}
   const allowed=new Set(programs.filter(p=>eligible(p,query,scope)).map(p=>p.id));
-  const aStart=performance.now();const a=programs.filter((p,i)=>allowed.has(p.id)&&AtlasSearch.matches(p,query,'Project '+(i+1)+' '+String(i+1).padStart(2,'0'))).map(p=>({id:p.id}));const aMs=performance.now()-aStart;
   const exact=programs.filter(p=>allowed.has(p.id)&&[p.name,p.id].some(v=>v?.toLowerCase()===query.toLowerCase()));
   profiling=await startProfile(store.internal?.llm);const bStart=performance.now();const results=query&&!exact.length?(deep?await store.search({query,collection:'atlas',limit:programs.length,candidateLimit:programs.length,rerank:true}):await catalogSearch(store,query,programs.length,timings)):[];
   const idsByFilename=new Map(programs.map(p=>[createHash('sha256').update(p.id).digest('hex')+'.md',p.id]));const seen=new Set();
@@ -57,9 +56,9 @@ export async function pilotRoute(request,getCatalog){
   const model=profiling.finish();profiling=null;Object.assign(timings,model);timings.indexMs=indexMs;timings.queryMs=performance.now()-bStart;timings.vectorLookupAndOverheadMs=Math.max(0,(timings.vectorTotalMs||0)-model.modelLoadMs-model.contextSetupMs-model.embeddingMs);
   for(const k of Object.keys(timings))if(k.endsWith('Ms'))timings[k]=+timings[k].toFixed(2);
   console.log('QMD_PROFILE '+JSON.stringify({deep,...timings}));
-  const result={timings,query:enteredQuery,semanticQuery:query,scope,deep,a,b,aMs:+aMs.toFixed(2),bMs:Math.round(performance.now()-bStart),indexMs:Math.round(indexMs),indexChanged:indexing.changed,indexedAt,revision:version,engine:'QMD 2.8.3',cached:false,totalMs:Math.round(performance.now()-started)};
+  const result={timings,query:enteredQuery,semanticQuery:query,scope,deep,results:b,searchMs:Math.round(performance.now()-bStart),indexMs:Math.round(indexMs),indexChanged:indexing.changed,indexedAt,revision:version,engine:'QMD 2.8.3',cached:false,totalMs:Math.round(performance.now()-started)};
   cache.set(key,result);if(cache.size>50)cache.delete(cache.keys().next().value);return reply(result);
- }catch(error){lastError=error.message;console.error('QMD pilot:',error.message);return reply({error:'QMD could not complete this comparison. '+error.message},503);}finally{profiling?.finish();running=false;}
+ }catch(error){lastError=error.message;console.error('QMD search:',error.message);return reply({error:'QMD could not complete this search. '+error.message},503);}finally{profiling?.finish();running=false;}
 }
 
 // Authenticated readiness probe: warm the actual store, coalescing all browser polls.

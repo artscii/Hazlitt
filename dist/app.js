@@ -79,11 +79,11 @@ const projectCards=new Map([...document.querySelectorAll('article.program')].map
 // v1.3.11: filter visible profiles without rebuilding cards or moving keyboard focus.
 function normalizeSearch(value){return value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();}
 // v2.7.4: plain text search; words are literal, without Boolean operators.
-let markerProjectIds=null,pilotProjectIds=null,pilotContinent=null,pilotQuery="";
+let markerProjectIds=null,semanticProjectIds=null,semanticContinent=null,semanticQuery="";
 function searchGroups(query){const terms=normalizeSearch(query).trim().split(/\s+/).filter(Boolean);return terms.length?[terms]:[];}
 function searchResult(query){return searchIndex.search(query);}
 function matchingProjectIds(query){
- if(pilotProjectIds)return new Set([...pilotProjectIds].filter(id=>(!markerProjectIds||markerProjectIds.has(id))&&(!pilotContinent||AtlasSearch.continentsOf(programsById.get(id)).includes(pilotContinent))));
+ if(semanticProjectIds)return new Set([...semanticProjectIds].filter(id=>(!markerProjectIds||markerProjectIds.has(id))&&(!semanticContinent||AtlasSearch.continentsOf(programsById.get(id)).includes(semanticContinent))));
  if(sharedProjectId)return new Set([sharedProjectId]);
  if(markerProjectIds)return markerProjectIds;
  return searchResult(query).ids;
@@ -262,7 +262,7 @@ document.addEventListener('click',e=>{
  if(id!=='map-overview'&&!programs.some(p=>p.id===id))return;
  if(link.getAttribute('data-profile')===id){
   const chosen=programsById.get(id);
-  if(pilotProjectIds){markerProjectIds=new Set([id]);syncSearchMap();}
+  if(semanticProjectIds){markerProjectIds=new Set([id]);syncSearchMap();}
   prioritizeProfiles({name:chosen.name,ids:[id]});
   const location=places.find(p=>p.name===tipButton?.dataset.name)||places.find(p=>p.name===activeLocationName&&p.ids.includes(id));
   if(location)showDetail({...location,ids:[id]});
@@ -301,7 +301,7 @@ function showTip(place,button){if(pinnedTipButton&&pinnedTipButton!==button)retu
  }
 
 // v4.8.15: selecting a location locks marker visibility to its geographic continent.
-for(const place of places){const b=document.createElement('button');b.className='marker '+(place.left?'left ':'')+programs.find(p=>p.id===place.ids[0]).kind;b.style.left=projectX(place.lon)+'%';b.style.top=projectY(place.lat)+'%';b.dataset.name=place.name;b.setAttribute('aria-label',`${place.name}: ${place.ids.map(id=>programsById.get(id).name).join(', ')}. Show outcomes`);b.innerHTML=`${place.ids.length>1?place.ids.length:'•'}<span class="marker-label">${place.name}</span>`;b.addEventListener('pointerdown',e=>{touchInteraction=e.pointerType==='touch'||e.pointerType==='pen'});b.addEventListener('mouseenter',()=>{if(touchInteraction||window.matchMedia('(hover: none)').matches)return;overMarker=true;showTip(place,b)});b.addEventListener('focus',()=>{if(touchInteraction)return;overMarker=b.matches(':hover');showTip(place,b)});b.addEventListener('mouseleave',()=>{if(tipButton===b){overMarker=false;scheduleTipClose()}});b.addEventListener('blur',()=>{if(tipButton===b)scheduleTipClose()});b.addEventListener('click',()=>{const selectedIds=pilotProjectIds?place.ids.filter(id=>pilotProjectIds.has(id)):place.ids;if(!selectedIds.length)return;clearSharedProject({preservePilot:true});revealContinent(continentByCountry.get(place.countries[0])||'All');chosenMarkerName=place.name;markerProjectIds=new Set(selectedIds);document.querySelector('#project-search').value=place.countries.join(', ');syncSearchMap({preserveMapPosition:true,selectedPlace:place});showTip(place,b);pinnedTipButton=b;touchTipButton=b});document.querySelector('#markers').append(b)}
+for(const place of places){const b=document.createElement('button');b.className='marker '+(place.left?'left ':'')+programs.find(p=>p.id===place.ids[0]).kind;b.style.left=projectX(place.lon)+'%';b.style.top=projectY(place.lat)+'%';b.dataset.name=place.name;b.setAttribute('aria-label',`${place.name}: ${place.ids.map(id=>programsById.get(id).name).join(', ')}. Show outcomes`);b.innerHTML=`${place.ids.length>1?place.ids.length:'•'}<span class="marker-label">${place.name}</span>`;b.addEventListener('pointerdown',e=>{touchInteraction=e.pointerType==='touch'||e.pointerType==='pen'});b.addEventListener('mouseenter',()=>{if(touchInteraction||window.matchMedia('(hover: none)').matches)return;overMarker=true;showTip(place,b)});b.addEventListener('focus',()=>{if(touchInteraction)return;overMarker=b.matches(':hover');showTip(place,b)});b.addEventListener('mouseleave',()=>{if(tipButton===b){overMarker=false;scheduleTipClose()}});b.addEventListener('blur',()=>{if(tipButton===b)scheduleTipClose()});b.addEventListener('click',()=>{const selectedIds=semanticProjectIds?place.ids.filter(id=>semanticProjectIds.has(id)):place.ids;if(!selectedIds.length)return;clearSharedProject({preserveSemantic:true});revealContinent(continentByCountry.get(place.countries[0])||'All');chosenMarkerName=place.name;markerProjectIds=new Set(selectedIds);document.querySelector('#project-search').value=place.countries.join(', ');syncSearchMap({preserveMapPosition:true,selectedPlace:place});showTip(place,b);pinnedTipButton=b;touchTipButton=b});document.querySelector('#markers').append(b)}
 document.addEventListener('pointerdown',e=>{if(!tip.hidden&&!tip.contains(e.target)&&!tipButton?.contains(e.target))closeTip();});
 // Keep a region visible across ocean gaps so offset markers remain easy to reach.
 const continentControls=document.createElement('nav');continentControls.className='continent-controls';continentControls.setAttribute('aria-label','Map continents');
@@ -331,8 +331,8 @@ function revealContinent(name){
 }
 // v4.8.3: continent selection uses the same geographic filter as typed searches.
 function selectContinent(name){
- clearSharedProject({preservePilot:true});closeTip(true);
- if(pilotProjectIds)pilotContinent=name==='All'?null:name;
+ clearSharedProject({preserveSemantic:true});closeTip(true);
+ if(semanticProjectIds)semanticContinent=name==='All'?null:name;
  document.querySelector('#project-search').value=name==='All'?'':name;
  revealContinent(name);syncSearchMap({preserveMapPosition:true});
  if(name==='All')showContinentSummary([...matchingProjectIds('')]);
@@ -419,7 +419,7 @@ if(!location.hash&&!new URL(location.href).searchParams.has('project')){
 // v1.3.11: keep search results, map coverage and the first result in sync.
 function searchPlace(place){
  const query=document.querySelector('#project-search').value.trim();
- if(!query&&!sharedProjectId&&!pilotProjectIds)return {...place,ids:orderProjectIds(place.ids)};
+ if(!query&&!sharedProjectId&&!semanticProjectIds)return {...place,ids:orderProjectIds(place.ids)};
  const ids=matchingProjectIds(query);
  return {...place,ids:orderProjectIds(place.ids.filter(id=>ids.has(id)))};
 }
@@ -550,9 +550,9 @@ const sharedNotice=document.createElement('div');sharedNotice.className='shared-
 const sharedMessage=document.createElement('span');
 const showAll=document.createElement('button');showAll.type='button';showAll.textContent='Show all projects';
 sharedNotice.append(sharedMessage,showAll);document.querySelector('.project-search').append(sharedNotice);
-function clearSharedProject({preservePilot=false}={}){
+function clearSharedProject({preserveSemantic=false}={}){
  window.dispatchEvent(new Event('atlas-search-cancel'));
- if(!preservePilot){pilotProjectIds=null;pilotQuery='';}pilotContinent=null;
+ if(!preserveSemantic){semanticProjectIds=null;semanticQuery='';}semanticContinent=null;
  markerProjectIds=null;chosenMarkerName=null;cancelAnimationFrame(searchFrame);revealContinent('All');
  sharedProjectId=null;sharedNotice.hidden=true;
  const url=new URL(location.href);url.searchParams.delete('project');url.hash='';history.replaceState(null,'',url);
@@ -562,7 +562,7 @@ showAll.addEventListener('click',()=>{clearSharedProject();document.querySelecto
 for(const event of ['input','search','change'])document.querySelector('#project-search').addEventListener(event,clearSharedProject,{capture:true});
 function openSharedProject(){
  const id=new URL(location.href).searchParams.get('project');
- pilotProjectIds=null;pilotContinent=null;markerProjectIds=null;chosenMarkerName=null;sharedProjectId=null;sharedNotice.hidden=!id;
+ semanticProjectIds=null;semanticContinent=null;markerProjectIds=null;chosenMarkerName=null;sharedProjectId=null;sharedNotice.hidden=!id;
  if(!id){syncSearchMap();return;}
  document.querySelector('#project-search').value='';
  const project=catalog.programsById.get(id);
@@ -582,8 +582,8 @@ document.addEventListener('click',async event=>{
 });
 // v4.8.7: start with Africa; explicit shared-project links take precedence.
 if(new URL(location.href).searchParams.has('project'))openSharedProject();else selectContinent('Africa');
-// v4.12.1: map navigation narrows the applied comparison, never the whole catalogue.
-window.addEventListener('atlas-pilot-results',event=>{clearSharedProject();pilotProjectIds=new Set(event.detail.ids.filter(id=>programsById.has(id)));pilotQuery=event.detail.query;document.querySelector('#project-search').value=event.detail.query;revealContinent('All');syncSearchMap();});
+// v4.12.1: map navigation narrows the semantic result set, never the whole catalogue.
+window.addEventListener('atlas-semantic-results',event=>{clearSharedProject();semanticProjectIds=new Set(event.detail.ids.filter(id=>programsById.has(id)));semanticQuery=event.detail.query;document.querySelector('#project-search').value=event.detail.query;revealContinent('All');syncSearchMap();});
 window.dispatchEvent(new Event('atlas-ready'));
 })().catch(error=>{const message=document.createElement('p');message.className='load-error';message.textContent=error.message;document.querySelector('#map-overview').before(message);console.error(error);});
 

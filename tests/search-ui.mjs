@@ -83,13 +83,13 @@ await search('');assert.equal(d.querySelectorAll('.search-match-context').length
 console.log('PASS: hidden-field match explanations and clearing.');
 // Pilot result sets use the same list/marker filtering without moving markers.
 const pilotId=catalog.programs[0].id;
-w.dispatchEvent(new w.CustomEvent('atlas-pilot-results',{detail:{query:'conceptual example',ids:[pilotId,'invalid-id']}}));
+w.dispatchEvent(new w.CustomEvent('atlas-semantic-results',{detail:{query:'conceptual example',ids:[pilotId,'invalid-id']}}));
 assert.deepEqual([...d.querySelectorAll('article.program:not([hidden])')].map(c=>c.id),[pilotId]);
 assert([...d.querySelectorAll('.marker:not([hidden])')].every(m=>m.getAttribute('aria-label').includes(catalog.programs[0].name)));
 const pilotMarker=d.querySelector('.marker:not([hidden]):not(.continent-hidden)');pilotMarker.click();
 assert.deepEqual([...d.querySelectorAll('article.program:not([hidden])')].map(c=>c.id),[pilotId],'Marker click preserves semantic subset');
 assert([...d.querySelectorAll('.tooltip-profile')].every(link=>link.dataset.profile===pilotId),'Previews exclude unrelated records');
-const pilotContinent=w.AtlasSearch.continentsOf(catalog.programs[0])[0];regionButton(pilotContinent)?.click();
+const semanticContinent=w.AtlasSearch.continentsOf(catalog.programs[0])[0];regionButton(semanticContinent)?.click();
 assert.equal(d.querySelector('#pilot-map-notice'),null,'Map filters never show legacy comparison controls');
 assert.deepEqual([...d.querySelectorAll('article.program:not([hidden])')].map(c=>c.id),[pilotId],'Continent selection stays inside semantic subset');
 await search('');assert.equal(d.querySelectorAll('article.program:not([hidden])').length,catalog.programs.length);assert.equal(d.querySelector('#pilot-map-notice'),null);

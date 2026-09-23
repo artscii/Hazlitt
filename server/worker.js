@@ -70,26 +70,26 @@ export default {async fetch(request,env){
  const url=new URL(request.url),path=url.pathname;
  try{
   // v4.13.0: authenticated external QMD gateway; clients never receive its token.
-  if(path==='/api/search-pilot/status'&&request.method==='GET'){
+  if(path==='/api/search/status'&&request.method==='GET'){
    try{
     if(!env.QMD_SERVICE_URL||!env.QMD_SERVICE_TOKEN)return json({ready:false});
-    const endpoint=new URL('/api/search-pilot/status',env.QMD_SERVICE_URL);
+    const endpoint=new URL('/api/search/status',env.QMD_SERVICE_URL);
     if(endpoint.protocol!=='https:'&&!(env.QMD_PRIVATE_NETWORK==='1'&&endpoint.origin==='http://qmd:8080'))throw Error('Invalid upstream');
     const response=await fetch(endpoint,{headers:{Authorization:'Bearer '+env.QMD_SERVICE_TOKEN},signal:AbortSignal.timeout(3000),redirect:'error'});
     if(!response.ok)throw Error('Unavailable');const state=await response.json();return json({ready:state.ready===true,warming:state.warming===true});
    }catch{return json({ready:false});}
   }
-  if(path==='/api/search-pilot/compare'){
+  if(path==='/api/search/query'){
    if(request.method!=='POST')return json({error:'Use POST'},405);
    if(request.headers.get('Origin')!==url.origin)return json({error:'Invalid origin'},403);
    if(!env.QMD_SERVICE_URL||!env.QMD_SERVICE_TOKEN)return json({error:'Semantic search unavailable'},503);
    try{
     const payload=await body(request,4096);
-    const endpoint=new URL('/api/search-pilot/compare',env.QMD_SERVICE_URL);
+    const endpoint=new URL('/api/search/query',env.QMD_SERVICE_URL);
     if(endpoint.protocol!=='https:'&&!(env.QMD_PRIVATE_NETWORK==='1'&&endpoint.origin==='http://qmd:8080'))throw Error('HTTPS required');
     const upstream=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+env.QMD_SERVICE_TOKEN},body:JSON.stringify(payload),signal:AbortSignal.timeout(7500),redirect:'error'});
     if(!upstream.ok)return json({error:'Semantic search unavailable'},upstream.status===429?429:503);
-    const result=await upstream.json();if(!Array.isArray(result.b))throw Error('Invalid results');
+    const result=await upstream.json();if(!Array.isArray(result.results))throw Error('Invalid results');
     return json(result);
    }catch{return json({error:'Semantic search unavailable'},503);}
   }
