@@ -553,7 +553,6 @@ sharedNotice.append(sharedMessage,showAll);document.querySelector('.project-sear
 function clearSharedProject({preservePilot=false}={}){
  window.dispatchEvent(new Event('atlas-search-cancel'));
  if(!preservePilot){pilotProjectIds=null;pilotQuery='';}pilotContinent=null;
- document.querySelector('#pilot-map-notice')?.toggleAttribute('hidden',!pilotProjectIds);
  markerProjectIds=null;chosenMarkerName=null;cancelAnimationFrame(searchFrame);revealContinent('All');
  sharedProjectId=null;sharedNotice.hidden=true;
  const url=new URL(location.href);url.searchParams.delete('project');url.hash='';history.replaceState(null,'',url);
@@ -563,7 +562,7 @@ showAll.addEventListener('click',()=>{clearSharedProject();document.querySelecto
 for(const event of ['input','search','change'])document.querySelector('#project-search').addEventListener(event,clearSharedProject,{capture:true});
 function openSharedProject(){
  const id=new URL(location.href).searchParams.get('project');
- pilotProjectIds=null;pilotContinent=null;document.querySelector('#pilot-map-notice')?.setAttribute('hidden','');markerProjectIds=null;chosenMarkerName=null;sharedProjectId=null;sharedNotice.hidden=!id;
+ pilotProjectIds=null;pilotContinent=null;markerProjectIds=null;chosenMarkerName=null;sharedProjectId=null;sharedNotice.hidden=!id;
  if(!id){syncSearchMap();return;}
  document.querySelector('#project-search').value='';
  const project=catalog.programsById.get(id);
@@ -584,10 +583,7 @@ document.addEventListener('click',async event=>{
 // v4.8.7: start with Africa; explicit shared-project links take precedence.
 if(new URL(location.href).searchParams.has('project'))openSharedProject();else selectContinent('Africa');
 // v4.12.1: map navigation narrows the applied comparison, never the whole catalogue.
-const pilotNotice=document.createElement('div');pilotNotice.id='pilot-map-notice';pilotNotice.className='pilot-status';pilotNotice.hidden=true;pilotNotice.innerHTML='<span>Comparison results are active on the map.</span> <button type="button" data-pilot-reset>All comparison results</button> <button type="button" data-pilot-exit>Exit comparison</button>';document.querySelector('.project-search').append(pilotNotice);
-pilotNotice.querySelector('[data-pilot-reset]').onclick=()=>{clearSharedProject({preservePilot:true});document.querySelector('#project-search').value=pilotQuery;syncSearchMap();};
-pilotNotice.querySelector('[data-pilot-exit]').onclick=()=>{clearSharedProject();document.querySelector('#project-search').value='';syncSearchMap();};
-window.addEventListener('atlas-pilot-results',event=>{clearSharedProject();pilotProjectIds=new Set(event.detail.ids.filter(id=>programsById.has(id)));pilotQuery=event.detail.query;pilotNotice.hidden=event.detail.primary===true;document.querySelector('#project-search').value=event.detail.query;revealContinent('All');syncSearchMap();});
+window.addEventListener('atlas-pilot-results',event=>{clearSharedProject();pilotProjectIds=new Set(event.detail.ids.filter(id=>programsById.has(id)));pilotQuery=event.detail.query;document.querySelector('#project-search').value=event.detail.query;revealContinent('All');syncSearchMap();});
 window.dispatchEvent(new Event('atlas-ready'));
 })().catch(error=>{const message=document.createElement('p');message.className='load-error';message.textContent=error.message;document.querySelector('#map-overview').before(message);console.error(error);});
 

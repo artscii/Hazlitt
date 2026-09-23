@@ -90,8 +90,8 @@ const pilotMarker=d.querySelector('.marker:not([hidden]):not(.continent-hidden)'
 assert.deepEqual([...d.querySelectorAll('article.program:not([hidden])')].map(c=>c.id),[pilotId],'Marker click preserves semantic subset');
 assert([...d.querySelectorAll('.tooltip-profile')].every(link=>link.dataset.profile===pilotId),'Previews exclude unrelated records');
 const pilotContinent=w.AtlasSearch.continentsOf(catalog.programs[0])[0];regionButton(pilotContinent)?.click();
+assert.equal(d.querySelector('#pilot-map-notice'),null,'Map filters never show legacy comparison controls');
 assert.deepEqual([...d.querySelectorAll('article.program:not([hidden])')].map(c=>c.id),[pilotId],'Continent selection stays inside semantic subset');
-d.querySelector('[data-pilot-reset]').click();assert.deepEqual([...d.querySelectorAll('article.program:not([hidden])')].map(c=>c.id),[pilotId]);
-await search('');assert.equal(d.querySelectorAll('article.program:not([hidden])').length,catalog.programs.length);assert(d.querySelector('#pilot-map-notice').hidden);
+await search('');assert.equal(d.querySelectorAll('article.program:not([hidden])').length,catalog.programs.length);assert.equal(d.querySelector('#pilot-map-notice'),null);
 console.log('PASS: applying pilot subset and returning to ordinary search.');
 dom.window.close();
